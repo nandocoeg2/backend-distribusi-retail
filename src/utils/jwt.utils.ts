@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '@prisma/client';
-import { prisma } from '@/config/database';
+import { redisClient as redis } from '@/config/redis';
 import { environment } from '@/config/environment';
 
 const JWT_SECRET = environment.JWT_SECRET;
@@ -29,15 +29,24 @@ export const signTokens = async (user: User) => {
   const accessToken = signToken({ sub: user.id }, JWT_SECRET, JWT_EXPIRES_IN);
   const refreshToken = signToken({ sub: user.id }, JWT_REFRESH_SECRET, JWT_REFRESH_EXPIRES_IN);
 
-  const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);
-
-  await prisma.session.create({
-    data: {
-      userId: user.id,
-      refreshToken: refreshToken,
-      expiresAt: expiresAt,
-    },
-  });
+  await redis.set(`user:${user.id}:accessToken`, accessToken, { EX: parseInt(JWT_EXPIRES_IN, 10) });
+  await redis.set(`user:${user.id}:refreshToken`, refreshToken, { EX: parseInt(JWT_REFRESH_EXPIRES_IN, 10) });
 
   return { accessToken, refreshToken };
+};
+
+export const reissueAccessToken = async (refreshToken: string) => {
+  const { decoded, expired } = verifyToken(refreshToken, JWT_REFRESH_SECRET);
+
+  if (!decoded || !decoded.sub || expired) return false;
+
+  const storedRefreshToken = await redis.get(`user:${decoded.sub}:refreshToken`);
+
+  if (!storedRefreshToken || storedRefreshToken !== refreshToken) return false;
+
+  const accessToken = signToken({ sub: decoded.sub }, JWT_SECRET, JWT_EXPIRES_IN);
+
+  await redis.set(`user:${decoded.sub}:accessToken`, accessToken, { EX: parseInt(JWT_EXPIRES_IN, 10) });
+
+  return accessToken;
 };

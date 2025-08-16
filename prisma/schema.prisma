@@ -20,7 +20,6 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  sessions Session[]
   profile  Profile?
 
   @@map("users")
@@ -39,19 +38,7 @@ model Profile {
   @@map("profiles")
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  refreshToken String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
 
 enum Role {
   ADMIN

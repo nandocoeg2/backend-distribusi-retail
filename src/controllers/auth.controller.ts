@@ -18,8 +18,23 @@ export class AuthController {
 
   static async login(request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
     try {
-      const data = await AuthService.login(request.body);
-      return reply.send(data);
+      const { accessToken, refreshToken, user } = await AuthService.login(request.body);
+
+      reply.setCookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+      });
+
+      return reply.send({ user });
     } catch (error) {
       if (error instanceof AppError) {
         return reply.code(error.statusCode).send({ message: error.message });
@@ -30,15 +45,13 @@ export class AuthController {
 
   static async logout(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const refreshToken = request.cookies.refreshToken;
-      if (!refreshToken) {
-        throw new AppError('Refresh token not found', 401);
-      }
       if (!request.user) {
         throw new AppError('User not authenticated', 401);
       }
-      await AuthService.logout(request.user.id, refreshToken);
-      return reply.clearCookie('refreshToken').send({ message: 'Logged out successfully' });
+      await AuthService.logout(request.user.id);
+      reply.clearCookie('accessToken');
+      reply.clearCookie('refreshToken');
+      return reply.send({ message: 'Logged out successfully' });
     } catch (error) {
       if (error instanceof AppError) {
         return reply.code(error.statusCode).send({ message: error.message });

@@ -4,6 +4,7 @@ import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
 import { AppError } from '@/utils/app-error';
 import { comparePassword, hashPassword } from '@/utils/password.utils';
 import { signTokens } from '@/utils/jwt.utils';
+import { redisClient as redis } from '@/config/redis';
 import { CacheService } from '@/services/cache.service';
 
 export class AuthService {
@@ -32,7 +33,9 @@ export class AuthService {
     return userWithoutPassword;
   }
 
-  static async login(input: LoginInput): Promise<{ accessToken: string; refreshToken: string; user: Omit<User, 'password'> }> {
+  static async login(
+    input: LoginInput
+  ): Promise<{ accessToken: string; refreshToken: string; user: Omit<User, 'password'> }> {
     const user = await prisma.user.findUnique({
       where: { email: input.email },
     });
@@ -48,13 +51,9 @@ export class AuthService {
     return { accessToken, refreshToken, user: userWithoutPassword };
   }
 
-  static async logout(userId: string, token: string): Promise<void> {
-    await prisma.session.deleteMany({
-      where: {
-        userId: userId,
-        refreshToken: token,
-      },
-    });
+  static async logout(userId: string): Promise<void> {
+    await redis.del(`user:${userId}:accessToken`);
+    await redis.del(`user:${userId}:refreshToken`);
     await CacheService.del(`user:${userId}`);
   }
 }
