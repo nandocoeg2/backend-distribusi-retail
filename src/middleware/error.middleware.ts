@@ -14,5 +14,5 @@ export const errorHandler = (error: FastifyError | AppError, request: FastifyReq
   }
 
   logger.error('Unhandled Error:', error);
-  reply.status(500).send({ message: 'Internal Server Error' });
+  return reply.status(500).send({ message: 'Internal Server Error' });
 };

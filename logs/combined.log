@@ -127,3 +127,21 @@
 {"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T06:32:45.005Z"}
 {"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T06:32:46.606Z"}
 {"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T06:32:46.607Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T06:33:57.538Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T06:33:57.545Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T06:33:57.556Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T06:33:57.559Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T06:33:57.560Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T06:33:57.560Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T06:33:58.272Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T06:33:58.272Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T06:34:16.236Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T06:34:16.243Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T06:34:16.254Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T06:34:16.258Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T06:34:16.259Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T06:34:16.259Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T06:34:17.076Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T06:34:17.076Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T06:35:38.527Z"}
+{"level":"error","message":"\nInvalid `prisma.session.create()` invocation in\nD:\\Project\\backend-distribusi-retail\\src\\utils\\jwt.utils.ts:34:24\n\n  31 \n  32 const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);\n  33 \n→ 34 await prisma.session.create(\nForeign key constraint violated: `sessions_userId_fkey (index)`","service":"user-service","target":"session.create","timestamp":"2025-08-16T06:59:21.676Z"}

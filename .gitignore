@@ -1,1 +1,12 @@
 node_modules
+coverage
+.env
+.env.test
+.env.test.db
+.env.development
+.env.production
+
+
+
+
+

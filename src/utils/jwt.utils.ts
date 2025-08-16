@@ -12,8 +12,17 @@ export const signToken = (payload: object, secret: string, expiresIn: string) =>
   return jwt.sign(payload, secret, { expiresIn: parseInt(expiresIn, 10) });
 };
 
-export const verifyToken = (token: string, secret: string = JWT_SECRET): any => {
-  return jwt.verify(token, secret);
+export const verifyToken = (token: string, secret: string = JWT_SECRET) => {
+  try {
+    const decoded = jwt.verify(token, secret);
+    return { valid: true, expired: false, decoded };
+  } catch (e: any) {
+    return {
+      valid: false,
+      expired: e.name === 'TokenExpiredError',
+      decoded: null,
+    };
+  }
 };
 
 export const signTokens = async (user: User) => {
