@@ -1,0 +1,117 @@
+{"level":"error","message":"Failed to start server: Cannot read properties of undefined (reading 'error')","service":"user-service","stack":"TypeError: Cannot read properties of undefined (reading 'error')\n    at connectDatabase (D:\\Project\\backend-distribusi-retail\\src\\config\\database.ts:45:12)\n    at start (D:\\Project\\backend-distribusi-retail\\src\\index.ts:13:5)","timestamp":"2025-08-16T04:29:43.346Z"}
+{"level":"error","message":"Failed to start server: Cannot read properties of undefined (reading 'error')","service":"user-service","stack":"TypeError: Cannot read properties of undefined (reading 'error')\n    at connectDatabase (D:\\Project\\backend-distribusi-retail\\src\\config\\database.ts:45:12)\n    at start (D:\\Project\\backend-distribusi-retail\\src\\index.ts:13:5)","timestamp":"2025-08-16T04:30:55.444Z"}
+{"level":"error","message":"Failed to start server: Cannot read properties of undefined (reading 'error')","service":"user-service","stack":"TypeError: Cannot read properties of undefined (reading 'error')\n    at connectDatabase (D:\\Project\\backend-distribusi-retail\\src\\config\\database.ts:45:12)\n    at start (D:\\Project\\backend-distribusi-retail\\src\\index.ts:13:5)","timestamp":"2025-08-16T04:32:23.070Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:32:53.375Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:32:53.382Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:32:53.392Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:32:53.396Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:32:53.397Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:32:53.398Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:32:55.282Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:32:55.282Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T04:33:01.900Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:33:10.447Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:33:10.454Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:33:10.464Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:33:10.468Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:33:10.469Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:33:10.469Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:33:11.208Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:33:11.209Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:33:28.230Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:33:28.237Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:33:28.246Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:33:28.250Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:33:28.250Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:33:28.251Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:33:28.870Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:33:28.870Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:55:14.976Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:55:14.982Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:55:14.992Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:55:14.996Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:55:14.996Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:55:14.997Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:55:16.536Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:55:16.537Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T04:55:52.312Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:56:05.398Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:56:05.406Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:56:05.418Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:56:05.422Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:56:05.423Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:56:05.424Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:56:06.498Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:56:06.499Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /","service":"user-service","timestamp":"2025-08-16T04:56:08.065Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET / - 404","responseTime":6.314000000245869,"service":"user-service","timestamp":"2025-08-16T04:56:08.069Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /","service":"user-service","timestamp":"2025-08-16T04:56:08.356Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET / - 404","responseTime":2.0770999998785555,"service":"user-service","timestamp":"2025-08-16T04:56:08.358Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /favicon.ico","service":"user-service","timestamp":"2025-08-16T04:56:09.882Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /favicon.ico - 404","responseTime":2.0764999999664724,"service":"user-service","timestamp":"2025-08-16T04:56:09.884Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T04:57:29.029Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:57:37.338Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:57:37.345Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:57:37.356Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:57:37.360Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:57:37.360Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:57:37.361Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:57:38.098Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:57:38.099Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:59:12.941Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:59:12.948Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:59:12.958Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:59:12.962Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:59:12.963Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:59:12.963Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:59:13.751Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:59:13.752Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T04:59:24.640Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T04:59:24.648Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T04:59:24.659Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T04:59:24.662Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T04:59:24.663Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T04:59:24.663Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T04:59:25.615Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T04:59:25.616Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs","service":"user-service","timestamp":"2025-08-16T04:59:25.760Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs - 302","responseTime":6.296099999919534,"service":"user-service","timestamp":"2025-08-16T04:59:25.764Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/index.html","service":"user-service","timestamp":"2025-08-16T04:59:25.767Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/index.html - 200","responseTime":1.9637000001966953,"service":"user-service","timestamp":"2025-08-16T04:59:25.768Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/swagger-ui.css","service":"user-service","timestamp":"2025-08-16T04:59:25.847Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/swagger-ui.css - 200","responseTime":47.229599999729544,"service":"user-service","timestamp":"2025-08-16T04:59:25.894Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/index.css","service":"user-service","timestamp":"2025-08-16T04:59:25.896Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/index.css - 200","responseTime":7.292700000107288,"service":"user-service","timestamp":"2025-08-16T04:59:25.903Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/swagger-ui-bundle.js","service":"user-service","timestamp":"2025-08-16T04:59:25.905Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/swagger-ui-bundle.js - 200","responseTime":46.48640000028536,"service":"user-service","timestamp":"2025-08-16T04:59:25.952Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/swagger-ui-standalone-preset.js","service":"user-service","timestamp":"2025-08-16T04:59:25.957Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/swagger-ui-standalone-preset.js - 200","responseTime":38.37649999978021,"service":"user-service","timestamp":"2025-08-16T04:59:25.995Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/swagger-initializer.js","service":"user-service","timestamp":"2025-08-16T04:59:26.004Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/swagger-initializer.js - 200","responseTime":1.8544000000692904,"service":"user-service","timestamp":"2025-08-16T04:59:26.006Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/favicon-32x32.png","service":"user-service","timestamp":"2025-08-16T04:59:26.874Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-32x32.png - 200","responseTime":12.522499999962747,"service":"user-service","timestamp":"2025-08-16T04:59:26.886Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/favicon-16x16.png","service":"user-service","timestamp":"2025-08-16T04:59:26.895Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-16x16.png - 200","responseTime":8.804299999959767,"service":"user-service","timestamp":"2025-08-16T04:59:26.903Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/json","service":"user-service","timestamp":"2025-08-16T04:59:27.101Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/json - 200","responseTime":10.27419999986887,"service":"user-service","timestamp":"2025-08-16T04:59:27.110Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/favicon-32x32.png","service":"user-service","timestamp":"2025-08-16T04:59:27.150Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-32x32.png - 304","responseTime":2.579200000036508,"service":"user-service","timestamp":"2025-08-16T04:59:27.152Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /docs/static/favicon-16x16.png","service":"user-service","timestamp":"2025-08-16T04:59:27.327Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-16x16.png - 304","responseTime":2.388499999884516,"service":"user-service","timestamp":"2025-08-16T04:59:27.329Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T05:01:13.482Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T05:01:13.489Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T05:01:13.499Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T05:01:13.503Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T05:01:13.503Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T05:01:13.504Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T05:01:14.257Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T05:01:14.257Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T05:28:17.522Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T05:28:17.530Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T05:28:17.546Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T05:28:17.550Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T05:28:17.551Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T05:28:17.551Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T05:28:18.454Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T05:28:18.454Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T05:28:55.909Z"}
