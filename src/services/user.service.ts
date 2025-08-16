@@ -1,6 +1,5 @@
 import { User } from '@prisma/client';
 import { prisma } from '@/config/database';
-import { AppError } from '@/utils/app-error';
 import { CacheService } from '@/services/cache.service';
 
 export class UserService {

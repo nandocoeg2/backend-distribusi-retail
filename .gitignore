@@ -10,3 +10,6 @@ coverage
 
 
 
+logs/
+log.txt
+log

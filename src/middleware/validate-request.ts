@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply, DoneFuncWithErrOrRes } from 'fastify';
 import { ZodSchema } from 'zod';
-import { AppError } from '@/utils/app-error';
 
 export const validateRequest = <T extends ZodSchema>(schema: T) => {
   return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErrOrRes) => {

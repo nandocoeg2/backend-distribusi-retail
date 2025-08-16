@@ -145,3 +145,213 @@
 {"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T06:34:17.076Z"}
 {"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T06:35:38.527Z"}
 {"level":"error","message":"\nInvalid `prisma.session.create()` invocation in\nD:\\Project\\backend-distribusi-retail\\src\\utils\\jwt.utils.ts:34:24\n\n  31 \n  32 const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);\n  33 \n→ 34 await prisma.session.create(\nForeign key constraint violated: `sessions_userId_fkey (index)`","service":"user-service","target":"session.create","timestamp":"2025-08-16T06:59:21.676Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:26:48.982Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:26:48.989Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:26:48.999Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:26:49.005Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:26:49.006Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:26:49.006Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T07:26:50.675Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T07:26:50.676Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /","service":"user-service","timestamp":"2025-08-16T07:26:54.681Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET / - 404","responseTime":6.652599999681115,"service":"user-service","timestamp":"2025-08-16T07:26:54.685Z"}
+{"ip":"127.0.0.1","level":"info","message":"GET /","service":"user-service","timestamp":"2025-08-16T07:26:54.914Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET / - 404","responseTime":1.1439999993890524,"service":"user-service","timestamp":"2025-08-16T07:26:54.915Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T07:28:22.251Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:30:06.871Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:30:06.880Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:30:06.890Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:30:06.895Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:30:06.896Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:30:06.896Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T07:30:07.638Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T07:30:07.638Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T07:30:39.156Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:30:47.517Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:30:47.524Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:30:47.534Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:30:47.538Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:30:47.538Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:30:47.539Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:30:48.278Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:30:48.278Z"}
+{"ip":"::1","level":"info","message":"GET /docs","service":"user-service","timestamp":"2025-08-16T07:30:51.056Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs - 302","responseTime":8.419399999082088,"service":"user-service","timestamp":"2025-08-16T07:30:51.062Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/index.html","service":"user-service","timestamp":"2025-08-16T07:30:51.083Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/index.html - 200","responseTime":3.180900000035763,"service":"user-service","timestamp":"2025-08-16T07:30:51.086Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/swagger-ui.css","service":"user-service","timestamp":"2025-08-16T07:30:51.272Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"ip":"::1","level":"info","message":"GET /docs/static/index.css","service":"user-service","timestamp":"2025-08-16T07:30:51.281Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"ip":"::1","level":"info","message":"GET /docs/static/swagger-ui-bundle.js","service":"user-service","timestamp":"2025-08-16T07:30:51.284Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"ip":"::1","level":"info","message":"GET /docs/static/swagger-ui-standalone-preset.js","service":"user-service","timestamp":"2025-08-16T07:30:51.287Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"ip":"::1","level":"info","message":"GET /docs/static/swagger-initializer.js","service":"user-service","timestamp":"2025-08-16T07:30:51.291Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/swagger-initializer.js - 200","responseTime":1.9346000012010336,"service":"user-service","timestamp":"2025-08-16T07:30:51.293Z"}
+{"level":"info","message":"GET /docs/static/index.css - 200","responseTime":20.23560000024736,"service":"user-service","timestamp":"2025-08-16T07:30:51.301Z"}
+{"level":"info","message":"GET /docs/static/swagger-ui.css - 200","responseTime":86.09050000086427,"service":"user-service","timestamp":"2025-08-16T07:30:51.358Z"}
+{"level":"info","message":"GET /docs/static/swagger-ui-standalone-preset.js - 200","responseTime":95.37069999985397,"service":"user-service","timestamp":"2025-08-16T07:30:51.382Z"}
+{"level":"info","message":"GET /docs/static/swagger-ui-bundle.js - 200","responseTime":110.76429999992251,"service":"user-service","timestamp":"2025-08-16T07:30:51.394Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/favicon-32x32.png","service":"user-service","timestamp":"2025-08-16T07:30:52.328Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-32x32.png - 304","responseTime":2.525499999523163,"service":"user-service","timestamp":"2025-08-16T07:30:52.330Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/favicon-16x16.png","service":"user-service","timestamp":"2025-08-16T07:30:52.339Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-16x16.png - 304","responseTime":2.9404000006616116,"service":"user-service","timestamp":"2025-08-16T07:30:52.341Z"}
+{"ip":"::1","level":"info","message":"GET /docs/json","service":"user-service","timestamp":"2025-08-16T07:30:52.588Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/json - 200","responseTime":9.461799999698997,"service":"user-service","timestamp":"2025-08-16T07:30:52.597Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/favicon-32x32.png","service":"user-service","timestamp":"2025-08-16T07:30:52.639Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-32x32.png - 304","responseTime":2.479399999603629,"service":"user-service","timestamp":"2025-08-16T07:30:52.641Z"}
+{"ip":"::1","level":"info","message":"GET /docs/static/favicon-16x16.png","service":"user-service","timestamp":"2025-08-16T07:30:52.797Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /docs/static/favicon-16x16.png - 304","responseTime":1.749099999666214,"service":"user-service","timestamp":"2025-08-16T07:30:52.799Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:30:55.968Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":3.658099999651313,"service":"user-service","timestamp":"2025-08-16T07:30:55.971Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:31:07.131Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":2.1100999992340803,"service":"user-service","timestamp":"2025-08-16T07:31:07.133Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/users/","service":"user-service","timestamp":"2025-08-16T07:31:22.612Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /api/v1/users/ - 401","responseTime":2.8532999996095896,"service":"user-service","timestamp":"2025-08-16T07:31:22.614Z"}
+{"ip":"::1","level":"info","message":"GET /api/v1/users/","service":"user-service","timestamp":"2025-08-16T07:31:23.374Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"GET /api/v1/users/ - 401","responseTime":1.1206999998539686,"service":"user-service","timestamp":"2025-08-16T07:31:23.375Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:32:01.667Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/login - 400","responseTime":1.6051999982446432,"service":"user-service","timestamp":"2025-08-16T07:32:01.669Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:32:02.579Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/login - 400","responseTime":1.2538999989628792,"service":"user-service","timestamp":"2025-08-16T07:32:02.580Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:32:03.586Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/login - 400","responseTime":1.8120000008493662,"service":"user-service","timestamp":"2025-08-16T07:32:03.588Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:32:32.116Z","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":4.797399999573827,"service":"user-service","timestamp":"2025-08-16T07:32:32.120Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:36:38.747Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:36:38.754Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:36:38.765Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:36:38.769Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:36:38.770Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:36:38.770Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:36:39.668Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:36:39.668Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:37:38.742Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":11.38120000064373,"service":"user-service","timestamp":"2025-08-16T07:37:38.750Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:37:43.490Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":2.224999999627471,"service":"user-service","timestamp":"2025-08-16T07:37:43.492Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:37:55.935Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 201","responseTime":131.50490000098944,"service":"user-service","timestamp":"2025-08-16T07:37:56.067Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:38:28.166Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":93.63970000110567,"service":"user-service","timestamp":"2025-08-16T07:38:28.259Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:43:17.302Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:17.309Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:43:17.321Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:43:17.326Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:43:17.326Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:17.327Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:43:18.101Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:43:18.102Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:43:29.804Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:29.811Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:43:29.821Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:43:29.825Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:43:29.826Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:29.826Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:43:30.548Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:43:30.548Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:43:56.304Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:56.312Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:43:56.325Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:43:56.330Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:43:56.331Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:43:56.331Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:43:57.146Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:43:57.147Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:45:21.420Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":10.798299999907613,"service":"user-service","timestamp":"2025-08-16T07:45:21.429Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:45:34.979Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:45:34.986Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:45:34.997Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:45:35.001Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:45:35.001Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:45:35.002Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:45:35.821Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:45:35.822Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:45:51.307Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:45:51.314Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:45:51.325Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:45:51.328Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:45:51.329Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:45:51.330Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:45:52.111Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:45:52.112Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:46:39.881Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":10.24800000153482,"service":"user-service","timestamp":"2025-08-16T07:46:39.889Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:46:40.292Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":2.733500000089407,"service":"user-service","timestamp":"2025-08-16T07:46:40.295Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:46:40.554Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":1.8155000004917383,"service":"user-service","timestamp":"2025-08-16T07:46:40.556Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:46:40.734Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":1.5940000005066395,"service":"user-service","timestamp":"2025-08-16T07:46:40.735Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T07:47:18.084Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:47:27.078Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:47:27.085Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:47:27.095Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:47:27.099Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:47:27.100Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:47:27.100Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:47:28.054Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:47:28.055Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:47:30.240Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":9.68070000037551,"service":"user-service","timestamp":"2025-08-16T07:47:30.247Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:47:30.749Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":1.7838000003248453,"service":"user-service","timestamp":"2025-08-16T07:47:30.751Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:47:31.164Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 400","responseTime":1.6271000001579523,"service":"user-service","timestamp":"2025-08-16T07:47:31.165Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:48:14.286Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:48:14.293Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:48:14.304Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:48:14.309Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:48:20.327Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:48:20.334Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:48:20.346Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:48:20.350Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:48:20.351Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:48:20.351Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:48:21.333Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:48:21.333Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T07:48:26.519Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T07:48:26.525Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T07:48:26.535Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T07:48:26.538Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T07:48:26.539Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T07:48:26.540Z"}
+{"level":"info","message":"Server running on http://localhost:3000","service":"user-service","timestamp":"2025-08-16T07:48:27.246Z"}
+{"level":"info","message":"Swagger documentation available at http://localhost:3000/docs","service":"user-service","timestamp":"2025-08-16T07:48:27.246Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:33.947Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 201","responseTime":100.52539999969304,"service":"user-service","timestamp":"2025-08-16T07:48:34.046Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:34.621Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 409","responseTime":5.060099998489022,"service":"user-service","timestamp":"2025-08-16T07:48:34.626Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:35.039Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 409","responseTime":3.7444000001996756,"service":"user-service","timestamp":"2025-08-16T07:48:35.042Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:35.829Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 409","responseTime":4.380299998447299,"service":"user-service","timestamp":"2025-08-16T07:48:35.834Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:36.262Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 409","responseTime":3.788899999111891,"service":"user-service","timestamp":"2025-08-16T07:48:36.266Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/register","service":"user-service","timestamp":"2025-08-16T07:48:36.592Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/register - 409","responseTime":4.0467000007629395,"service":"user-service","timestamp":"2025-08-16T07:48:36.595Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:39.354Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":91.50760000012815,"service":"user-service","timestamp":"2025-08-16T07:48:39.445Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:39.841Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"error","message":"\nInvalid `prisma.session.create()` invocation in\nD:\\Project\\backend-distribusi-retail\\src\\utils\\jwt.utils.ts:34:24\n\n  31 \n  32 const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);\n  33 \n→ 34 await prisma.session.create(\nUnique constraint failed on the fields: (`refreshToken`)","service":"user-service","target":"session.create","timestamp":"2025-08-16T07:48:39.944Z"}
+{"level":"info","message":"POST /api/v1/auth/login - 500","responseTime":105.48719999939203,"service":"user-service","timestamp":"2025-08-16T07:48:39.947Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:40.308Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":88.19610000029206,"service":"user-service","timestamp":"2025-08-16T07:48:40.396Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:40.871Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"error","message":"\nInvalid `prisma.session.create()` invocation in\nD:\\Project\\backend-distribusi-retail\\src\\utils\\jwt.utils.ts:34:24\n\n  31 \n  32 const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);\n  33 \n→ 34 await prisma.session.create(\nUnique constraint failed on the fields: (`refreshToken`)","service":"user-service","target":"session.create","timestamp":"2025-08-16T07:48:40.959Z"}
+{"level":"info","message":"POST /api/v1/auth/login - 500","responseTime":89.65940000116825,"service":"user-service","timestamp":"2025-08-16T07:48:40.960Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:44.462Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":88.84159999899566,"service":"user-service","timestamp":"2025-08-16T07:48:44.550Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:45.579Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":95.15039999969304,"service":"user-service","timestamp":"2025-08-16T07:48:45.674Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:46.973Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":84.80969999916852,"service":"user-service","timestamp":"2025-08-16T07:48:47.058Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:48.186Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":88.87949999980628,"service":"user-service","timestamp":"2025-08-16T07:48:48.275Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:49.714Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":85.7402999997139,"service":"user-service","timestamp":"2025-08-16T07:48:49.799Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:50.631Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":86.70729999989271,"service":"user-service","timestamp":"2025-08-16T07:48:50.717Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:50.855Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"error","message":"\nInvalid `prisma.session.create()` invocation in\nD:\\Project\\backend-distribusi-retail\\src\\utils\\jwt.utils.ts:34:24\n\n  31 \n  32 const expiresAt = new Date(Date.now() + parseInt(JWT_REFRESH_EXPIRES_IN, 10) * 1000);\n  33 \n→ 34 await prisma.session.create(\nUnique constraint failed on the fields: (`refreshToken`)","service":"user-service","target":"session.create","timestamp":"2025-08-16T07:48:50.937Z"}
+{"level":"info","message":"POST /api/v1/auth/login - 500","responseTime":82.98699999973178,"service":"user-service","timestamp":"2025-08-16T07:48:50.938Z"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"user-service","timestamp":"2025-08-16T07:48:52.579Z","userAgent":"bruno-runtime/2.1.0"}
+{"level":"info","message":"POST /api/v1/auth/login - 200","responseTime":84.8775000013411,"service":"user-service","timestamp":"2025-08-16T07:48:52.664Z"}
