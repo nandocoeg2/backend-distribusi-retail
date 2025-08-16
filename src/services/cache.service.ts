@@ -1,5 +1,5 @@
-import { redisClient } from '../config/redis';
-import logger from '../config/logger';
+import { redisClient } from '@/config/redis';
+import logger from '@/config/logger';
 
 export class CacheService {
   private static readonly DEFAULT_TTL = 3600; // 1 hour in seconds

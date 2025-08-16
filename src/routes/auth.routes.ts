@@ -1,9 +1,9 @@
-import { FastifyInstance, FastifyPluginOptions } from 'fastify';
-import { AuthController } from '../controllers/auth.controller';
-import { validateRequest } from '../middleware/validate-request';
-import { createUserSchema, loginUserSchema } from '../schemas/user.schema';
+import { FastifyInstance, FastifyPluginOptions, FastifyPluginCallback } from 'fastify';
+import { AuthController } from '@/controllers/auth.controller';
+import { validateRequest } from '@/middleware/validate-request';
+import { createUserSchema, loginUserSchema } from '@/schemas/user.schema';
 
-export const authRoutes = (fastify: FastifyInstance, options: FastifyPluginOptions, done: any) => {
+export const authRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
   fastify.post(
     '/register',
     { preHandler: [validateRequest(createUserSchema)] },

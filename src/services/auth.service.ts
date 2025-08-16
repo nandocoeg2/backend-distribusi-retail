@@ -1,10 +1,10 @@
 import { User } from '@prisma/client';
-import { prisma } from '../config/database';
-import { CreateUserInput, LoginInput } from '../schemas/auth.schema';
-import { AppError } from '../utils/app-error';
-import { comparePassword, hashPassword } from '../utils/password.utils';
-import { signTokens } from '../utils/jwt.utils';
-import { CacheService } from './cache.service';
+import { prisma } from '@/config/database';
+import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
+import { AppError } from '@/utils/app-error';
+import { comparePassword, hashPassword } from '@/utils/password.utils';
+import { signTokens } from '@/utils/jwt.utils';
+import { CacheService } from '@/services/cache.service';
 
 export class AuthService {
   static async register(input: CreateUserInput): Promise<Omit<User, 'password'>> {
@@ -20,7 +20,8 @@ export class AuthService {
 
     const user = await prisma.user.create({
       data: {
-        ...input,
+        email: input.email,
+        username: input.name,
         password: hashedPassword,
       },
     });
@@ -49,7 +50,7 @@ export class AuthService {
     await prisma.session.deleteMany({
       where: {
         userId: userId,
-        token: token,
+        refreshToken: token,
       },
     });
     await CacheService.del(`user:${userId}`);

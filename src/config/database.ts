@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import logger from './logger';
+import logger from '@/config/logger';
 
 class Database {
   private static instance: PrismaClient;
@@ -7,17 +7,12 @@ class Database {
   public static getInstance(): PrismaClient {
     if (!Database.instance) {
       Database.instance = new PrismaClient({
-        log: [
-          { emit: 'event', level: 'query' },
-          { emit: 'event', level: 'error' },
-          { emit: 'event', level: 'info' },
-          { emit: 'event', level: 'warn' },
-        ],
+        log: ['query', 'error', 'info', 'warn'],
       });
 
       // Log database queries in development
       if (process.env.NODE_ENV === 'development') {
-        Database.instance.$on('query', (e) => {
+        (Database.instance as any).$on('query', (e: any) => {
           logger.debug('Database Query:', {
             query: e.query,
             params: e.params,
@@ -26,7 +21,7 @@ class Database {
         });
       }
 
-      Database.instance.$on('error', (e) => {
+      (Database.instance as any).$on('error', (e: any) => {
         logger.error('Database Error:', e);
       });
     }

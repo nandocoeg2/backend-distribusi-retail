@@ -1,11 +1,11 @@
-import { FastifyInstance, FastifyPluginOptions, Done } from 'fastify';
-import { UserController } from '../controllers/user.controller';
-import { validateRequest } from '../middleware/validate-request';
-import { getUserSchema } from '../schemas/user.schema';
+import { FastifyInstance, FastifyPluginOptions, FastifyPluginCallback } from 'fastify';
+import { UserController } from '@/controllers/user.controller';
+import { validateRequest } from '@/middleware/validate-request';
+import { getUserSchema } from '@/schemas/user.schema';
 
-export const userRoutes = (fastify: FastifyInstance, options: FastifyPluginOptions, done: Done) => {
+export const userRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
   fastify.get('/', { preHandler: [fastify.authenticate] }, UserController.getUsers);
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
       preHandler: [fastify.authenticate, validateRequest(getUserSchema)],

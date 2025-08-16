@@ -1,7 +1,7 @@
 import { User } from '@prisma/client';
-import { prisma } from '../config/database';
-import { AppError } from '../utils/app-error';
-import { CacheService } from './cache.service';
+import { prisma } from '@/config/database';
+import { AppError } from '@/utils/app-error';
+import { CacheService } from '@/services/cache.service';
 
 export class UserService {
   static async getAllUsers(): Promise<Omit<User, 'password'>[]> {
@@ -14,7 +14,11 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -35,7 +39,11 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       },

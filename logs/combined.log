@@ -115,3 +115,15 @@
 {"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T05:28:18.454Z"}
 {"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T05:28:18.454Z"}
 {"level":"info","message":"Received SIGINT, shutting down gracefully","service":"user-service","timestamp":"2025-08-16T05:28:55.909Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T06:28:13.542Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T06:28:13.549Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T06:28:13.559Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T06:28:13.564Z"}
+{"level":"info","message":"Database connection established","service":"user-service","timestamp":"2025-08-16T06:32:44.981Z"}
+{"level":"info","message":"Database connected successfully","service":"user-service","timestamp":"2025-08-16T06:32:44.988Z"}
+{"level":"info","message":"Redis client connected","service":"user-service","timestamp":"2025-08-16T06:32:44.998Z"}
+{"level":"info","message":"Redis client ready","service":"user-service","timestamp":"2025-08-16T06:32:45.003Z"}
+{"level":"info","message":"Redis connection established","service":"user-service","timestamp":"2025-08-16T06:32:45.004Z"}
+{"level":"info","message":"Redis connected successfully","service":"user-service","timestamp":"2025-08-16T06:32:45.005Z"}
+{"level":"info","message":"Server running on http://0.0.0.0:3000","service":"user-service","timestamp":"2025-08-16T06:32:46.606Z"}
+{"level":"info","message":"Swagger documentation available at http://0.0.0.0:3000/docs","service":"user-service","timestamp":"2025-08-16T06:32:46.607Z"}

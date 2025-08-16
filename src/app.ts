@@ -4,10 +4,11 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import logger from './config/logger';
-import { errorHandler } from './middleware/error.middleware';
-import routes from './routes';
-import { authMiddleware } from './middleware/auth.middleware';
+import cookie from '@fastify/cookie';
+import logger from '@/config/logger';
+import { errorHandler } from '@/middleware/error.middleware';
+import routes from '@/routes';
+import { authMiddleware } from '@/middleware/auth.middleware';
 
 export const createApp = async () => {
   const app = Fastify({
@@ -28,6 +29,12 @@ export const createApp = async () => {
   await app.register(rateLimit, {
     max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     timeWindow: parseInt(process.env.RATE_LIMIT_TIME_WINDOW || '900000', 10),
+  });
+
+  // Register cookies plugin
+  await app.register(cookie, {
+    secret: process.env.COOKIE_SECRET || 'my-secret-key',
+    parseOptions: {},
   });
 
   // Swagger documentation

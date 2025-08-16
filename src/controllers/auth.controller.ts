@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { CreateUserInput, LoginInput } from '../schemas/auth.schema';
-import { AuthService } from '../services/auth.service';
-import { AppError } from '../utils/app-error';
+import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
+import { AuthService } from '@/services/auth.service';
+import { AppError } from '@/utils/app-error';
 
 export class AuthController {
   static async register(request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
@@ -33,6 +33,9 @@ export class AuthController {
       const refreshToken = request.cookies.refreshToken;
       if (!refreshToken) {
         throw new AppError('Refresh token not found', 401);
+      }
+      if (!request.user) {
+        throw new AppError('User not authenticated', 401);
       }
       await AuthService.logout(request.user.id, refreshToken);
       return reply.clearCookie('refreshToken').send({ message: 'Logged out successfully' });

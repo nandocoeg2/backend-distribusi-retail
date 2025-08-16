@@ -1,6 +1,6 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
-import { logger } from '../config/logger';
-import { AppError } from '../utils/app-error';
+import logger  from '@/config/logger';
+import { AppError } from '@/utils/app-error';
 
 export const errorHandler = (error: FastifyError | AppError, request: FastifyRequest, reply: FastifyReply) => {
   if (error instanceof AppError) {

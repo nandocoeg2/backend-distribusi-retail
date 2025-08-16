@@ -1,9 +1,9 @@
-import { FastifyRequest, FastifyReply, DoneFuncWithErr } from 'fastify';
+import { FastifyRequest, FastifyReply, DoneFuncWithErrOrRes } from 'fastify';
 import { ZodSchema } from 'zod';
-import { AppError } from '../utils/app-error';
+import { AppError } from '@/utils/app-error';
 
 export const validateRequest = <T extends ZodSchema>(schema: T) => {
-  return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErr) => {
+  return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErrOrRes) => {
     try {
       schema.parse({
         body: req.body,
@@ -16,7 +16,10 @@ export const validateRequest = <T extends ZodSchema>(schema: T) => {
         field: err.path.join('.'),
         message: err.message,
       }));
-      done(new AppError('Validation failed', 400, validationErrors));
+      return reply.code(400).send({ 
+        message: 'Validation failed', 
+        errors: validationErrors 
+      });
     }
   };
 };

@@ -1,4 +1,5 @@
 import 'fastify';
+import '@fastify/cookie';
 
 declare module 'fastify' {
   export interface FastifyRequest {
@@ -7,6 +8,7 @@ declare module 'fastify' {
       iat: number;
       exp: number;
     };
+    cookies: { [cookieName: string]: string | undefined };
   }
 
   export interface FastifyInstance {
