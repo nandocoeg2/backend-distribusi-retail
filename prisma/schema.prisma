@@ -39,8 +39,6 @@ model Profile {
   @@map("profiles")
 }
 
-
-
 model Role {
   id          String @id @default(cuid())
   name        String @unique
@@ -52,8 +50,8 @@ model Role {
 }
 
 model Menu {
-  id        String   @id @default(cuid())
-  name      String
+  id        String     @id @default(cuid())
+  name      String     @unique
   url       String
   icon      String?
   parentId  String?
@@ -73,3 +71,63 @@ model RoleMenu {
   @@id([roleId, menuId])
   @@map("role_menus")
 }
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  address     String?
+  phoneNumber String
+  email       String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+
+  @@map("customers")
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  address     String?
+  phoneNumber String
+  email       String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id                 String   @id @default(cuid())
+  orderNumber        String   @unique
+  suratJalan         String?
+  invoicePengiriman  String?
+  suratPO            String?
+  suratPenagihan     String?
+  customerId         String
+  customer           Customer @relation(fields: [customerId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  files              FileUploaded[]
+
+  @@map("purchase_orders")
+}
+
+model FileUploaded {
+  id              String   @id @default(cuid())
+  filename        String
+  path            String
+  mimetype        String
+  size            Int
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("file_uploaded")
+}
+

@@ -6,6 +6,9 @@ coverage
 .env.development
 .env.production
 
+dist/
+dist/**/*
+
 logs/
 log.txt
 log

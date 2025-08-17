@@ -1,0 +1,23 @@
+meta {
+  name: customers
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3000/api/v1/customers/
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+}
+
+body:json {
+  {
+    "name":"customers 1",
+    "address":"jalan 1",
+    "phoneNumber":"123"
+  }
+}

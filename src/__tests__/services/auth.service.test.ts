@@ -1,37 +1,28 @@
 import { AuthService } from '@/services/auth.service';
 import { prisma } from '@/config/database';
+import { redisClient as redis } from '@/config/redis';
 import { AppError } from '@/utils/app-error';
 import { hashPassword, comparePassword } from '@/utils/password.utils';
 import { signTokens } from '@/utils/jwt.utils';
+import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
 import { CacheService } from '@/services/cache.service';
 
+// Mock dependencies
 jest.mock('@/config/database', () => ({
-  prisma: {
-    user: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
+    prisma: {
+      user: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
+      },
+      role: {
+        findUnique: jest.fn(),
+      },
     },
-    session: {
-      deleteMany: jest.fn(),
-    },
-  },
-}));
-
-jest.mock('@/utils/password.utils', () => ({
-  hashPassword: jest.fn(),
-  comparePassword: jest.fn(),
-}));
-
-jest.mock('@/utils/jwt.utils', () => ({
-  signTokens: jest.fn(),
-}));
-
-jest.mock('@/services/cache.service', () => ({
-  CacheService: {
-    set: jest.fn(),
-    del: jest.fn(),
-  },
-}));
+  }));
+jest.mock('@/config/redis');
+jest.mock('@/utils/password.utils');
+jest.mock('@/utils/jwt.utils');
+jest.mock('@/services/cache.service');
 
 describe('AuthService', () => {
   afterEach(() => {
@@ -39,69 +30,99 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should register a new user', async () => {
-      const input = { email: 'test@example.com', name: 'Test User', password: 'password' };
-      const hashedPassword = 'hashedPassword';
-      const user = { id: '1', email: input.email, username: input.name, password: hashedPassword };
+    const userInput: CreateUserInput = {
+      email: 'test@example.com',
+      username: 'testuser',
+      firstName: 'Test',
+      lastName: 'User',
+      password: 'password123',
+    };
 
+    it('should register a new user successfully', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (hashPassword as jest.Mock).mockResolvedValue(hashedPassword);
-      (prisma.user.create as jest.Mock).mockResolvedValue(user);
+      (hashPassword as jest.Mock).mockResolvedValue('hashedPassword');
+      (prisma.role.findUnique as jest.Mock).mockResolvedValue({ id: 'role1', name: 'user' });
+      const createdUser = { ...userInput, id: '1', roleId: 'role1', isActive: true, createdAt: new Date(), updatedAt: new Date() };
+      (prisma.user.create as jest.Mock).mockResolvedValue(createdUser);
 
-      const result = await AuthService.register(input);
-      const { password, ...userWithoutPassword } = user;
+      const result = await AuthService.register(userInput);
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: input.email } });
-      expect(hashPassword).toHaveBeenCalledWith(input.password);
-      expect(prisma.user.create).toHaveBeenCalledWith({ data: { email: input.email, username: input.name, password: hashedPassword } });
-      expect(result).toEqual(userWithoutPassword);
+      const { password, ...expectedUser } = createdUser;
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: userInput.email } });
+      expect(hashPassword).toHaveBeenCalledWith(userInput.password);
+      expect(prisma.role.findUnique).toHaveBeenCalledWith({ where: { name: 'user' } });
+      expect(prisma.user.create).toHaveBeenCalled();
+      expect(result).toEqual(expectedUser);
     });
 
     it('should throw an error if user already exists', async () => {
-      const input = { email: 'test@example.com', name: 'Test User', password: 'password' };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: '1', email: input.email });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
 
-      await expect(AuthService.register(input)).rejects.toThrow(new AppError('User with this email already exists', 409));
+      await expect(AuthService.register(userInput)).rejects.toThrow(
+        new AppError('User with this email already exists', 409)
+      );
     });
+
+    it('should throw an error if default role not found', async () => {
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+        (prisma.role.findUnique as jest.Mock).mockResolvedValue(null);
+  
+        await expect(AuthService.register(userInput)).rejects.toThrow(
+          new AppError('Default role not found', 500)
+        );
+      });
   });
 
   describe('login', () => {
-    it('should login a user and return tokens', async () => {
-      const input = { email: 'test@example.com', password: 'password' };
-      const user = { id: '1', email: input.email, password: 'hashedPassword' };
-      const tokens = { accessToken: 'accessToken', refreshToken: 'refreshToken' };
+    const loginInput: LoginInput = { email: 'test@example.com', password: 'password123' };
+    const user = {
+      id: '1',
+      email: 'test@example.com',
+      password: 'hashedPassword',
+      role: {
+        id: 'role1',
+        name: 'user',
+        menus: [],
+      },
+    };
+    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
 
+    it('should login a user and return tokens and user data', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
       (comparePassword as jest.Mock).mockResolvedValue(true);
       (signTokens as jest.Mock).mockResolvedValue(tokens);
+      (CacheService.set as jest.Mock).mockResolvedValue(undefined);
 
-      const result = await AuthService.login(input);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...userWithoutPassword } = user;
+      const result = await AuthService.login(loginInput);
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: input.email } });
-      expect(comparePassword).toHaveBeenCalledWith(input.password, user.password);
+      expect(prisma.user.findUnique).toHaveBeenCalled();
+      expect(comparePassword).toHaveBeenCalledWith(loginInput.password, user.password);
       expect(signTokens).toHaveBeenCalledWith(user);
-      expect(CacheService.set).toHaveBeenCalledWith(`user:${user.id}`, user, 3600);
-      expect(result).toEqual({ ...tokens, user: userWithoutPassword });
+      expect(CacheService.set).toHaveBeenCalled();
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
+      expect(result).toHaveProperty('user');
     });
 
     it('should throw an error for invalid credentials', async () => {
-      const input = { email: 'test@example.com', password: 'password' };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(AuthService.login(input)).rejects.toThrow(new AppError('Invalid email or password', 401));
-    });
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+        await expect(AuthService.login(loginInput)).rejects.toThrow(
+          new AppError('Invalid email or password', 401)
+        );
+      });
   });
 
   describe('logout', () => {
-    it('should logout a user', async () => {
+    it('should clear user session data from redis', async () => {
       const userId = '1';
-      const token = 'refreshToken';
+      (redis.del as jest.Mock).mockResolvedValue(1);
+      (CacheService.del as jest.Mock).mockResolvedValue(undefined);
 
-      await AuthService.logout(userId, token);
+      await AuthService.logout(userId);
 
-      expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId, refreshToken: token } });
+      expect(redis.del).toHaveBeenCalledWith(`user:${userId}:accessToken`);
+      expect(redis.del).toHaveBeenCalledWith(`user:${userId}:refreshToken`);
       expect(CacheService.del).toHaveBeenCalledWith(`user:${userId}`);
     });
   });

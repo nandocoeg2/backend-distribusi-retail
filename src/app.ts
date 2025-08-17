@@ -1,4 +1,6 @@
 import Fastify from 'fastify';
+import { z } from 'zod';
+import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -14,7 +16,10 @@ export const createApp = async () => {
   const app = Fastify({
     logger: false, // We'll use Winston instead
     trustProxy: true,
-  });
+  }).withTypeProvider<ZodTypeProvider>();
+
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   // Register plugins
   await app.register(helmet, {
@@ -79,7 +84,7 @@ export const createApp = async () => {
 
   app.addHook('onResponse', async (request, reply) => {
     logger.info(`${request.method} ${request.url} - ${reply.statusCode}`, {
-      responseTime: reply.getResponseTime(),
+      responseTime: reply.elapsedTime,
     });
   });
 
@@ -104,3 +109,5 @@ export const createApp = async () => {
 
   return app;
 };
+
+export type App = Awaited<ReturnType<typeof createApp>>;
