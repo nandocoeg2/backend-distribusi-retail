@@ -91,7 +91,7 @@ export class AuthService {
 
     await CacheService.set(`user:${user.id}`, userResponse, 3600);
 
-    return { accessToken, refreshToken, user: userResponse };
+    return { accessToken, refreshToken, user: { ...userResponse, accessToken } };
   }
 
   static async logout(userId: string): Promise<void> {
