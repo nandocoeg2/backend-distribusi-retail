@@ -14,7 +14,8 @@ model User {
   password  String
   firstName String?
   lastName  String?
-  role      Role     @default(USER)
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,8 +41,35 @@ model Profile {
 
 
 
-enum Role {
-  ADMIN
-  USER
-  MODERATOR
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  users       User[]
+  menus       RoleMenu[]
+
+  @@map("roles")
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  icon      String?
+  parentId  String?
+  parent    Menu?    @relation("SubMenu", fields: [parentId], references: [id])
+  children  Menu[]   @relation("SubMenu")
+  roles     RoleMenu[]
+
+  @@map("menus")
+}
+
+model RoleMenu {
+  roleId String
+  menuId String
+  role   Role   @relation(fields: [roleId], references: [id])
+  menu   Menu   @relation(fields: [menuId], references: [id])
+
+  @@id([roleId, menuId])
+  @@map("role_menus")
 }

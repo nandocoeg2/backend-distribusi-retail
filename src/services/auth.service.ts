@@ -19,6 +19,14 @@ export class AuthService {
 
     const hashedPassword = await hashPassword(input.password);
 
+    const userRole = await prisma.role.findUnique({
+      where: { name: 'user' },
+    });
+
+    if (!userRole) {
+      throw new AppError('Default role not found', 500);
+    }
+
     const user = await prisma.user.create({
       data: {
         email: input.email,
@@ -26,6 +34,11 @@ export class AuthService {
         firstName: input.firstName,
         lastName: input.lastName,
         password: hashedPassword,
+        role: {
+          connect: {
+            id: userRole.id,
+          },
+        },
       },
     });
 
@@ -35,9 +48,25 @@ export class AuthService {
 
   static async login(
     input: LoginInput
-  ): Promise<{ accessToken: string; refreshToken: string; user: Omit<User, 'password'> }> {
+  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
     const user = await prisma.user.findUnique({
       where: { email: input.email },
+      include: {
+        role: {
+          include: {
+                menus: {
+                  include: {
+                    menu: true,
+                  },
+                  orderBy: {
+                    menu: {
+                      id: 'asc',
+                    },
+                  },
+                },
+              },
+        },
+      },
     });
 
     if (!user || !(await comparePassword(input.password, user.password))) {
@@ -45,10 +74,24 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken } = await signTokens(user);
-    await CacheService.set(`user:${user.id}`, user, 3600);
 
-    const { password, ...userWithoutPassword } = user;
-    return { accessToken, refreshToken, user: userWithoutPassword };
+    const accessibleMenus = user.role ? user.role.menus.map(rm => rm.menu) : [];
+    const parentMenus = accessibleMenus.filter(menu => !menu.parentId);
+    const hierarchicalMenus = parentMenus.map(parent => ({
+      ...parent,
+      children: accessibleMenus.filter(child => child.parentId === parent.id),
+    }));
+
+    const { password, role, ...userWithoutPassword } = user;
+    const userResponse = {
+      ...userWithoutPassword,
+      role: role ? { id: role.id, name: role.name } : null,
+      menus: hierarchicalMenus,
+    };
+
+    await CacheService.set(`user:${user.id}`, userResponse, 3600);
+
+    return { accessToken, refreshToken, user: userResponse };
   }
 
   static async logout(userId: string): Promise<void> {
