@@ -149,3 +149,15 @@ model Status {
   @@map("statuses")
 }
 
+model Inventory {
+  id           String   @id @default(cuid())
+  kode_barang  String   @unique
+  nama_barang  String
+  stok_barang  Int
+  harga_barang Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("inventories")
+}
+
