@@ -11,13 +11,13 @@ export const createCustomerSchema = z.object({
 
 export const getCustomerSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
 });
 
 export const updateCustomerSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
   body: z.object({
     name: z.string().optional(),
@@ -29,7 +29,7 @@ export const updateCustomerSchema = z.object({
 
 export const deleteCustomerSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
 });
 

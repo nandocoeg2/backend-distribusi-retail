@@ -7,6 +7,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import cookie from '@fastify/cookie';
+import formBody from '@fastify/formbody';
 import logger from '@/config/logger';
 import { errorHandler } from '@/middleware/error.middleware';
 import routes from '@/routes';
@@ -35,6 +36,9 @@ export const createApp = async () => {
     max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     timeWindow: parseInt(process.env.RATE_LIMIT_TIME_WINDOW || '900000', 10),
   });
+
+  // Register form body plugin
+  await app.register(formBody);
 
   // Register cookies plugin
   await app.register(cookie, {

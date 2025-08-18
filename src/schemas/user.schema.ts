@@ -19,6 +19,6 @@ export const loginUserSchema = z.object({
 
 export const getUserSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
 });

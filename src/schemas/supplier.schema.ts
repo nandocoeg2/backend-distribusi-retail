@@ -11,13 +11,13 @@ export const createSupplierSchema = z.object({
 
 export const getSupplierSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
 });
 
 export const updateSupplierSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
   body: z.object({
     name: z.string().optional(),
@@ -29,10 +29,9 @@ export const updateSupplierSchema = z.object({
 
 export const deleteSupplierSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid UUID'),
+    id: z.string(), // Changed from uuid() to allow CUIDs
   }),
 });
 
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>['body'];
 export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
-

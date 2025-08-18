@@ -6,15 +6,11 @@ export const validateRequest = <T extends ZodSchema & { shape?: unknown }>(
 ) => {
   return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErrOrRes) => {
     try {
-      if (schema.shape && typeof schema.shape === 'object' && 'body' in schema.shape) {
-        schema.parse({
-          body: req.body,
-          query: req.query,
-          params: req.params,
-        });
-      } else {
-        schema.parse(req.body);
-      }
+      schema.parse({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
       done();
     } catch (error: any) {
       const validationErrors = error.errors.map((err: any) => ({
