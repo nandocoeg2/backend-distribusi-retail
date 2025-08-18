@@ -1,0 +1,16 @@
+meta {
+  name: upload
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/v1/conversions/upload
+  body: multipart-form
+  auth: none
+}
+
+body:multipart-form {
+  file: @file(C:\path\to\your\test-file.pdf)
+}
+

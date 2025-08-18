@@ -132,13 +132,10 @@ export class NotificationService {
   }
 
   static async checkLowStockAlerts(): Promise<Notification[]> {
-    const lowStockInventories = await prisma.inventory.findMany({
-      where: {
-        stok_barang: {
-          lt: 10, // Consider stock below 10 as low stock
-        },
-      },
-    });
+    const inventories = await prisma.inventory.findMany();
+    const lowStockInventories = inventories.filter(
+      (inventory) => inventory.stok_barang <= inventory.min_stok
+    );
 
     const notifications: Notification[] = [];
 
@@ -154,7 +151,7 @@ export class NotificationService {
       if (!existingNotification) {
         const notification = await this.createNotification({
           title: `Low Stock Alert: ${inventory.nama_barang}`,
-          message: `Stock for ${inventory.nama_barang} is running low. Current stock: ${inventory.stok_barang}`,
+          message: `Stock for ${inventory.nama_barang} is running low. Current stock: ${inventory.stok_barang}, Minimum stock: ${inventory.min_stok}`,
           type: 'LOW_STOCK',
           inventoryId: inventory.id,
         });

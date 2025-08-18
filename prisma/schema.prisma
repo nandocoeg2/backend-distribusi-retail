@@ -154,6 +154,7 @@ model Inventory {
   kode_barang  String   @unique
   nama_barang  String
   stok_barang  Int
+  min_stok     Int      @default(10)
   harga_barang Float
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

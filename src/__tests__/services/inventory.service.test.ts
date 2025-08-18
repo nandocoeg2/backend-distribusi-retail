@@ -34,6 +34,7 @@ describe('Inventory Service', () => {
         nama_barang: 'Test Item',
         stok_barang: 100,
         harga_barang: 10000,
+        min_stok: 10,
       };
       const mockInventory = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date() };
 
@@ -96,7 +97,7 @@ describe('Inventory Service', () => {
 
   describe('updateInventory', () => {
     it('should update an inventory', async () => {
-      const data: UpdateInventoryInput['body'] = { stok_barang: 150 };
+      const data: UpdateInventoryInput['body'] = { stok_barang: 150, min_stok: 20 };
       const mockInventory = {
         id: '1',
         kode_barang: 'BRG001',

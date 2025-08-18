@@ -14,6 +14,7 @@ export const createInventorySchema = z.object({
     harga_barang: z.number({
       required_error: 'Harga barang is required',
     }),
+    min_stok: z.number().optional().default(10),
   }),
 });
 
@@ -23,6 +24,7 @@ export const updateInventorySchema = z.object({
     nama_barang: z.string().optional(),
     stok_barang: z.number().optional(),
     harga_barang: z.number().optional(),
+    min_stok: z.number().optional(),
   }),
   params: z.object({
     id: z.string(),
@@ -37,4 +39,3 @@ export const getOrDeleteInventorySchema = z.object({
 
 export type CreateInventoryInput = z.infer<typeof createInventorySchema>['body'];
 export type UpdateInventoryInput = z.infer<typeof updateInventorySchema>;
-

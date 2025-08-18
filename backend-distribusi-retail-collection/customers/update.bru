@@ -1,0 +1,19 @@
+meta {
+  name: update
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:3000/api/v1/customers/clvow2l3d000008l4g64k3h4j
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Updated Customer Name",
+    "address": "Updated Address"
+  }
+}
+
