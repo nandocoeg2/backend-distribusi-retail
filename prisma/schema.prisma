@@ -158,6 +158,29 @@ model Inventory {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  notifications Notification[]
+
   @@map("inventories")
 }
 
+model Notification {
+  id          String         @id @default(cuid())
+  title       String
+  message     String
+  type        NotificationType @default(GENERAL)
+  isRead      Boolean        @default(false)
+  inventoryId String?
+  inventory   Inventory?      @relation(fields: [inventoryId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  GENERAL
+  LOW_STOCK
+  OUT_OF_STOCK
+  STOCK_ALERT
+  SYSTEM
+}

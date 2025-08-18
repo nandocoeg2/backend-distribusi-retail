@@ -1,9 +1,7 @@
 import { FastifyRequest, FastifyReply, DoneFuncWithErrOrRes } from 'fastify';
-import { ZodSchema } from 'zod';
+import { z, ZodSchema } from 'zod';
 
-export const validateRequest = <T extends ZodSchema & { shape?: unknown }>(
-  schema: T
-) => {
+export const validateRequest = (schema: ZodSchema) => {
   return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErrOrRes) => {
     try {
       schema.parse({
@@ -12,15 +10,23 @@ export const validateRequest = <T extends ZodSchema & { shape?: unknown }>(
         params: req.params,
       });
       done();
-    } catch (error: any) {
-      const validationErrors = error.errors.map((err: any) => ({
-        field: err.path.join('.'),
-        message: err.message,
-      }));
-      reply.code(400).send({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
-      });
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        reply.code(400).send({
+          success: false,
+          error: 'Validation failed',
+          issues: e.errors.map((err) => ({
+            path: err.path.join('.'),
+            message: err.message,
+          })),
+        });
+      } else {
+        reply.code(500).send({
+          success: false,
+          error: 'Internal Server Error',
+          message: 'An unexpected error occurred during validation.',
+        });
+      }
     }
   };
 };
