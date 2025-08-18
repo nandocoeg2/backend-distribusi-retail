@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { environment } from '@/config/environment';
-import pdf from 'pdf-parse';
+
 import logger from '@/config/logger';
 
 const genAI = new GoogleGenerativeAI(environment.GOOGLE_API_KEY);
@@ -15,24 +15,18 @@ async function fileToGenerativePart(file: Buffer, mimeType: string) {
 }
 
 export const convertFileToJson = async (file: Buffer, mimeType: string, prompt: string) => {
+  // Use a model that supports multimodal input, like gemini-1.5-pro
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  let textContent = '';
+  logger.info('Preparing file for Gemini API...');
+  const filePart = await fileToGenerativePart(file, mimeType);
+  logger.info('File part created successfully.');
 
-  logger.info('Starting file content extraction...');
-  if (mimeType === 'application/pdf') {
-    const data = await pdf(file);
-    textContent = data.text;
-  } else {
-    textContent = file.toString('utf-8');
-  }
-  logger.info('File content extracted successfully.');
-
-  const fullPrompt = `${prompt}\n\n${textContent}`;
+  const requestPayload = [prompt, filePart];
 
   try {
-    logger.info('Sending request to Gemini API...');
-    const result = await model.generateContent(fullPrompt);
+    logger.info('Sending request to Gemini API with direct file upload...');
+    const result = await model.generateContent(requestPayload);
     const response = await result.response;
     logger.info('Received response from Gemini API.');
 
