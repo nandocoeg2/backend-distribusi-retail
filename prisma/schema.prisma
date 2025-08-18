@@ -54,6 +54,7 @@ model Menu {
   name      String     @unique
   url       String
   icon      String?
+  order     Int?
   parentId  String?
   parent    Menu?    @relation("SubMenu", fields: [parentId], references: [id])
   children  Menu[]   @relation("SubMenu")
@@ -130,4 +131,3 @@ model FileUploaded {
 
   @@map("file_uploaded")
 }
-

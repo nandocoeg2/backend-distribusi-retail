@@ -167,6 +167,26 @@ async function main() {
     },
   });
 
+  // Update parent menus url to '#'
+  const parentMenus = await prisma.menu.findMany({
+    where: {
+      children: {
+        some: {},
+      },
+    },
+  });
+
+  for (const parentMenu of parentMenus) {
+    await prisma.menu.update({
+      where: {
+        id: parentMenu.id,
+      },
+      data: {
+        url: '#',
+      },
+    });
+  }
+
   // Assign menus to roles
   await prisma.roleMenu.deleteMany({});
 

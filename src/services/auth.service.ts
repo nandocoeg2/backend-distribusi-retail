@@ -76,6 +76,18 @@ export class AuthService {
     const { accessToken, refreshToken } = await signTokens(user);
 
     const accessibleMenus = user.role ? user.role.menus.map(rm => rm.menu) : [];
+
+    // Sort menus by the 'order' field, handling nulls by placing them at the end
+    accessibleMenus.sort((a, b) => {
+      const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+      if (orderA === orderB) {
+        // Fallback to sorting by id if order is the same or both are null
+        return a.id.localeCompare(b.id);
+      }
+      return orderA - orderB;
+    });
+
     const parentMenus = accessibleMenus.filter(menu => !menu.parentId);
     const hierarchicalMenus = parentMenus.map(parent => ({
       ...parent,
