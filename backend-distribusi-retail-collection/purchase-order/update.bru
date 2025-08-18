@@ -1,0 +1,27 @@
+meta {
+  name: Update Purchase Order
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:3000/api/v1/purchase-orders/{{purchaseOrderId}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+}
+
+body:json {
+  {
+    "total_items": 15,
+    "po_type": "Express"
+  }
+}
+
+vars:pre-request {
+  purchaseOrderId: clwtu45n4000008l89k2e56e0
+}
+

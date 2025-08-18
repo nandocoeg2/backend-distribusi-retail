@@ -1,21 +1,4 @@
 meta {
-  name: Get Users
-  type: http
-  seq: 1
-}
-
-get {
-  url: http://localhost:3000/api/v1/users/
-  body: none
-  auth: inherit
-}
-
-headers {
-  accept: application/json
-}
-
-
-meta {
   name: Get User by ID
   type: http
   seq: 2

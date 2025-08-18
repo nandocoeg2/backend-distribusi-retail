@@ -3,7 +3,11 @@ import { z } from 'zod';
 export const createPurchaseOrderSchema = z.object({
   body: z.object({
     customerId: z.string().uuid('Invalid Customer UUID'),
-    orderNumber: z.string(),
+    po_number: z.string(),
+    total_items: z.number().int(),
+    tanggal_order: z.string().datetime(),
+    po_type: z.string(),
+    statusId: z.string().uuid('Invalid Status UUID'),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),
@@ -23,7 +27,11 @@ export const updatePurchaseOrderSchema = z.object({
   }),
   body: z.object({
     customerId: z.string().uuid('Invalid Customer UUID').optional(),
-    orderNumber: z.string().optional(),
+    po_number: z.string().optional(),
+    total_items: z.number().int().optional(),
+    tanggal_order: z.string().datetime().optional(),
+    po_type: z.string().optional(),
+    statusId: z.string().uuid('Invalid Status UUID').optional(),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),

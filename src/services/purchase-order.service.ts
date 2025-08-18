@@ -19,6 +19,7 @@ export class PurchaseOrderService {
       include: {
         customer: true,
         files: true,
+        status: true,
       },
     });
   }
@@ -29,6 +30,7 @@ export class PurchaseOrderService {
       include: {
         customer: true,
         files: true,
+        status: true,
       },
     });
   }

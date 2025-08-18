@@ -187,6 +187,67 @@ async function main() {
     });
   }
 
+  // Create statuses
+  const statusPending = await prisma.status.upsert({
+    where: { status_code: 'PENDING' },
+    update: {},
+    create: {
+      status_code: 'PENDING',
+      status_name: 'Pending',
+      status_description: 'Order is pending approval',
+    },
+  });
+
+  const statusApproved = await prisma.status.upsert({
+    where: { status_code: 'APPROVED' },
+    update: {},
+    create: {
+      status_code: 'APPROVED',
+      status_name: 'Approved',
+      status_description: 'Order has been approved',
+    },
+  });
+
+  // Create customers
+  const customer1 = await prisma.customer.upsert({
+    where: { email: 'customer1@example.com' },
+    update: {},
+    create: {
+      name: 'Customer One',
+      email: 'customer1@example.com',
+      phoneNumber: '1234567890',
+    },
+  });
+
+  // Create suppliers
+  const supplier1 = await prisma.supplier.upsert({
+    where: { email: 'supplier1@example.com' },
+    update: {},
+    create: {
+      name: 'Supplier One',
+      email: 'supplier1@example.com',
+      phoneNumber: '0987654321',
+    },
+  });
+
+  // Create purchase orders
+  await prisma.purchaseOrder.deleteMany({});
+
+  await prisma.purchaseOrder.create({
+    data: {
+      po_number: `PO-${new Date().getFullYear()}-${new Date().getDate()}-001AB`,
+      customer: {
+        connect: { id: customer1.id },
+      },
+      status: {
+        connect: { id: statusPending.id },
+      },
+      total_items: 10,
+      tanggal_order: new Date(),
+      po_type: 'Regular',
+    },
+  });
+
   // Assign menus to roles
   await prisma.roleMenu.deleteMany({});
 

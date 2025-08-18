@@ -1,0 +1,36 @@
+meta {
+  name: Create Purchase Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/v1/purchase-orders/
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+}
+
+body:json {
+  {
+    "customerId": "{{customerId}}",
+    "po_number": "PO-2025-08-18-001AB",
+    "total_items": 10,
+    "tanggal_order": "2025-08-18T10:00:00.000Z",
+    "po_type": "Regular",
+    "statusId": "{{statusId}}",
+    "suratJalan": "SJ/2025/08/18/001",
+    "invoicePengiriman": "INV/2025/08/18/001",
+    "suratPO": "SPO/2025/08/18/001",
+    "suratPenagihan": "SPN/2025/08/18/001"
+  }
+}
+
+vars:pre-request {
+  customerId: clwtu45n4000008l89k2e56e0
+  statusId: clwtu45n4000008l89k2e56e0
+}
+

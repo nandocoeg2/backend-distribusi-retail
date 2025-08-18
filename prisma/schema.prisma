@@ -103,13 +103,18 @@ model Supplier {
 
 model PurchaseOrder {
   id                 String   @id @default(cuid())
-  orderNumber        String   @unique
+  po_number          String   @unique
   suratJalan         String?
   invoicePengiriman  String?
   suratPO            String?
   suratPenagihan     String?
   customerId         String
   customer           Customer @relation(fields: [customerId], references: [id])
+  total_items        Int?
+  tanggal_order      DateTime?
+  po_type            String?
+  statusId           String?
+  status             Status?   @relation(fields: [statusId], references: [id])
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -131,3 +136,16 @@ model FileUploaded {
 
   @@map("file_uploaded")
 }
+
+model Status {
+  id                 String          @id @default(cuid())
+  status_code        String          @unique
+  status_name        String
+  status_description String?
+  purchaseOrders     PurchaseOrder[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@map("statuses")
+}
+
