@@ -17,6 +17,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string(),
   CORS_ORIGIN: z.string(),
   LOG_LEVEL: z.string(),
+  GOOGLE_API_KEY: z.string(),
 });
 
 const env = envSchema.parse(process.env);
@@ -35,4 +36,5 @@ export const environment = {
   JWT_REFRESH_EXPIRES_IN: env.JWT_REFRESH_EXPIRES_IN,
   CORS_ORIGIN: env.CORS_ORIGIN,
   LOG_LEVEL: env.LOG_LEVEL,
+  GOOGLE_API_KEY: env.GOOGLE_API_KEY,
 };

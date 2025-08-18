@@ -6,6 +6,7 @@ import menuRoutes from '@/routes/menu.routes';
 import { customerRoutes } from './customer.routes';
 import { purchaseOrderRoutes } from './purchase-order.routes';
 import { supplierRoutes } from './supplier.routes';
+import { conversionRoutes } from './conversion.routes';
 
 export default async (fastify: App) => {
   fastify.register(authRoutes, { prefix: '/auth' });
@@ -15,5 +16,5 @@ export default async (fastify: App) => {
   fastify.register(customerRoutes, { prefix: '/customers' });
   fastify.register(supplierRoutes, { prefix: '/suppliers' });
   fastify.register(purchaseOrderRoutes, { prefix: '/purchase-orders' });
+  fastify.register(conversionRoutes, { prefix: '/conversions' });
 };
-

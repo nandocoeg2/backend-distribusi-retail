@@ -8,6 +8,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import cookie from '@fastify/cookie';
 import formBody from '@fastify/formbody';
+import multipart from '@fastify/multipart';
 import logger from '@/config/logger';
 import { errorHandler } from '@/middleware/error.middleware';
 import routes from '@/routes';
@@ -39,6 +40,9 @@ export const createApp = async () => {
 
   // Register form body plugin
   await app.register(formBody);
+
+  // Register multipart plugin
+  await app.register(multipart);
 
   // Register cookies plugin
   await app.register(cookie, {

@@ -1,17 +1,16 @@
 import 'fastify';
-import '@fastify/cookie';
 
 declare module 'fastify' {
-  export interface FastifyRequest {
-    user?: {
-      id: string;
-      iat: number;
-      exp: number;
-    };
-    cookies: { [cookieName: string]: string | undefined };
-  }
-
-  export interface FastifyInstance {
-    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+  interface FastifyRequest {
+    parts: () => AsyncIterable<{
+      type: 'file' | 'field';
+      toBuffer: () => Promise<Buffer>;
+      value: string | Buffer;
+      fieldname: string;
+      filename: string;
+      encoding: string;
+      mimetype: string;
+      file: any; // The underlying file stream
+    }>;
   }
 }
