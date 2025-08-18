@@ -26,7 +26,7 @@ describe('PurchaseOrderController', () => {
 
   describe('createPurchaseOrder', () => {
     it('should create a purchase order and return 201', async () => {
-      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', orderNumber: 'PO123' };
+      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', po_number: 'PO123', total_items: 1, tanggal_order: new Date().toISOString(), po_type: 'Regular', statusId: 'status1' };
       const po = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
       request.body = createInput;
       (PurchaseOrderService.createPurchaseOrder as jest.Mock).mockResolvedValue(po);
@@ -41,7 +41,7 @@ describe('PurchaseOrderController', () => {
 
   describe('getPurchaseOrders', () => {
     it('should return all purchase orders', async () => {
-      const pos = [{ id: '1', customerId: 'cust1', orderNumber: 'PO123' }];
+      const pos = [{ id: '1', customerId: 'cust1', po_number: 'PO123' }];
       (PurchaseOrderService.getAllPurchaseOrders as jest.Mock).mockResolvedValue(pos);
 
       await PurchaseOrderController.getPurchaseOrders(request as FastifyRequest, reply as FastifyReply);
@@ -53,7 +53,7 @@ describe('PurchaseOrderController', () => {
 
   describe('getPurchaseOrder', () => {
     it('should return a single purchase order by id', async () => {
-      const po = { id: '1', customerId: 'cust1', orderNumber: 'PO123' };
+      const po = { id: '1', customerId: 'cust1', po_number: 'PO123' };
       request.params = { id: '1' };
       (PurchaseOrderService.getPurchaseOrderById as jest.Mock).mockResolvedValue(po);
 
@@ -77,8 +77,8 @@ describe('PurchaseOrderController', () => {
 
   describe('updatePurchaseOrder', () => {
     it('should update a purchase order and return it', async () => {
-      const updateInput: UpdatePurchaseOrderInput['body'] = { orderNumber: 'PO456' };
-      const po = { id: '1', customerId: 'cust1', orderNumber: 'PO456' };
+      const updateInput: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
+      const po = { id: '1', customerId: 'cust1', po_number: 'PO456' };
       request.params = { id: '1' };
       request.body = updateInput;
       (PurchaseOrderService.updatePurchaseOrder as jest.Mock).mockResolvedValue(po);
@@ -90,7 +90,7 @@ describe('PurchaseOrderController', () => {
     });
 
     it('should return 404 if purchase order to update not found', async () => {
-      const updateInput: UpdatePurchaseOrderInput['body'] = { orderNumber: 'PO456' };
+      const updateInput: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
       request.params = { id: '1' };
       request.body = updateInput;
       (PurchaseOrderService.updatePurchaseOrder as jest.Mock).mockResolvedValue(null);
@@ -105,7 +105,7 @@ describe('PurchaseOrderController', () => {
 
   describe('deletePurchaseOrder', () => {
     it('should delete a purchase order and return 204', async () => {
-      const po = { id: '1', customerId: 'cust1', orderNumber: 'PO123' };
+      const po = { id: '1', customerId: 'cust1', po_number: 'PO123' };
       request.params = { id: '1' };
       (PurchaseOrderService.deletePurchaseOrder as jest.Mock).mockResolvedValue(po);
 

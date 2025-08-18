@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
+import { prisma } from '@/config/database';
 
-const prisma = new PrismaClient();
+import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
 
 export const createInventory = async (input: CreateInventoryInput) => {
   return prisma.inventory.create({
@@ -31,4 +30,3 @@ export const deleteInventory = async (id: string) => {
     where: { id },
   });
 };
-

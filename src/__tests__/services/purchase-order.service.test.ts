@@ -24,7 +24,11 @@ describe('PurchaseOrderService', () => {
     it('should create a new purchase order', async () => {
       const input: CreatePurchaseOrderInput = {
         customerId: 'cust1',
-        orderNumber: 'PO123',
+        po_number: 'PO123',
+        total_items: 1,
+        tanggal_order: new Date().toISOString(),
+        po_type: 'Regular',
+        statusId: 'status1',
       };
       const expectedPO = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date() };
 
@@ -43,7 +47,7 @@ describe('PurchaseOrderService', () => {
         {
           id: '1',
           customerId: 'cust1',
-          orderNumber: 'PO123',
+          po_number: 'PO123',
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: { id: 'cust1', name: 'Test Customer' },
@@ -59,6 +63,7 @@ describe('PurchaseOrderService', () => {
         include: {
           customer: true,
           files: true,
+          status: true,
         },
       });
       expect(result).toEqual(expectedPOs);
@@ -71,7 +76,7 @@ describe('PurchaseOrderService', () => {
       const expectedPO = {
         id: poId,
         customerId: 'cust1',
-        orderNumber: 'PO123',
+        po_number: 'PO123',
         createdAt: new Date(),
         updatedAt: new Date(),
         customer: { id: 'cust1', name: 'Test Customer' },
@@ -87,6 +92,7 @@ describe('PurchaseOrderService', () => {
         include: {
           customer: true,
           files: true,
+          status: true,
         },
       });
       expect(result).toEqual(expectedPO);
@@ -106,12 +112,12 @@ describe('PurchaseOrderService', () => {
     it('should update a purchase order', async () => {
       const poId = '1';
       const input: UpdatePurchaseOrderInput['body'] = {
-        orderNumber: 'PO456',
+        po_number: 'PO456',
       };
       const expectedPO = {
         id: poId,
         customerId: 'cust1',
-        orderNumber: 'PO456',
+        po_number: 'PO456',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -126,7 +132,7 @@ describe('PurchaseOrderService', () => {
 
     it('should return null if purchase order to update is not found', async () => {
         const poId = '999';
-        const input: UpdatePurchaseOrderInput['body'] = { orderNumber: 'PO456' };
+        const input: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
   
         (prisma.purchaseOrder.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
   
@@ -139,7 +145,7 @@ describe('PurchaseOrderService', () => {
   describe('deletePurchaseOrder', () => {
     it('should delete a purchase order', async () => {
       const poId = '1';
-      const expectedPO = { id: poId, customerId: 'cust1', orderNumber: 'PO123', createdAt: new Date(), updatedAt: new Date() };
+      const expectedPO = { id: poId, customerId: 'cust1', po_number: 'PO123', createdAt: new Date(), updatedAt: new Date() };
 
       (prisma.purchaseOrder.delete as jest.Mock).mockResolvedValue(expectedPO);
 
@@ -160,4 +166,3 @@ describe('PurchaseOrderService', () => {
       });
   });
 });
-
