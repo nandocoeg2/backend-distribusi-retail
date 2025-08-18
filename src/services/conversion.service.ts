@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { environment } from '@/config/environment';
 
 import logger from '@/config/logger';
@@ -15,8 +15,92 @@ async function fileToGenerativePart(file: Buffer, mimeType: string) {
 }
 
 export const convertFileToJson = async (file: Buffer, mimeType: string, prompt: string) => {
-  // Use a model that supports multimodal input, like gemini-1.5-pro
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    systemInstruction:
+      'You are an expert at converting documents into structured JSON. ' +
+      'Analyze the provided file and convert it into a valid JSON object based on the user\'s prompt. ' +
+      'Do not include any explanatory text or markdown formatting in your response.',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          order: {
+            type: SchemaType.OBJECT,
+            properties: {
+              id:   { type: SchemaType.STRING },
+              date: { type: SchemaType.STRING },
+              status: { type: SchemaType.STRING },
+              type: { type: SchemaType.STRING }
+            }
+          },
+          supplier: {
+            type: SchemaType.OBJECT,
+            properties: {
+              name:    { type: SchemaType.STRING },
+              code:    { type: SchemaType.STRING },
+              address: { type: SchemaType.STRING },
+              phone:   { type: SchemaType.STRING, nullable: true },
+              fax:     { type: SchemaType.STRING, nullable: true },
+              bank: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  name:    { type: SchemaType.STRING },
+                  account: { type: SchemaType.STRING },
+                  holder:  { type: SchemaType.STRING }
+                }
+              }
+            }
+          },
+          delivery: {
+            type: SchemaType.OBJECT,
+            properties: {
+              destination:   { type: SchemaType.STRING },
+              dateScheduled: { type: SchemaType.STRING },
+              timeScheduled: { type: SchemaType.STRING },
+              doorTime:      { type: SchemaType.STRING },
+              notes: {
+                type: SchemaType.ARRAY,
+                items: { type: SchemaType.STRING }
+              }
+            }
+          },
+          items: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                lineNo:            { type: SchemaType.INTEGER },
+                productName:       { type: SchemaType.STRING },
+                plu:               { type: SchemaType.STRING },
+                qtyOrdered_carton: { type: SchemaType.INTEGER },
+                qtyOrdered_pcs:    { type: SchemaType.INTEGER },
+                price_perPcs:      { type: SchemaType.NUMBER },
+                discount_percent:  { type: SchemaType.NUMBER },
+                netPrice_perPcs:   { type: SchemaType.NUMBER },
+                totalLine_net:     { type: SchemaType.NUMBER },
+                bonus:             { type: SchemaType.INTEGER },
+                lst:               { type: SchemaType.INTEGER },
+                remarks:           { type: SchemaType.STRING, nullable: true }
+              }
+            }
+          },
+          pricing: {
+            type: SchemaType.OBJECT,
+            properties: {
+              subTotal:         { type: SchemaType.NUMBER },
+              totalDiscount:    { type: SchemaType.NUMBER },
+              netAfterDiscount: { type: SchemaType.NUMBER },
+              vatInput:         { type: SchemaType.NUMBER },
+              grandTotal:       { type: SchemaType.NUMBER },
+              inWords:          { type: SchemaType.STRING }
+            }
+          }
+        }
+      }
+    },
+  });
 
   logger.info('Preparing file for Gemini API...');
   const filePart = await fileToGenerativePart(file, mimeType);
@@ -25,17 +109,13 @@ export const convertFileToJson = async (file: Buffer, mimeType: string, prompt: 
   const requestPayload = [prompt, filePart];
 
   try {
-    logger.info('Sending request to Gemini API with direct file upload...');
+    logger.info('Sending request to Gemini API for structured JSON output...');
     const result = await model.generateContent(requestPayload);
     const response = await result.response;
-    logger.info('Received response from Gemini API.');
+    logger.info('Received structured response from Gemini API.');
 
-    const text = response.text();
-    logger.info({ message: 'Raw response text from Gemini', text });
-
-    // Clean the response to ensure it's valid JSON
-    const jsonString = text.replace(/```json\n|```/g, '').trim();
-    logger.info({ message: 'Cleaned JSON string', jsonString });
+    const jsonString = response.text();
+    logger.info({ message: 'Raw JSON string from Gemini', jsonString });
 
     try {
       const parsedJson = JSON.parse(jsonString);
