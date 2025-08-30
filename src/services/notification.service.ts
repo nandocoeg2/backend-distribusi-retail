@@ -42,6 +42,8 @@ export class NotificationService {
       orderBy: {
         createdAt: 'desc',
       },
+      take: 10,
+      skip: 0,
     });
   }
 
@@ -232,3 +234,4 @@ export class NotificationService {
     return { total, unread, byType };
   }
 }
+

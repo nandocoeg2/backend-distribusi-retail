@@ -16,6 +16,7 @@ const mockInventory = {
   nama_barang: 'Test Item',
   stok_barang: 100,
   harga_barang: 10000,
+  min_stok: 10,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -46,6 +47,7 @@ describe('Inventory Controller', () => {
         nama_barang: 'Test Item',
         stok_barang: 100,
         harga_barang: 10000,
+        min_stok: 10,
       };
       request.body = createInventoryInput;
       jest.spyOn(inventoryService, 'createInventory').mockResolvedValue(mockInventory);

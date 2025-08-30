@@ -1,18 +1,28 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
 import { RoleService } from '@/services/role.service';
-import { updateRoleMenusSchema } from '@/schemas/role.schema';
+import { FastifyRequest, FastifyReply } from 'fastify';
 
 export class RoleController {
-  static async getAll(request: FastifyRequest, reply: FastifyReply) {
+  static async getAll(req: FastifyRequest, reply: FastifyReply) {
     const roles = await RoleService.getAll();
-    return reply.send(roles);
+    reply.code(200).send(roles);
   }
 
-  static async updateRoleMenus(request: FastifyRequest, reply: FastifyReply) {
-    const { role, menu } = request.body as { role: string; menu: string[] };
+  static async create(req: FastifyRequest, reply: FastifyReply) {
+    const { name, menuIds } = req.body as { name: string; menuIds: string[] };
+    const newRole = await RoleService.create(name, menuIds);
+    reply.code(201).send(newRole);
+  }
 
-    const updatedRole = await RoleService.updateRoleMenus(role, menu);
+  static async updateMenus(req: FastifyRequest, reply: FastifyReply) {
+    const { roleId } = req.params as { roleId: string };
+    const { menuIds } = req.body as { menuIds: string[] };
+    const updatedRole = await RoleService.updateMenus(roleId, menuIds);
+    reply.code(200).send(updatedRole);
+  }
 
-    return reply.send(updatedRole);
+  static async delete(req: FastifyRequest, reply: FastifyReply) {
+    const { roleId } = req.params as { roleId: string };
+    await RoleService.delete(roleId);
+    reply.code(204).send();
   }
 }

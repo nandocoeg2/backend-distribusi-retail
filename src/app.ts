@@ -35,8 +35,8 @@ export const createApp = async () => {
   });
 
   await app.register(rateLimit, {
-    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
-    timeWindow: parseInt(process.env.RATE_LIMIT_TIME_WINDOW || '900000', 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 1),
+    timeWindow: parseInt(process.env.RATE_LIMIT_TIME_WINDOW || '900000', 1),
   });
 
   // Register form body plugin
@@ -120,4 +120,3 @@ export const createApp = async () => {
 };
 
 export type App = Awaited<ReturnType<typeof createApp>>;
-

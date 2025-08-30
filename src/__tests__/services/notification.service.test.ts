@@ -229,7 +229,7 @@ describe('NotificationService', () => {
 
   describe('checkLowStockAlerts', () => {
     it('should create notifications for low-stock items', async () => {
-      const lowStockInventories = [{ id: 'inv1', nama_barang: 'Item 1', stok_barang: 5 }];
+      const lowStockInventories = [{ id: 'inv1', nama_barang: 'Item 1', stok_barang: 5, min_stok: 10 }];
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(lowStockInventories);
       (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({ id: 'notif1' });

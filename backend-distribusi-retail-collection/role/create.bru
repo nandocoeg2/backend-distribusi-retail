@@ -1,0 +1,20 @@
+meta {
+  name: create
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:5050/api/v1/roles
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "new role",
+    "menuIds": [
+      "cmeef18710005ydcq4dsy8k12"
+    ]
+  }
+}

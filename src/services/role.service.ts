@@ -3,7 +3,7 @@ import { AppError } from '@/utils/app-error';
 
 export class RoleService {
   static async getAll() {
-    return prisma.role.findMany({
+    const roles = await prisma.role.findMany({
       include: {
         menus: {
           include: {
@@ -12,64 +12,105 @@ export class RoleService {
         },
       },
     });
+    return roles.map((role) => ({
+      ...role,
+      menus: role.menus.map((roleMenu) => roleMenu.menu),
+    }));
   }
 
-  static async updateRoleMenus(roleId: string, menuIds: string[]) {
-    // 1. Validate that the role exists
+  static async create(name: string, menuIds: string[]) {
+    const existingRole = await prisma.role.findUnique({
+      where: { name },
+    });
+
+    if (existingRole) {
+      throw new AppError(`Role with name '${name}' already exists`, 409);
+    }
+
+    const newRole = await prisma.role.create({
+      data: {
+        name,
+        menus: {
+          create: menuIds.map((menuId) => ({
+            menu: {
+              connect: { id: menuId },
+            },
+          })),
+        },
+      },
+      include: {
+        menus: {
+          include: {
+            menu: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...newRole,
+      menus: newRole.menus.map((roleMenu) => roleMenu.menu),
+    };
+  }
+
+  static async updateMenus(roleId: string, menuIds: string[]) {
     const role = await prisma.role.findUnique({
       where: { id: roleId },
     });
 
     if (!role) {
-      throw new AppError('Role tidak ditemukan', 404);
+      throw new AppError('Role not found', 404);
     }
 
-    // 2. Validate that all menus exist
-    const existingMenus = await prisma.menu.findMany({
-      where: {
-        id: { in: menuIds },
+    const updatedRole = await prisma.role.update({
+      where: { id: roleId },
+      data: {
+        menus: {
+          deleteMany: {},
+          create: menuIds.map((menuId) => ({
+            menu: {
+              connect: { id: menuId },
+            },
+          })),
+        },
+      },
+      include: {
+        menus: {
+          include: {
+            menu: true,
+          },
+        },
       },
     });
 
-    if (existingMenus.length !== menuIds.length) {
-      const notFoundMenuIds = menuIds.filter(
-        (menuId) => !existingMenus.some((menu) => menu.id === menuId)
-      );
-      throw new AppError(`Menu dengan ID berikut tidak ditemukan: ${notFoundMenuIds.join(', ')}`, 404);
+    return {
+      ...updatedRole,
+      menus: updatedRole.menus.map((roleMenu) => roleMenu.menu),
+    };
+  }
+
+  static async delete(roleId: string) {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      include: {
+        users: true,
+      },
+    });
+
+    if (!role) {
+      throw new AppError('Role not found', 404);
     }
 
-    // 3. Perform the update within a transaction
-    return prisma.$transaction(async (tx) => {
-      // First, delete all existing menu associations for this role
-      await tx.roleMenu.deleteMany({
-        where: {
-          roleId: roleId,
-        },
-      });
+    if (role.users.length > 0) {
+      throw new AppError('Cannot delete role with associated users', 400);
+    }
 
-      // Then, create the new menu associations
-      const roleMenuData = menuIds.map((menuId) => ({
-        roleId: roleId,
-        menuId: menuId,
-      }));
+    await prisma.roleMenu.deleteMany({
+      where: { roleId },
+    });
 
-      await tx.roleMenu.createMany({
-        data: roleMenuData,
-      });
-
-      // Return the updated role with its menus
-      return tx.role.findUnique({
-        where: {
-          id: roleId,
-        },
-        include: {
-          menus: {
-            include: {
-              menu: true,
-            },
-          },
-        },
-      });
+    return prisma.role.delete({
+      where: { id: roleId },
     });
   }
 }
