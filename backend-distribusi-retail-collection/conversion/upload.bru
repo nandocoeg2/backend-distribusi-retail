@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:3000/api/v1/conversions/upload
+  url: http://localhost:5050/api/v1/conversions/upload
   body: multipart-form
   auth: none
 }
@@ -13,4 +13,3 @@ post {
 body:multipart-form {
   file: @file(C:\path\to\your\test-file.pdf)
 }
-

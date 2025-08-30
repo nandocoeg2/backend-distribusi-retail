@@ -21,7 +21,7 @@ const start = async () => {
     const app = await createApp();
 
     // Start server
-    const port = parseInt(process.env.PORT || '3000', 10);
+    const port = parseInt(process.env.PORT || '5050', 10);
     const host = process.env.HOST || '0.0.0.0';
 
     await app.listen({ port, host });

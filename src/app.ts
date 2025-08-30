@@ -13,6 +13,7 @@ import logger from '@/config/logger';
 import { errorHandler } from '@/middleware/error.middleware';
 import routes from '@/routes';
 import { authMiddleware } from '@/middleware/auth.middleware';
+import { cspOptions } from '@/config/csp';
 
 export const createApp = async () => {
   const app = Fastify({
@@ -25,7 +26,7 @@ export const createApp = async () => {
 
   // Register plugins
   await app.register(helmet, {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: cspOptions,
   });
 
   await app.register(cors, {
@@ -119,3 +120,4 @@ export const createApp = async () => {
 };
 
 export type App = Awaited<ReturnType<typeof createApp>>;
+
