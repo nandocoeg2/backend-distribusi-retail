@@ -1,0 +1,25 @@
+meta {
+  name: Update Menus by Role
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://localhost:3000/api/v1/roles/menus
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "role": "cmeef187y0002ydcqnpkk2qn9",
+    "menu": [
+      "clw2n3a0g000508l7c86g3e02",
+      "clw2n3a0h000608l71a1i1a8a"
+    ]
+  }
+}
