@@ -3,7 +3,15 @@ import { AppError } from '@/utils/app-error';
 
 export class RoleService {
   static async getAll() {
-    return prisma.role.findMany();
+    return prisma.role.findMany({
+      include: {
+        menus: {
+          include: {
+            menu: true,
+          },
+        },
+      },
+    });
   }
 
   static async updateRoleMenus(roleId: string, menuIds: string[]) {

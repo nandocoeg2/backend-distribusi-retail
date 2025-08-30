@@ -26,13 +26,24 @@ describe('RoleService', () => {
   });
 
   describe('getAll', () => {
-    it('should return all roles from the database', async () => {
-      const mockRoles = [{ id: '1', name: 'Admin' }, { id: '2', name: 'User' }];
+    it('should return all roles with their menus from the database', async () => {
+      const mockRoles = [
+        { id: '1', name: 'Admin', menus: [] },
+        { id: '2', name: 'User', menus: [] },
+      ];
       (prisma.role.findMany as jest.Mock).mockResolvedValue(mockRoles);
 
       const roles = await RoleService.getAll();
 
-      expect(prisma.role.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.role.findMany).toHaveBeenCalledWith({
+        include: {
+          menus: {
+            include: {
+              menu: true,
+            },
+          },
+        },
+      });
       expect(roles).toEqual(mockRoles);
     });
   });
