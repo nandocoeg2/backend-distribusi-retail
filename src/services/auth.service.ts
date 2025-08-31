@@ -3,7 +3,7 @@ import { prisma } from '@/config/database';
 import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
 import { AppError } from '@/utils/app-error';
 import { comparePassword, hashPassword } from '@/utils/password.utils';
-import { signTokens } from '@/utils/jwt.utils';
+import { signAccessToken } from '@/utils/jwt.utils';
 import { redisClient as redis } from '@/config/redis';
 import { CacheService } from '@/services/cache.service';
 
@@ -48,7 +48,7 @@ export class AuthService {
 
   static async login(
     input: LoginInput
-  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
+  ): Promise<{ user: any }> {
     const user = await prisma.user.findUnique({
       where: { email: input.email },
       include: {
@@ -73,16 +73,14 @@ export class AuthService {
       throw new AppError('Invalid email or password', 401);
     }
 
-    const { accessToken, refreshToken } = await signTokens(user);
+    const accessToken = await signAccessToken(user);
 
     const accessibleMenus = user.role ? user.role.menus.map(rm => rm.menu) : [];
 
-    // Sort menus by the 'order' field, handling nulls by placing them at the end
     accessibleMenus.sort((a, b) => {
       const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
       const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
       if (orderA === orderB) {
-        // Fallback to sorting by id if order is the same or both are null
         return a.id.localeCompare(b.id);
       }
       return orderA - orderB;
@@ -103,12 +101,11 @@ export class AuthService {
 
     await CacheService.set(`user:${user.id}`, userResponse, 3600);
 
-    return { accessToken, refreshToken, user: { ...userResponse, accessToken } };
+    return { user: { ...userResponse, accessToken } };
   }
 
   static async logout(userId: string): Promise<void> {
     await redis.del(`user:${userId}:accessToken`);
-    await redis.del(`user:${userId}:refreshToken`);
     await CacheService.del(`user:${userId}`);
   }
 }

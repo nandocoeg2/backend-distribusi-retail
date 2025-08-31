@@ -1,64 +1,31 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { verifyToken, reissueAccessToken } from '@/utils/jwt.utils';
-import { environment } from '@/config/environment';
+import { verifyToken } from '@/utils/jwt.utils';
 import { AppError } from '@/utils/app-error';
 import { prisma } from '@/config/database';
 
 const authMiddlewarePlugin = async (fastify: FastifyInstance) => {
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      let accessToken = request.cookies.accessToken;
+      const authHeader = request.headers.authorization;
 
-      if (!accessToken) {
-        const refreshToken = request.cookies.refreshToken;
-        if (!refreshToken) {
-          throw new AppError('Authentication failed. No tokens provided.', 401);
-        }
-
-        const newAccessToken = await reissueAccessToken(refreshToken);
-        if (!newAccessToken) {
-          throw new AppError('Authentication failed. Could not refresh token.', 401);
-        }
-
-        reply.setCookie('accessToken', newAccessToken, {
-          httpOnly: true,
-          secure: environment.NODE_ENV === 'production',
-          sameSite: 'strict',
-          path: '/',
-        });
-        accessToken = newAccessToken;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new AppError('Authentication failed. No token provided.', 401);
       }
 
-      let { decoded, expired } = verifyToken(accessToken);
+      const accessToken = authHeader.substring(7);
 
-      if (expired) {
-        const refreshToken = request.cookies.refreshToken;
-        if (!refreshToken) {
-          throw new AppError('Authentication failed. No refresh token provided.', 401);
-        }
+      const { decoded, expired } = verifyToken(accessToken);
 
-        const newAccessToken = await reissueAccessToken(refreshToken);
-        if (!newAccessToken) {
-          throw new AppError('Authentication failed. Could not refresh token.', 401);
-        }
-
-        reply.setCookie('accessToken', newAccessToken, {
-          httpOnly: true,
-          secure: environment.NODE_ENV === 'production',
-          sameSite: 'strict',
-          path: '/',
-        });
-
-        const newDecoded = verifyToken(newAccessToken);
-        decoded = newDecoded.decoded;
+      if (expired || !decoded) {
+        throw new AppError('Authentication failed. Invalid or expired token.', 401);
       }
 
-      if (!decoded || typeof decoded === 'string' || !decoded.sub) {
+      if (typeof decoded === 'string' || !decoded.sub) {
         throw new AppError('Invalid token.', 401);
       }
 
-            const user = await prisma.user.findUnique({ where: { id: decoded.sub as string } });
+      const user = await prisma.user.findUnique({ where: { id: decoded.sub as string } });
       if (!user) {
         throw new AppError('User not found', 401);
       }

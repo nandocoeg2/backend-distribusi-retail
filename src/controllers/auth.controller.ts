@@ -18,22 +18,7 @@ export class AuthController {
 
   static async login(request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
     try {
-      const { accessToken, refreshToken, user } = await AuthService.login(request.body);
-
-      reply.setCookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-      });
-
-      reply.setCookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-      });
-
+      const { user } = await AuthService.login(request.body);
       return reply.send({ user });
     } catch (error) {
       if (error instanceof AppError) {
@@ -49,8 +34,6 @@ export class AuthController {
         throw new AppError('User not authenticated', 401);
       }
       await AuthService.logout(request.user.id);
-      reply.clearCookie('accessToken');
-      reply.clearCookie('refreshToken');
       return reply.send({ message: 'Logged out successfully' });
     } catch (error) {
       if (error instanceof AppError) {
