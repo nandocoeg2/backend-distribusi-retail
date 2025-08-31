@@ -176,5 +176,18 @@ describe('CustomerService', () => {
 
       expect(result).toEqual([]);
     });
+
+    it('should return all customers if query is empty', async () => {
+      const expectedCustomers = [
+        { id: '1', name: 'John Doe', email: 'john.doe@example.com', address: '123 Main St', phoneNumber: '1234567890', createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Jane Doe', email: 'jane.doe@example.com', address: '456 Oak Ave', phoneNumber: '0987654321', createdAt: new Date(), updatedAt: new Date() },
+      ];
+      (prisma.customer.findMany as jest.Mock).mockResolvedValue(expectedCustomers);
+
+      const result = await CustomerService.searchCustomers('');
+
+      expect(prisma.customer.findMany).toHaveBeenCalled();
+      expect(result).toEqual(expectedCustomers);
+    });
   });
 });

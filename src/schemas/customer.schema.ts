@@ -34,8 +34,8 @@ export const deleteCustomerSchema = z.object({
 });
 
 export const searchCustomerSchema = z.object({
-  querystring: z.object({
-    q: z.string({ required_error: 'Query is required' }),
+  params: z.object({
+    q: z.string().optional(),
   }),
 });
 

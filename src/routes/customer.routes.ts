@@ -7,16 +7,23 @@ import {
   deleteCustomerSchema,
   getCustomerSchema,
   searchCustomerSchema,
-  SearchCustomerInput,
   updateCustomerSchema,
   UpdateCustomerInput,
 } from '@/schemas/customer.schema';
 
 export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
-  fastify.get<{ Querystring: SearchCustomerInput['querystring'] }>(
-    '/search',
+  fastify.get(
+    '/search/:q',
     {
       preHandler: [fastify.authenticate, validateRequest(searchCustomerSchema)],
+    },
+    CustomerController.searchCustomers
+  );
+
+  fastify.get(
+    '/search',
+    {
+      preHandler: [fastify.authenticate],
     },
     CustomerController.searchCustomers
   );
@@ -57,3 +64,4 @@ export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
 
   done();
 };
+

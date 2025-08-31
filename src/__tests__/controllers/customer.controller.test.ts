@@ -13,7 +13,6 @@ describe('CustomerController', () => {
     request = {
       body: {},
       params: {},
-      query: {},
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -130,16 +129,16 @@ describe('CustomerController', () => {
   });
 
   describe('searchCustomers', () => {
-    it('should return customers that match the query', async () => {
+    it('should return customers that match the param', async () => {
       const query = 'John';
       const customers = [
         { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com' },
       ];
-      request.query = { q: query };
+      request.params = { q: query };
       (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(customers);
 
       await CustomerController.searchCustomers(
-        request as FastifyRequest<{ Querystring: SearchCustomerInput['querystring'] }>,
+        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
         reply as FastifyReply
       );
 
@@ -149,16 +148,33 @@ describe('CustomerController', () => {
 
     it('should return an empty array if no customers match', async () => {
       const query = 'NonExistent';
-      request.query = { q: query };
+      request.params = { q: query };
       (CustomerService.searchCustomers as jest.Mock).mockResolvedValue([]);
 
       await CustomerController.searchCustomers(
-        request as FastifyRequest<{ Querystring: SearchCustomerInput['querystring'] }>,
+        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
         reply as FastifyReply
       );
 
       expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query);
       expect(reply.send).toHaveBeenCalledWith([]);
     });
+
+    it('should return all customers if param is not provided', async () => {
+      const customers = [
+        { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com' },
+      ];
+      request.params = {};
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(customers);
+
+      await CustomerController.searchCustomers(
+        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
+        reply as FastifyReply
+      );
+
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(undefined);
+      expect(reply.send).toHaveBeenCalledWith(customers);
+    });
   });
 });
+

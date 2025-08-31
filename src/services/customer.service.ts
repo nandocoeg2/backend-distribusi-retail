@@ -45,7 +45,11 @@ export class CustomerService {
     }
   }
 
-  static async searchCustomers(query: string): Promise<Customer[]> {
+  static async searchCustomers(query?: string): Promise<Customer[]> {
+    if (!query) {
+      return prisma.customer.findMany();
+    }
+
     return prisma.customer.findMany({
       where: {
         OR: [
@@ -63,6 +67,12 @@ export class CustomerService {
           },
           {
             address: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            phoneNumber: {
               contains: query,
               mode: 'insensitive',
             },
