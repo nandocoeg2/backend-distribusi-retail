@@ -18,6 +18,7 @@ export class PurchaseOrderService {
     return prisma.purchaseOrder.findMany({
       include: {
         customer: true,
+        supplier: true,
         files: true,
         status: true,
       },
@@ -29,6 +30,8 @@ export class PurchaseOrderService {
       where: { id },
       include: {
         customer: true,
+        supplier: true,
+        purchaseOrderDetails: true,
         files: true,
         status: true,
       },

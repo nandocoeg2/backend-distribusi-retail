@@ -17,7 +17,11 @@ export class SupplierService {
     return prisma.supplier.findUnique({
       where: { id },
       include: {
-        purchaseOrders: true,
+        purchaseOrders: {
+          include: {
+            purchaseOrderDetails: true
+          },
+        },
       },
     });
   }
