@@ -64,6 +64,7 @@ describe('PurchaseOrderService', () => {
           customer: true,
           files: true,
           status: true,
+          supplier: true,
         },
       });
       expect(result).toEqual(expectedPOs);
@@ -93,6 +94,8 @@ describe('PurchaseOrderService', () => {
           customer: true,
           files: true,
           status: true,
+          supplier: true,
+          purchaseOrderDetails: true,
         },
       });
       expect(result).toEqual(expectedPO);

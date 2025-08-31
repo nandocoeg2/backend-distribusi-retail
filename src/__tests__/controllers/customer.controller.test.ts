@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CustomerController } from '@/controllers/customer.controller';
 import { CustomerService } from '@/services/customer.service';
-import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
+import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput } from '@/schemas/customer.schema';
 
 jest.mock('@/services/customer.service');
 
@@ -13,6 +13,7 @@ describe('CustomerController', () => {
     request = {
       body: {},
       params: {},
+      query: {},
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -127,5 +128,37 @@ describe('CustomerController', () => {
       expect(reply.send).toHaveBeenCalledWith({ message: 'Customer not found' });
     });
   });
-});
 
+  describe('searchCustomers', () => {
+    it('should return customers that match the query', async () => {
+      const query = 'John';
+      const customers = [
+        { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com' },
+      ];
+      request.query = { q: query };
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(customers);
+
+      await CustomerController.searchCustomers(
+        request as FastifyRequest<{ Querystring: SearchCustomerInput['querystring'] }>,
+        reply as FastifyReply
+      );
+
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query);
+      expect(reply.send).toHaveBeenCalledWith(customers);
+    });
+
+    it('should return an empty array if no customers match', async () => {
+      const query = 'NonExistent';
+      request.query = { q: query };
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue([]);
+
+      await CustomerController.searchCustomers(
+        request as FastifyRequest<{ Querystring: SearchCustomerInput['querystring'] }>,
+        reply as FastifyReply
+      );
+
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query);
+      expect(reply.send).toHaveBeenCalledWith([]);
+    });
+  });
+});

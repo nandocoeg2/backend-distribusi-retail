@@ -64,7 +64,7 @@ describe('CustomerService', () => {
 
       const result = await CustomerService.getCustomerById(customerId);
 
-      expect(prisma.customer.findUnique).toHaveBeenCalledWith({ where: { id: customerId } });
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({ where: { id: customerId }, include: { purchaseOrders: true } });
       expect(result).toEqual(expectedCustomer);
     });
 
@@ -128,5 +128,53 @@ describe('CustomerService', () => {
   
         expect(result).toBeNull();
       });
+  });
+
+  describe('searchCustomers', () => {
+    it('should return customers matching the search query', async () => {
+      const query = 'John';
+      const expectedCustomers = [
+        { id: '1', name: 'John Doe', email: 'john.doe@example.com', address: '123 Main St', phoneNumber: '1234567890', createdAt: new Date(), updatedAt: new Date() },
+      ];
+
+      (prisma.customer.findMany as jest.Mock).mockResolvedValue(expectedCustomers);
+
+      const result = await CustomerService.searchCustomers(query);
+
+      expect(prisma.customer.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              address: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      });
+      expect(result).toEqual(expectedCustomers);
+    });
+
+    it('should return an empty array if no customers match the query', async () => {
+      const query = 'NonExistent';
+      (prisma.customer.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await CustomerService.searchCustomers(query);
+
+      expect(result).toEqual([]);
+    });
   });
 });

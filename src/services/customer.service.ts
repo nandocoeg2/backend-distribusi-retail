@@ -44,4 +44,31 @@ export class CustomerService {
       return null;
     }
   }
+
+  static async searchCustomers(query: string): Promise<Customer[]> {
+    return prisma.customer.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            email: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            address: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+    });
+  }
 }

@@ -64,7 +64,16 @@ describe('SupplierService', () => {
 
       const result = await SupplierService.getSupplierById(supplierId);
 
-      expect(prisma.supplier.findUnique).toHaveBeenCalledWith({ where: { id: supplierId } });
+      expect(prisma.supplier.findUnique).toHaveBeenCalledWith({
+        where: { id: supplierId },
+        include: {
+          purchaseOrders: {
+            include: {
+              purchaseOrderDetails: true,
+            },
+          },
+        },
+      });
       expect(result).toEqual(expectedSupplier);
     });
 

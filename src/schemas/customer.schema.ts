@@ -33,5 +33,13 @@ export const deleteCustomerSchema = z.object({
   }),
 });
 
+export const searchCustomerSchema = z.object({
+  querystring: z.object({
+    q: z.string({ required_error: 'Query is required' }),
+  }),
+});
+
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>['body'];
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+export type SearchCustomerInput = z.infer<typeof searchCustomerSchema>;
+

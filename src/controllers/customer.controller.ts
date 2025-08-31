@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CustomerService } from '@/services/customer.service';
-import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
+import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput } from '@/schemas/customer.schema';
 
 export class CustomerController {
   static async createCustomer(request: FastifyRequest<{ Body: CreateCustomerInput }>, reply: FastifyReply) {
@@ -38,5 +38,14 @@ export class CustomerController {
       return reply.code(404).send({ message: 'Customer not found' });
     }
     return reply.code(204).send();
+  }
+
+  static async searchCustomers(
+    request: FastifyRequest<{ Querystring: SearchCustomerInput['querystring'] }>,
+    reply: FastifyReply
+  ) {
+    const { q } = request.query;
+    const customers = await CustomerService.searchCustomers(q);
+    return reply.send(customers);
   }
 }

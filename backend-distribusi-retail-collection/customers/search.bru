@@ -1,0 +1,20 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/customers/search
+  body: none
+  auth: bearer
+}
+
+query {
+  q: 
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
