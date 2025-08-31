@@ -98,6 +98,8 @@ model Supplier {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  purchaseOrders PurchaseOrder[]
+
   @@map("suppliers")
 }
 
@@ -110,6 +112,8 @@ model PurchaseOrder {
   suratPenagihan     String?
   customerId         String
   customer           Customer @relation(fields: [customerId], references: [id])
+  supplierId         String?
+  supplier           Supplier?  @relation(fields: [supplierId], references: [id])
   total_items        Int?
   tanggal_order      DateTime?
   po_type            String?
@@ -119,6 +123,7 @@ model PurchaseOrder {
   updatedAt          DateTime @updatedAt
 
   files              FileUploaded[]
+  purchaseOrderDetails PurchaseOrderDetail[]
 
   @@map("purchase_orders")
 }
@@ -160,6 +165,7 @@ model Inventory {
   updatedAt    DateTime @updatedAt
 
   notifications Notification[]
+  purchaseOrderDetails PurchaseOrderDetail[]
 
   @@map("inventories")
 }
@@ -184,4 +190,27 @@ enum NotificationType {
   OUT_OF_STOCK
   STOCK_ALERT
   SYSTEM
+}
+
+model PurchaseOrderDetail {
+  id                      String        @id @default(cuid())
+  kode_barang             String
+  nama_barang             String
+  quantity                Int
+  isi                     Int
+  harga                   Float
+  potongan_a              Float?
+  harga_after_potongan_a  Float?
+  harga_netto             Float
+  total_pembelian         Float
+  potongan_b              Float?
+  harga_after_potongan_b  Float?
+  purchaseOrderId         String
+  purchaseOrder           PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  inventoryId             String
+  inventory               Inventory     @relation(fields: [inventoryId], references: [id])
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@map("purchase_order_details")
 }
