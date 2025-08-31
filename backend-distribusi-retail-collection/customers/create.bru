@@ -12,7 +12,13 @@ post {
 
 headers {
   accept: application/json
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{access_token}}
+}
+
 
 body:json {
   {

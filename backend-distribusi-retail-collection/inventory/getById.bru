@@ -7,5 +7,10 @@ meta {
 get {
   url: http://localhost:5050/api/v1/inventories/clvnw5t5c000008l43n5j1b9h
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{access_token}}
+}
+

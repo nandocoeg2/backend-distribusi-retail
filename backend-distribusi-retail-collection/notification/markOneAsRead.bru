@@ -7,5 +7,10 @@ meta {
 patch {
   url: http://localhost:5050/api/v1/notifications/clvovamli000008l41j9g7w4s/read
   body: none
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{access_token}}
+}
+

@@ -7,8 +7,13 @@ meta {
 post {
   url: http://localhost:5050/api/v1/inventories
   body: json
-  auth: none
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{access_token}}
+}
+
 
 body:json {
   {

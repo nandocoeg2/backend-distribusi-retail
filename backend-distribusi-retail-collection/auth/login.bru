@@ -20,3 +20,7 @@ body:json {
     "password": "password123"
   }
 }
+
+script:post-response {
+  bru.setEnvVar("access_token", res.body.user.accessToken);
+}

@@ -7,8 +7,14 @@ meta {
 post {
   url: http://localhost:5050/api/v1/suppliers/
   body: json
-  auth: inherit
+  auth: bearer
 }
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+
 
 headers {
   accept: application/json
