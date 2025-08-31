@@ -16,6 +16,9 @@ export class SupplierService {
   static async getSupplierById(id: string): Promise<Supplier | null> {
     return prisma.supplier.findUnique({
       where: { id },
+      include: {
+        purchaseOrders: true,
+      },
     });
   }
 

@@ -16,6 +16,9 @@ export class CustomerService {
   static async getCustomerById(id: string): Promise<Customer | null> {
     return prisma.customer.findUnique({
       where: { id },
+      include: {
+        purchaseOrders: true,
+      },
     });
   }
 
