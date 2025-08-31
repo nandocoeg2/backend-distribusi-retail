@@ -18,8 +18,6 @@ describe('AuthController', () => {
     reply = {
       code: jest.fn().mockReturnThis(),
       send: jest.fn(),
-      setCookie: jest.fn().mockReturnThis(),
-      clearCookie: jest.fn().mockReturnThis(),
     } as Partial<FastifyReply>;
   });
 
@@ -62,17 +60,16 @@ describe('AuthController', () => {
 
   describe('login', () => {
     const loginInput: LoginInput = { email: 'test@example.com', password: 'password' };
-    const loginData = { accessToken: 'access', refreshToken: 'refresh', user: { id: '1' } };
+    const loginData = { user: { id: '1', accessToken: 'access-token' } };
 
-    it('should login a user, set cookies, and return user data', async () => {
+    it('should login a user and return user data with access token', async () => {
       request.body = loginInput;
       (AuthService.login as jest.Mock).mockResolvedValue(loginData);
 
       await AuthController.login(request as FastifyRequest<{ Body: LoginInput }>, reply as FastifyReply);
 
       expect(AuthService.login).toHaveBeenCalledWith(loginInput);
-      expect(reply.setCookie).toHaveBeenCalledTimes(2);
-      expect(reply.send).toHaveBeenCalledWith({ user: loginData.user });
+      expect(reply.send).toHaveBeenCalledWith(loginData);
     });
 
     it('should handle login errors', async () => {
@@ -94,8 +91,6 @@ describe('AuthController', () => {
       await AuthController.logout(request as FastifyRequest, reply as FastifyReply);
 
       expect(AuthService.logout).toHaveBeenCalledWith('1');
-      expect(reply.clearCookie).toHaveBeenCalledWith('accessToken');
-      expect(reply.clearCookie).toHaveBeenCalledWith('refreshToken');
       expect(reply.send).toHaveBeenCalledWith({ message: 'Logged out successfully' });
     });
 

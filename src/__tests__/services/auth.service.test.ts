@@ -3,7 +3,7 @@ import { prisma } from '@/config/database';
 import { redisClient as redis } from '@/config/redis';
 import { AppError } from '@/utils/app-error';
 import { hashPassword, comparePassword } from '@/utils/password.utils';
-import { signTokens } from '@/utils/jwt.utils';
+import { signAccessToken } from '@/utils/jwt.utils';
 import { CreateUserInput, LoginInput } from '@/schemas/auth.schema';
 import { CacheService } from '@/services/cache.service';
 
@@ -86,23 +86,22 @@ describe('AuthService', () => {
         menus: [],
       },
     };
-    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
+    const accessToken = 'access-token';
 
     it('should login a user and return tokens and user data', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
       (comparePassword as jest.Mock).mockResolvedValue(true);
-      (signTokens as jest.Mock).mockResolvedValue(tokens);
+      (signAccessToken as jest.Mock).mockResolvedValue(accessToken);
       (CacheService.set as jest.Mock).mockResolvedValue(undefined);
 
       const result = await AuthService.login(loginInput);
 
       expect(prisma.user.findUnique).toHaveBeenCalled();
       expect(comparePassword).toHaveBeenCalledWith(loginInput.password, user.password);
-      expect(signTokens).toHaveBeenCalledWith(user);
+      expect(signAccessToken).toHaveBeenCalledWith(user);
       expect(CacheService.set).toHaveBeenCalled();
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(result).toHaveProperty('user');
+      expect(result.user).toHaveProperty('accessToken', accessToken);
+      expect(result.user).toHaveProperty('email', user.email);
     });
 
     it('should throw an error for invalid credentials', async () => {
@@ -122,8 +121,8 @@ describe('AuthService', () => {
       await AuthService.logout(userId);
 
       expect(redis.del).toHaveBeenCalledWith(`user:${userId}:accessToken`);
-      expect(redis.del).toHaveBeenCalledWith(`user:${userId}:refreshToken`);
       expect(CacheService.del).toHaveBeenCalledWith(`user:${userId}`);
     });
   });
 });
+
