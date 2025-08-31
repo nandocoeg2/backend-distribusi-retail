@@ -1,12 +1,20 @@
 import { Supplier } from '@prisma/client';
 import { prisma } from '@/config/database';
-import { CreateSupplierInput, UpdateSupplierInput } from '@/schemas/supplier.schema';
+import { AppError } from '@/utils/app-error';
+import { CreateSupplierInput, UpdateSupplierInput, SearchSupplierInput } from '@/schemas/supplier.schema';
 
 export class SupplierService {
   static async createSupplier(data: CreateSupplierInput): Promise<Supplier> {
-    return prisma.supplier.create({
-      data,
-    });
+    try {
+      return await prisma.supplier.create({
+        data,
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
+        throw new AppError('Supplier with this code already exists', 409);
+      }
+      throw error;
+    }
   }
 
   static async getAllSuppliers(): Promise<Supplier[]> {
@@ -32,9 +40,14 @@ export class SupplierService {
         where: { id },
         data,
       });
-    } catch (error) {
-      // Prisma throws an error if the record is not found on update
-      return null;
+    } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
+        throw new AppError('Supplier with this code already exists', 409);
+      }
+      if (error.code === 'P2025') {
+        return null;
+      }
+      throw error;
     }
   }
 
@@ -81,9 +94,14 @@ export class SupplierService {
               mode: 'insensitive',
             },
           },
+          {
+            code: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
         ],
       },
     });
   }
 }
-

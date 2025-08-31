@@ -91,10 +91,12 @@ model Customer {
 model Supplier {
   id          String   @id @default(cuid())
   name        String
+  code        String?  @unique
   description String?
   address     String?
   phoneNumber String
   email       String?  @unique
+  bank        Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

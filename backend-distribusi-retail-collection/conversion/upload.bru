@@ -5,8 +5,8 @@ meta {
 }
 
 post {
-  url: http://localhost:5050/api/v1/conversions/upload
-  body: multipart-form
+  url: http://localhost:5050/api/v1/conversions/convert
+  body: multipartForm
   auth: bearer
 }
 
@@ -14,7 +14,7 @@ auth:bearer {
   token: {{access_token}}
 }
 
-
 body:multipart-form {
-  file: @file(C:\path\to\your\test-file.pdf)
+  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_PO.pdf)
+  prompt: convert to json
 }
