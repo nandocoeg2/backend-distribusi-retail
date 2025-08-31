@@ -162,6 +162,12 @@ describe('CustomerService', () => {
                 mode: 'insensitive',
               },
             },
+            {
+              phoneNumber: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
           ],
         },
       });

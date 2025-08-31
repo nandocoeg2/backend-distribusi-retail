@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/customers/search/test
+  url: http://localhost:5050/api/v1/customers/search/
   body: none
   auth: bearer
 }
@@ -13,4 +13,3 @@ get {
 auth:bearer {
   token: {{access_token}}
 }
-
