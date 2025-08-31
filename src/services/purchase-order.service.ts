@@ -1,8 +1,9 @@
-import { PurchaseOrder } from '@prisma/client';
+import { PurchaseOrder, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import {
   CreatePurchaseOrderInput,
   UpdatePurchaseOrderInput,
+  SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 
 export class PurchaseOrderService {
@@ -60,5 +61,57 @@ export class PurchaseOrderService {
     } catch (error) {
       return null;
     }
+  }
+
+  static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PurchaseOrder[]> {
+    const { tanggal_order, customer_name, customerId, suratPO, invoicePengiriman, po_number, supplierId, statusId } = query;
+
+    const filters: Prisma.PurchaseOrderWhereInput[] = [];
+    if (tanggal_order) {
+      const date = new Date(tanggal_order);
+      try {
+        filters.push({
+          tanggal_order: {
+            gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+            lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
+          }
+        }); 
+      } catch (e) {
+        // ignore invalid date
+      }
+    }
+    if (customer_name) {
+      filters.push({ customer: { name: { contains: customer_name, mode: 'insensitive' } } });
+    }
+    if (customerId) {
+      filters.push({ customerId });
+    }
+    if (suratPO) {
+      filters.push({ suratPO: { contains: suratPO, mode: 'insensitive' } });
+    }
+    if (invoicePengiriman) {
+      filters.push({ invoicePengiriman: { contains: invoicePengiriman, mode: 'insensitive' } });
+    }
+    if (po_number) {
+      filters.push({ po_number: { contains: po_number, mode: 'insensitive' } });
+    }
+    if (supplierId) {
+      filters.push({ supplierId });
+    }
+    if (statusId) {
+      filters.push({ statusId });
+    }
+
+    return prisma.purchaseOrder.findMany({
+      where: {
+        AND: filters.length > 0 ? filters : undefined,
+      },
+      include: {
+        customer: true,
+        supplier: true,
+        files: true,
+        status: true,
+      },
+    });
   }
 }

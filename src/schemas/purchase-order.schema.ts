@@ -45,5 +45,19 @@ export const deletePurchaseOrderSchema = z.object({
   }),
 });
 
+export const searchPurchaseOrderSchema = z.object({
+  query: z.object({
+    tanggal_order: z.string().optional(),
+    customer_name: z.string().optional(),
+    customerId: z.string().optional(),
+    suratPO: z.string().optional(),
+    invoicePengiriman: z.string().optional(),
+    po_number: z.string().optional(),
+    supplierId: z.string().optional(),
+    statusId: z.string().optional(),
+  }),
+});
+
 export type CreatePurchaseOrderInput = z.infer<typeof createPurchaseOrderSchema>['body'];
 export type UpdatePurchaseOrderInput = z.infer<typeof updatePurchaseOrderSchema>;
+export type SearchPurchaseOrderInput = z.infer<typeof searchPurchaseOrderSchema>;

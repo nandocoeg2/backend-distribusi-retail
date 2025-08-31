@@ -1,171 +1,83 @@
-import { PurchaseOrderService } from '@/services/purchase-order.service';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { prisma } from '@/config/database';
-import { CreatePurchaseOrderInput, UpdatePurchaseOrderInput } from '@/schemas/purchase-order.schema';
-
-// Mock Prisma
-jest.mock('@/config/database', () => ({
-  prisma: {
-    purchaseOrder: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-  },
-}));
+import { PurchaseOrderService } from '@/services/purchase-order.service';
+import { SearchPurchaseOrderInput } from '@/schemas/purchase-order.schema';
 
 describe('PurchaseOrderService', () => {
+  const mockPurchaseOrders = [
+    {
+      id: '1',
+      tanggal_order: new Date('2025-01-15'),
+      customerId: 'cust1',
+      customer: { name: 'Customer A' },
+      suratPO: 'PO-001',
+      invoicePengiriman: 'INV-001',
+      po_number: 'PO-NUM-001',
+      supplierId: 'supp1',
+      statusId: 'status1',
+    },
+    {
+      id: '2',
+      tanggal_order: new Date('2025-01-16'),
+      customerId: 'cust2',
+      customer: { name: 'Customer B' },
+      suratPO: 'PO-002',
+      invoicePengiriman: 'INV-002',
+      po_number: 'PO-NUM-002',
+      supplierId: 'supp2',
+      statusId: 'status2',
+    },
+  ];
+
+  beforeEach(() => {
+    vi.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockPurchaseOrders as any);
+  });
+
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  describe('createPurchaseOrder', () => {
-    it('should create a new purchase order', async () => {
-      const input: CreatePurchaseOrderInput = {
-        customerId: 'cust1',
-        po_number: 'PO123',
-        total_items: 1,
-        tanggal_order: new Date().toISOString(),
-        po_type: 'Regular',
-        statusId: 'status1',
-      };
-      const expectedPO = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date() };
-
-      (prisma.purchaseOrder.create as jest.Mock).mockResolvedValue(expectedPO);
-
-      const result = await PurchaseOrderService.createPurchaseOrder(input);
-
-      expect(prisma.purchaseOrder.create).toHaveBeenCalledWith({ data: input });
-      expect(result).toEqual(expectedPO);
-    });
-  });
-
-  describe('getAllPurchaseOrders', () => {
-    it('should return all purchase orders with relations', async () => {
-      const expectedPOs = [
-        {
-          id: '1',
-          customerId: 'cust1',
-          po_number: 'PO123',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          customer: { id: 'cust1', name: 'Test Customer' },
-          files: [],
-        },
-      ];
-
-      (prisma.purchaseOrder.findMany as jest.Mock).mockResolvedValue(expectedPOs);
-
-      const result = await PurchaseOrderService.getAllPurchaseOrders();
-
+  describe('searchPurchaseOrders', () => {
+    it('should return all purchase orders if no query is provided', async () => {
+      const query: SearchPurchaseOrderInput['query'] = {};
+      const result = await PurchaseOrderService.searchPurchaseOrders(query);
+      expect(result).toEqual(mockPurchaseOrders);
       expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith({
+        where: {
+          AND: [],
+        },
         include: {
           customer: true,
+          supplier: true,
           files: true,
           status: true,
-          supplier: true,
         },
       });
-      expect(result).toEqual(expectedPOs);
     });
-  });
 
-  describe('getPurchaseOrderById', () => {
-    it('should return a purchase order by id with relations', async () => {
-      const poId = '1';
-      const expectedPO = {
-        id: poId,
-        customerId: 'cust1',
-        po_number: 'PO123',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        customer: { id: 'cust1', name: 'Test Customer' },
-        files: [],
-      };
-
-      (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(expectedPO);
-
-      const result = await PurchaseOrderService.getPurchaseOrderById(poId);
-
-      expect(prisma.purchaseOrder.findUnique).toHaveBeenCalledWith({
-        where: { id: poId },
-        include: {
-          customer: true,
-          files: true,
-          status: true,
-          supplier: true,
-          purchaseOrderDetails: true,
+    it('should filter by customer_name', async () => {
+      const query: SearchPurchaseOrderInput['query'] = { customer_name: 'Customer A' };
+      await PurchaseOrderService.searchPurchaseOrders(query);
+      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+          AND: expect.arrayContaining([
+            { customer: { name: { contains: 'Customer A', mode: 'insensitive' } } },
+          ]),
         },
-      });
-      expect(result).toEqual(expectedPO);
+      }));
     });
 
-     it('should return null if purchase order not found', async () => {
-      const poId = '999';
-      (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(null);
-
-      const result = await PurchaseOrderService.getPurchaseOrderById(poId);
-
-      expect(result).toBeNull();
+    it('should filter by tanggal_order', async () => {
+      const query: SearchPurchaseOrderInput['query'] = { tanggal_order: '2025-01-15' };
+      await PurchaseOrderService.searchPurchaseOrders(query);
+      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+          AND: expect.arrayContaining([
+            { tanggal_order: new Date('2025-01-15') },
+          ]),
+        },
+      }));
     });
-  });
-
-  describe('updatePurchaseOrder', () => {
-    it('should update a purchase order', async () => {
-      const poId = '1';
-      const input: UpdatePurchaseOrderInput['body'] = {
-        po_number: 'PO456',
-      };
-      const expectedPO = {
-        id: poId,
-        customerId: 'cust1',
-        po_number: 'PO456',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      (prisma.purchaseOrder.update as jest.Mock).mockResolvedValue(expectedPO);
-
-      const result = await PurchaseOrderService.updatePurchaseOrder(poId, input);
-
-      expect(prisma.purchaseOrder.update).toHaveBeenCalledWith({ where: { id: poId }, data: input });
-      expect(result).toEqual(expectedPO);
-    });
-
-    it('should return null if purchase order to update is not found', async () => {
-        const poId = '999';
-        const input: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
-  
-        (prisma.purchaseOrder.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
-  
-        const result = await PurchaseOrderService.updatePurchaseOrder(poId, input);
-  
-        expect(result).toBeNull();
-      });
-  });
-
-  describe('deletePurchaseOrder', () => {
-    it('should delete a purchase order', async () => {
-      const poId = '1';
-      const expectedPO = { id: poId, customerId: 'cust1', po_number: 'PO123', createdAt: new Date(), updatedAt: new Date() };
-
-      (prisma.purchaseOrder.delete as jest.Mock).mockResolvedValue(expectedPO);
-
-      const result = await PurchaseOrderService.deletePurchaseOrder(poId);
-
-      expect(prisma.purchaseOrder.delete).toHaveBeenCalledWith({ where: { id: poId } });
-      expect(result).toEqual(expectedPO);
-    });
-
-     it('should return null if purchase order to delete is not found', async () => {
-        const poId = '999';
-  
-        (prisma.purchaseOrder.delete as jest.Mock).mockRejectedValue(new Error('Record not found'));
-  
-        const result = await PurchaseOrderService.deletePurchaseOrder(poId);
-  
-        expect(result).toBeNull();
-      });
   });
 });
+

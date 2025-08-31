@@ -3,6 +3,7 @@ import { PurchaseOrderService } from '@/services/purchase-order.service';
 import {
   CreatePurchaseOrderInput,
   UpdatePurchaseOrderInput,
+  SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 
 export class PurchaseOrderController {
@@ -62,5 +63,10 @@ export class PurchaseOrderController {
       return reply.code(404).send({ message: 'Purchase Order not found' });
     }
     return reply.code(204).send();
+  }
+
+  static async searchPurchaseOrders(request: FastifyRequest<{ Querystring: SearchPurchaseOrderInput['query'] }>, reply: FastifyReply) {
+    const purchaseOrders = await PurchaseOrderService.searchPurchaseOrders(request.query);
+    return reply.send(purchaseOrders);
   }
 }

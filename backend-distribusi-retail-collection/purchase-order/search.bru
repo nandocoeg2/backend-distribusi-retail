@@ -1,0 +1,22 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  // Example search by customer name:
+  // url: {{base_url}}/api/purchase-orders/search?customer_name=a
+
+  // Example search by order date:
+  url: {{base_url}}/api/purchase-orders/search?tanggal_order=2025-08-31
+  body: none
+  auth: bearer
+}
+params:query {
+  customer_name: a
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

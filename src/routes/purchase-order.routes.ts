@@ -8,6 +8,8 @@ import {
   getPurchaseOrderSchema,
   updatePurchaseOrderSchema,
   UpdatePurchaseOrderInput,
+  SearchPurchaseOrderInput,
+  searchPurchaseOrderSchema,
 } from '@/schemas/purchase-order.schema';
 
 export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -15,6 +17,14 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   options,
   done
 ) => {
+  fastify.get<{ Querystring: SearchPurchaseOrderInput['query'] }>(
+    '/search',
+    {
+      preHandler: [fastify.authenticate, validateRequest(searchPurchaseOrderSchema)],
+    },
+    PurchaseOrderController.searchPurchaseOrders
+  );
+
   fastify.post<{ Body: CreatePurchaseOrderInput }>(
     '/',
     {
