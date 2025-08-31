@@ -5,11 +5,15 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/customers/search/
+  url: http://localhost:5050/api/v1/customers/search/{{q}}
   body: none
   auth: bearer
 }
 
 auth:bearer {
   token: {{access_token}}
+}
+
+vars:pre-request {
+  q: one
 }

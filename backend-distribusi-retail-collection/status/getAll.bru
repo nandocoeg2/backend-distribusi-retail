@@ -5,12 +5,11 @@ meta {
 }
 
 get {
-  url: {{host}}/statuses
+  url: http://localhost:5050/api/v1/statuses
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
-

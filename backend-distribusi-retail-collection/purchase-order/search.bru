@@ -5,16 +5,13 @@ meta {
 }
 
 get {
-  // Example search by customer name:
-  // url: {{base_url}}/api/purchase-orders/search?customer_name=a
-
-  // Example search by order date:
-  url: {{base_url}}/api/purchase-orders/search?tanggal_order=2025-08-31
+  url: http://localhost:5050/api/v1/purchase-orders/search?customer_name=Customer One
   body: none
   auth: bearer
 }
+
 params:query {
-  customer_name: a
+  customer_name: Customer One
 }
 
 auth:bearer {
