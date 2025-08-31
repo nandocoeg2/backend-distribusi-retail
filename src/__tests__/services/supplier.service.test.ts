@@ -106,11 +106,11 @@ describe('SupplierService', () => {
     it('should return null if supplier to update is not found', async () => {
         const supplierId = '999';
         const input: UpdateSupplierInput['body'] = { name: 'Non Existent' };
-  
+
         (prisma.supplier.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
-  
+
         const result = await SupplierService.updateSupplier(supplierId, input);
-  
+
         expect(result).toBeNull();
       });
   });
@@ -130,12 +130,52 @@ describe('SupplierService', () => {
 
     it('should return null if supplier to delete is not found', async () => {
         const supplierId = '999';
-  
+
         (prisma.supplier.delete as jest.Mock).mockRejectedValue(new Error('Record not found'));
-  
+
         const result = await SupplierService.deleteSupplier(supplierId);
-  
+
         expect(result).toBeNull();
       });
   });
+
+  describe('searchSuppliers', () => {
+    it('should return suppliers matching the query', async () => {
+      const query = 'Supplier A';
+      const expectedSuppliers = [
+        { id: '1', name: 'Supplier A', email: 'contact@suppliera.com', address: '456 Corp Ave', phoneNumber: '1122334455', createdAt: new Date(), updatedAt: new Date() },
+      ];
+
+      (prisma.supplier.findMany as jest.Mock).mockResolvedValue(expectedSuppliers);
+
+      const result = await SupplierService.searchSuppliers(query);
+
+      expect(prisma.supplier.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } },
+            { address: { contains: query, mode: 'insensitive' } },
+            { phoneNumber: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+      });
+      expect(result).toEqual(expectedSuppliers);
+    });
+
+    it('should return all suppliers if no query is provided', async () => {
+      const expectedSuppliers = [
+        { id: '1', name: 'Supplier A', email: 'contact@suppliera.com', address: '456 Corp Ave', phoneNumber: '1122334455', createdAt: new Date(), updatedAt: new Date() },
+        { id: '2', name: 'Supplier B', email: 'contact@supplierb.com', address: '789 Business Rd', phoneNumber: '5544332211', createdAt: new Date(), updatedAt: new Date() },
+      ];
+
+      (prisma.supplier.findMany as jest.Mock).mockResolvedValue(expectedSuppliers);
+
+      const result = await SupplierService.searchSuppliers();
+
+      expect(prisma.supplier.findMany).toHaveBeenCalled();
+      expect(result).toEqual(expectedSuppliers);
+    });
+  });
 });
+

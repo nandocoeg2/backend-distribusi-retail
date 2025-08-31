@@ -8,9 +8,26 @@ import {
   getSupplierSchema,
   updateSupplierSchema,
   UpdateSupplierInput,
+  searchSupplierSchema,
 } from '@/schemas/supplier.schema';
 
 export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
+  fastify.get(
+    '/search/:q',
+    {
+      preHandler: [fastify.authenticate, validateRequest(searchSupplierSchema)],
+    },
+    SupplierController.searchSuppliers
+  );
+
+  fastify.get(
+    '/search',
+    {
+      preHandler: [fastify.authenticate],
+    },
+    SupplierController.searchSuppliers
+  );
+
   fastify.post<{ Body: CreateSupplierInput }>(
     '/',
     {

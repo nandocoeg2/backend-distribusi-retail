@@ -39,5 +39,11 @@ export class SupplierController {
     }
     return reply.code(204).send();
   }
+
+  static async searchSuppliers(request: FastifyRequest, reply: FastifyReply) {
+    const params = request.params as { q?: string };
+    const suppliers = await SupplierService.searchSuppliers(params.q);
+    return reply.send(suppliers);
+  }
 }
 

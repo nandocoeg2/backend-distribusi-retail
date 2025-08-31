@@ -48,5 +48,42 @@ export class SupplierService {
       return null;
     }
   }
+
+  static async searchSuppliers(query?: string): Promise<Supplier[]> {
+    if (!query) {
+      return prisma.supplier.findMany();
+    }
+
+    return prisma.supplier.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            email: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            address: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            phoneNumber: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+    });
+  }
 }
 
