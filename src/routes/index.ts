@@ -9,6 +9,7 @@ import { supplierRoutes } from './supplier.routes';
 import { conversionRoutes } from './conversion.routes';
 import { inventoryRoutes } from './inventory.routes';
 import notificationRoutes from './notification.routes';
+import { statusRoutes } from './status.routes';
 
 export default async (fastify: App) => {
   fastify.register(authRoutes, { prefix: '/auth' });
@@ -21,4 +22,5 @@ export default async (fastify: App) => {
   fastify.register(conversionRoutes, { prefix: '/conversions' });
   fastify.register(inventoryRoutes, { prefix: '/inventories' });
   fastify.register(notificationRoutes, { prefix: '/notifications' });
+  fastify.register(statusRoutes, { prefix: '/statuses' });
 };
