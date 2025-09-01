@@ -6,7 +6,7 @@ meta {
 
 post {
   url: http://localhost:5050/api/v1/purchase-orders/
-  body: json
+  body: multipartForm
   auth: bearer
 }
 
@@ -31,6 +31,20 @@ body:json {
     "suratPO": "SPO/2025/08/18/001",
     "suratPenagihan": "SPN/2025/08/18/001"
   }
+}
+
+body:multipart-form {
+  customerId: {{customerId}}
+  po_number: PO-2025-08-18-003123323
+  total_items: 10
+  tanggal_order: 2025-08-18T10:00:00.000Z
+  po_type: Regular
+  statusId: {{statusId}}
+  suratJalan: SJ/2025/08/18/001
+  invoicePengiriman: SJ/2025/08/18/001
+  suratPO: SJ/2025/08/18/001
+  suratPenagihan: SJ/2025/08/18/001
+  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_PO.pdf)
 }
 
 vars:pre-request {

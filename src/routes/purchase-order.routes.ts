@@ -28,7 +28,7 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.post<{ Body: CreatePurchaseOrderInput }>(
     '/',
     {
-      preHandler: [fastify.authenticate, validateRequest(createPurchaseOrderSchema)],
+      preHandler: [fastify.authenticate],
     },
     PurchaseOrderController.createPurchaseOrder
   );
@@ -71,3 +71,4 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
 
   done();
 };
+

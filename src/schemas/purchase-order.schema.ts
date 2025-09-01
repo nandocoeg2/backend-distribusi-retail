@@ -4,8 +4,8 @@ export const createPurchaseOrderSchema = z.object({
   body: z.object({
     customerId: z.string(), // Changed from uuid() to allow CUIDs
     po_number: z.string(),
-    total_items: z.number().int(),
-    tanggal_order: z.string().datetime(),
+    total_items: z.string(),
+    tanggal_order: z.string(),
     po_type: z.string(),
     statusId: z.string(), // Changed from uuid() to allow CUIDs
     suratJalan: z.string().optional(),

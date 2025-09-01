@@ -7,17 +7,37 @@ import {
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
 
+export interface FileInfo {
+  filename: string;
+  path: string;
+  mimetype: string;
+  size: number;
+}
+
 export class PurchaseOrderService {
   static async createPurchaseOrder(
-    data: CreatePurchaseOrderInput
+    poData: CreatePurchaseOrderInput,
+    fileInfo: FileInfo
   ): Promise<PurchaseOrder> {
     try {
+      const dataForDb = {
+        ...poData,
+        total_items: parseInt(poData.total_items, 10),
+        tanggal_order: new Date(poData.tanggal_order),
+        files: {
+          create: fileInfo,
+        },
+      };
+
       return await prisma.purchaseOrder.create({
-        data,
+        data: dataForDb,
       });
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('po_number')) {
-        throw new AppError('Purchase Order with this PO Number already exists', 409);
+        throw new AppError(
+          'Purchase Order with this PO Number already exists',
+          409
+        );
       }
       throw error;
     }
@@ -123,3 +143,4 @@ export class PurchaseOrderService {
     });
   }
 }
+

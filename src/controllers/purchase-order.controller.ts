@@ -1,20 +1,84 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { PurchaseOrderService } from '@/services/purchase-order.service';
+import { PurchaseOrderService, FileInfo } from '@/services/purchase-order.service';
 import {
   CreatePurchaseOrderInput,
   UpdatePurchaseOrderInput,
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
+import { AppError } from '@/utils/app-error';
+import * as fs from 'fs';
+import * as path from 'path';
+import { randomBytes } from 'crypto';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+import { MultipartFile } from '@fastify/multipart';
+
+const pump = promisify(pipeline);
 
 export class PurchaseOrderController {
-  static async createPurchaseOrder(
-    request: FastifyRequest<{ Body: CreatePurchaseOrderInput }>,
-    reply: FastifyReply
-  ) {
-    const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
-      request.body
-    );
-    return reply.code(201).send(purchaseOrder);
+  static async createPurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
+    if (!request.isMultipart()) {
+      return reply.code(400).send(new AppError('Request is not multipart', 400));
+    }
+
+    const fields: { [key: string]: any } = {};
+    let fileInfo: FileInfo | undefined;
+    let tempFilepath: string | undefined;
+
+    try {
+      for await (const part of request.parts()) {
+        if (part.type === 'file') {
+          const today = new Date().toISOString().split('T')[0]!;
+          const uploadDir = path.join(process.cwd(), 'fileuploaded', today);
+          await fs.promises.mkdir(uploadDir, { recursive: true });
+
+          const randomString = randomBytes(2).toString('hex');
+          const filename = `PO_${part.filename.split('.')[0]}_${randomString}.${part.filename.split('.').pop()}`;
+          const filepath = path.join(uploadDir, filename);
+          tempFilepath = filepath;
+
+          await pump(part.file, fs.createWriteStream(filepath));
+
+          const stats = await fs.promises.stat(filepath);
+          fileInfo = {
+            filename: part.filename,
+            path: filepath,
+            mimetype: part.mimetype,
+            size: stats.size,
+          };
+        } else {
+          fields[part.fieldname] = part.value;
+        }
+      }
+
+      if (!fileInfo) {
+        throw new AppError('File is required', 400);
+      }
+
+      const poData: CreatePurchaseOrderInput = {
+        customerId: fields.customerId,
+        po_number: fields.po_number,
+        total_items: fields.total_items,
+        tanggal_order: fields.tanggal_order,
+        po_type: fields.po_type,
+        statusId: fields.statusId,
+        suratJalan: fields.suratJalan,
+        invoicePengiriman: fields.invoicePengiriman,
+        suratPO: fields.suratPO,
+        suratPenagihan: fields.suratPenagihan,
+      };
+
+      const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
+        poData,
+        fileInfo
+      );
+      return reply.code(201).send(purchaseOrder);
+    } catch (error) {
+      if (tempFilepath) {
+        await fs.promises.unlink(tempFilepath).catch(console.error);
+      }
+      throw error;
+    }
   }
 
   static async getPurchaseOrders(request: FastifyRequest, reply: FastifyReply) {
@@ -65,8 +129,13 @@ export class PurchaseOrderController {
     return reply.code(204).send();
   }
 
-  static async searchPurchaseOrders(request: FastifyRequest<{ Querystring: SearchPurchaseOrderInput['query'] }>, reply: FastifyReply) {
-    const purchaseOrders = await PurchaseOrderService.searchPurchaseOrders(request.query);
+  static async searchPurchaseOrders(
+    request: FastifyRequest<{ Querystring: SearchPurchaseOrderInput['query'] }>,
+    reply: FastifyReply
+  ) {
+    const purchaseOrders = await PurchaseOrderService.searchPurchaseOrders(
+      request.query
+    );
     return reply.send(purchaseOrders);
   }
 }
