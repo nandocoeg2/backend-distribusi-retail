@@ -17,7 +17,7 @@ export interface FileInfo {
 export class PurchaseOrderService {
   static async createPurchaseOrder(
     poData: CreatePurchaseOrderInput,
-    fileInfo: FileInfo
+    fileInfos: FileInfo[]
   ): Promise<PurchaseOrder> {
     try {
       const dataForDb = {
@@ -25,7 +25,7 @@ export class PurchaseOrderService {
         total_items: parseInt(poData.total_items, 10),
         tanggal_order: new Date(poData.tanggal_order),
         files: {
-          create: fileInfo,
+          create: fileInfos,
         },
       };
 
@@ -143,4 +143,3 @@ export class PurchaseOrderService {
     });
   }
 }
-

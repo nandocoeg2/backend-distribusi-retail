@@ -22,8 +22,8 @@ export class PurchaseOrderController {
     }
 
     const fields: { [key: string]: any } = {};
-    let fileInfo: FileInfo | undefined;
-    let tempFilepath: string | undefined;
+    const fileInfos: FileInfo[] = [];
+    const tempFilepaths: string[] = [];
 
     try {
       for await (const part of request.parts()) {
@@ -35,24 +35,24 @@ export class PurchaseOrderController {
           const randomString = randomBytes(2).toString('hex');
           const filename = `PO_${part.filename.split('.')[0]}_${randomString}.${part.filename.split('.').pop()}`;
           const filepath = path.join(uploadDir, filename);
-          tempFilepath = filepath;
+          tempFilepaths.push(filepath);
 
           await pump(part.file, fs.createWriteStream(filepath));
 
           const stats = await fs.promises.stat(filepath);
-          fileInfo = {
+          fileInfos.push({
             filename: part.filename,
             path: filepath,
             mimetype: part.mimetype,
             size: stats.size,
-          };
+          });
         } else {
           fields[part.fieldname] = part.value;
         }
       }
 
-      if (!fileInfo) {
-        throw new AppError('File is required', 400);
+      if (fileInfos.length === 0) {
+        throw new AppError('At least one file is required', 400);
       }
 
       const poData: CreatePurchaseOrderInput = {
@@ -70,12 +70,14 @@ export class PurchaseOrderController {
 
       const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
         poData,
-        fileInfo
+        fileInfos
       );
       return reply.code(201).send(purchaseOrder);
     } catch (error) {
-      if (tempFilepath) {
-        await fs.promises.unlink(tempFilepath).catch(console.error);
+      if (tempFilepaths.length > 0) {
+        for (const path of tempFilepaths) {
+          await fs.promises.unlink(path).catch(console.error);
+        }
       }
       throw error;
     }
