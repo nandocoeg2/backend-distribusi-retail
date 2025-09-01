@@ -5,14 +5,22 @@ import {
   UpdatePurchaseOrderInput,
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
+import { AppError } from '@/utils/app-error';
 
 export class PurchaseOrderService {
   static async createPurchaseOrder(
     data: CreatePurchaseOrderInput
   ): Promise<PurchaseOrder> {
-    return prisma.purchaseOrder.create({
-      data,
-    });
+    try {
+      return await prisma.purchaseOrder.create({
+        data,
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('po_number')) {
+        throw new AppError('Purchase Order with this PO Number already exists', 409);
+      }
+      throw error;
+    }
   }
 
   static async getAllPurchaseOrders(): Promise<PurchaseOrder[]> {
