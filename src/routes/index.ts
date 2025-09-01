@@ -11,7 +11,12 @@ import { inventoryRoutes } from './inventory.routes';
 import notificationRoutes from './notification.routes';
 import { statusRoutes } from './status.routes';
 
+import { fileRoutes } from './file.routes';
+
+
+
 export default async (fastify: App) => {
+
   fastify.register(authRoutes, { prefix: '/auth' });
   fastify.register(userRoutes, { prefix: '/users' });
   fastify.register(roleRoutes, { prefix: '/roles' });
@@ -23,4 +28,5 @@ export default async (fastify: App) => {
   fastify.register(inventoryRoutes, { prefix: '/inventories' });
   fastify.register(notificationRoutes, { prefix: '/notifications' });
   fastify.register(statusRoutes, { prefix: '/statuses' });
+  fastify.register(fileRoutes, { prefix: '/files' });
 };

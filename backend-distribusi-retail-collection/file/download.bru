@@ -1,0 +1,19 @@
+meta {
+  name: download
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:5050/api/v1/files/download/{{fileId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+vars:pre-request {
+  fileId: cmf0jkxyo0002dqxhnvnzgtv5
+}
