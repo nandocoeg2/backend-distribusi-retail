@@ -1,12 +1,20 @@
 import { Customer } from '@prisma/client';
 import { prisma } from '@/config/database';
 import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
+import { AppError } from '@/utils/app-error';
 
 export class CustomerService {
   static async createCustomer(data: CreateCustomerInput): Promise<Customer> {
-    return prisma.customer.create({
-      data,
-    });
+    try {
+      return await prisma.customer.create({
+        data,
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
+        throw new AppError('Customer with this code already exists', 409);
+      }
+      throw error;
+    }
   }
 
   static async getAllCustomers(): Promise<Customer[]> {
