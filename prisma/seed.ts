@@ -208,6 +208,26 @@ async function main() {
     },
   });
 
+  const statusProcessed = await prisma.status.upsert({
+    where: { status_code: 'PROCESSED' },
+    update: {},
+    create: {
+      status_code: 'PROCESSED',
+      status_name: 'Processed',
+      status_description: 'File has been processed successfully',
+    },
+  });
+
+  const statusFailed = await prisma.status.upsert({
+    where: { status_code: 'FAILED' },
+    update: {},
+    create: {
+      status_code: 'FAILED',
+      status_name: 'Failed',
+      status_description: 'File processing has failed',
+    },
+  });
+
   // Create customers
   const customer1 = await prisma.customer.upsert({
     where: { email: 'customer1@example.com' },
@@ -332,7 +352,7 @@ async function main() {
       },
       total_items: 10,
       tanggal_order: new Date(),
-      po_type: 'Regular',
+      po_type: 'SINGLE',
     },
   });
 

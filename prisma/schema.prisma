@@ -105,9 +105,14 @@ model Supplier {
   @@map("suppliers")
 }
 
+enum POType {
+  SINGLE
+  BULK
+}
+
 model PurchaseOrder {
   id                 String   @id @default(cuid())
-  po_number          String   @unique
+  po_number          String
   suratJalan         String?
   invoicePengiriman  String?
   suratPO            String?
@@ -118,7 +123,7 @@ model PurchaseOrder {
   supplier           Supplier?  @relation(fields: [supplierId], references: [id])
   total_items        Int?
   tanggal_order      DateTime?
-  po_type            String?
+  po_type            POType   @default(SINGLE)
   statusId           String?
   status             Status?   @relation(fields: [statusId], references: [id])
   createdAt          DateTime @default(now())
@@ -131,15 +136,17 @@ model PurchaseOrder {
 }
 
 model FileUploaded {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   filename        String
   path            String
   mimetype        String
   size            Int
-  purchaseOrderId String
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  statusId        String?
+  status          Status?       @relation(fields: [statusId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@map("file_uploaded")
 }
@@ -150,6 +157,7 @@ model Status {
   status_name        String
   status_description String?
   purchaseOrders     PurchaseOrder[]
+  fileUploads        FileUploaded[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 

@@ -14,7 +14,7 @@ async function fileToGenerativePart(file: Buffer, mimeType: string) {
 }
 
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.5-flash',
   systemInstruction:
     'You are an expert at converting documents into structured JSON. ' +
     'Analyze the provided file and convert it into a valid JSON object based on the user\'s prompt. ' +
@@ -36,17 +36,35 @@ const model = genAI.getGenerativeModel({
         supplier: {
           type: SchemaType.OBJECT,
           properties: {
-            name:    { type: SchemaType.STRING },
-            code:    { type: SchemaType.STRING },
-            address: { type: SchemaType.STRING },
-            phone:   { type: SchemaType.STRING, nullable: true },
-            fax:     { type: SchemaType.STRING, nullable: true },
+            name:    { type: SchemaType.STRING, nullable: true, description: 'Nama supplier' },
+            code:    { type: SchemaType.STRING, nullable: true, description: 'Kode supplier' },
+            address: { type: SchemaType.STRING, nullable: true, description: 'Alamat supplier' },
+            phone:   { type: SchemaType.STRING, nullable: true, description: 'Nomor telepon supplier' },
+            fax:     { type: SchemaType.STRING, nullable: true, description: 'Nomor fax supplier' },
             bank: {
               type: SchemaType.OBJECT,
               properties: {
-                name:    { type: SchemaType.STRING },
-                account: { type: SchemaType.STRING },
-                holder:  { type: SchemaType.STRING }
+                name:    { type: SchemaType.STRING, nullable: true, description: 'Nama bank supplier' },
+                account: { type: SchemaType.STRING, nullable: true, description: 'Nomor rekening bank supplier' },
+                holder:  { type: SchemaType.STRING, nullable: true, description: 'Nama pemilik rekening bank supplier' }
+              }
+            }
+          }
+        },
+        customers: {
+          type: SchemaType.OBJECT,
+          properties: {
+            name:    { type: SchemaType.STRING, nullable: true, description: 'Nama customer' },
+            code:    { type: SchemaType.STRING, nullable: true, description: 'Kode customer' },
+            address: { type: SchemaType.STRING, nullable: true, description: 'Alamat customer' },
+            phone:   { type: SchemaType.STRING, nullable: true, description: 'Nomor telepon customer' },
+            fax:     { type: SchemaType.STRING, nullable: true, description: 'Nomor fax customer' },
+            bank: {
+              type: SchemaType.OBJECT,
+              properties: {
+                name:    { type: SchemaType.STRING, nullable: true, description: 'Nama bank customer' },
+                account: { type: SchemaType.STRING, nullable: true, description: 'Nomor rekening bank customer' },
+                holder:  { type: SchemaType.STRING, nullable: true, description: 'Nama pemilik rekening bank customer' }
               }
             }
           }
@@ -54,13 +72,13 @@ const model = genAI.getGenerativeModel({
         delivery: {
           type: SchemaType.OBJECT,
           properties: {
-            destination:   { type: SchemaType.STRING },
-            dateScheduled: { type: SchemaType.STRING },
-            timeScheduled: { type: SchemaType.STRING },
-            doorTime:      { type: SchemaType.STRING },
+            destination:   { type: SchemaType.STRING, nullable: true, description: 'Tujuan pengiriman' },
+            dateScheduled: { type: SchemaType.STRING, nullable: true, description: 'Tanggal pengiriman' },
+            timeScheduled: { type: SchemaType.STRING, nullable: true, description: 'Waktu pengiriman' },
+            doorTime:      { type: SchemaType.STRING, nullable: true, description: 'Waktu tiba di tempat' },
             notes: {
               type: SchemaType.ARRAY,
-              items: { type: SchemaType.STRING }
+              items: { type: SchemaType.STRING, nullable: true, description: 'Catatan pengiriman' }
             }
           }
         },
@@ -69,30 +87,33 @@ const model = genAI.getGenerativeModel({
           items: {
             type: SchemaType.OBJECT,
             properties: {
-              lineNo:            { type: SchemaType.INTEGER },
-              productName:       { type: SchemaType.STRING },
-              plu:               { type: SchemaType.STRING },
-              qtyOrdered_carton: { type: SchemaType.INTEGER },
-              qtyOrdered_pcs:    { type: SchemaType.INTEGER },
-              price_perPcs:      { type: SchemaType.NUMBER },
-              discount_percent:  { type: SchemaType.NUMBER },
-              netPrice_perPcs:   { type: SchemaType.NUMBER },
-              totalLine_net:     { type: SchemaType.NUMBER },
-              bonus:             { type: SchemaType.INTEGER },
-              lst:               { type: SchemaType.INTEGER },
-              remarks:           { type: SchemaType.STRING, nullable: true }
+              lineNo:            { type: SchemaType.INTEGER, nullable: true, description: 'Nomor urut' },
+              productName:       { type: SchemaType.STRING, nullable: true, description: 'Nama produk' },
+              plu:               { type: SchemaType.STRING, nullable: true, description: 'Kode PLU' },
+              qtyOrdered_carton: { type: SchemaType.INTEGER, nullable: true, description: 'Jumlah pesanan (carton)' },
+              qtyOrdered_pcs:    { type: SchemaType.INTEGER, nullable: true, description: 'Jumlah pesanan (pcs)' },
+              price_perPcs:      { type: SchemaType.NUMBER, nullable: true, description: 'Harga per pcs' },
+              discount_percent:  { type: SchemaType.NUMBER, nullable: true, description: 'Diskon persentase' },
+              netPrice_perPcs:   { type: SchemaType.NUMBER, nullable: true, description: 'Harga net per pcs' },
+              totalLine_net:     { type: SchemaType.NUMBER, nullable: true, description: 'Harga total per line' },
+              bonus:             { type: SchemaType.INTEGER, nullable: true, description: 'Bonus' },
+              lst:               { type: SchemaType.INTEGER, nullable: true, description: 'LST' },
+              remarks:           { type: SchemaType.STRING, nullable: true, description: 'Catatan' },
+              price_perCarton:   { type: SchemaType.NUMBER, nullable: true, description: 'Harga per carton' },
+              ppnbm:             { type: SchemaType.NUMBER, nullable: true, description: 'PPNBM' },
+              totalPrice:        { type: SchemaType.NUMBER, nullable: true, description: 'Harga total' },
             }
           }
         },
         pricing: {
           type: SchemaType.OBJECT,
           properties: {
-            subTotal:         { type: SchemaType.NUMBER },
-            totalDiscount:    { type: SchemaType.NUMBER },
-            netAfterDiscount: { type: SchemaType.NUMBER },
-            vatInput:         { type: SchemaType.NUMBER },
-            grandTotal:       { type: SchemaType.NUMBER },
-            inWords:          { type: SchemaType.STRING }
+            subTotal:         { type: SchemaType.NUMBER, nullable: true, description: 'Subtotal' },
+            totalDiscount:    { type: SchemaType.NUMBER, nullable: true, description: 'Total diskon' },
+            netAfterDiscount: { type: SchemaType.NUMBER, nullable: true, description: 'Harga setelah diskon' },
+            vatInput:         { type: SchemaType.NUMBER, nullable: true, description: 'Pajak input' },
+            grandTotal:       { type: SchemaType.NUMBER, nullable: true, description: 'Total harga' },
+            inWords:          { type: SchemaType.STRING, nullable: true, description: 'Total harga dalam kata' },
           }
         }
       }

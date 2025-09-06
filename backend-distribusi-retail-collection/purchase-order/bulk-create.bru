@@ -1,0 +1,24 @@
+meta {
+  name: Bulk Create Purchase Order
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5050/api/v1/purchase-orders/bulk
+  body: multipartForm
+  auth: bearer
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:multipart-form {
+  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_POPO.pdf)
+  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_PO.pdf)
+}

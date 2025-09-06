@@ -3,6 +3,7 @@ import { createApp } from '@/app';
 import logger from '@/config/logger';
 import { connectDatabase } from '@/config/database';
 import { connectRedis } from '@/config/redis';
+import { BulkPurchaseOrderService } from '@/services/bulk-purchase-order.service';
 
 // Load environment variables
 dotenv.config();
@@ -27,10 +28,18 @@ const start = async () => {
     await app.listen({ port, host });
     logger.info(`Server running on http://${host}:${port}`);
     logger.info(
-      `Swagger documentation available at http://${host}:${port}/docs`
+      `Swagger documentation available at http://${host}:${port}`
     );
-  } catch (error) {
-    logger.error('Failed to start server:', error);
+
+    // Start background job for bulk PO processing
+    setInterval(() => {
+      logger.info('Running bulk PO processing job...');
+      BulkPurchaseOrderService.processPendingFiles().catch((error) => {
+        logger.error('Error in bulk PO processing job:', error);
+      });
+    }, 30000); // every 30 seconds
+
+  } catch (error) {    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };
