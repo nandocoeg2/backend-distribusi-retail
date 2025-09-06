@@ -1,0 +1,27 @@
+meta {
+  name: Get All Bulk Uploads
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://localhost:5050/api/v1/purchase-orders/bulk/all?status={{status}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  status: {{status}}
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+vars:pre-request {
+  status: PROCESSED
+}

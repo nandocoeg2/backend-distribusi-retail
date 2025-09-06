@@ -3,7 +3,7 @@ import { convertFileToJson } from '@/services/conversion.service';
 import { AppError } from '@/utils/app-error';
 import logger from '@/config/logger';
 import fs from 'fs/promises';
-import { POType, Supplier } from '@prisma/client';
+import { POType, Supplier, Prisma } from '@prisma/client';
 
 export class BulkPurchaseOrderService {
   static async processPendingFiles() {
@@ -144,6 +144,30 @@ export class BulkPurchaseOrderService {
     }
 
     return file;
+  }
+
+  static async getAllBulkFiles(status?: string) {
+    const whereClause: Prisma.FileUploadedWhereInput = {
+      path: {
+        contains: 'bulk',
+      },
+    };
+
+    if (status) {
+      whereClause.status = {
+        status_code: status.toUpperCase(),
+      };
+    }
+
+    return prisma.fileUploaded.findMany({
+      where: whereClause,
+      include: {
+        status: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }
 

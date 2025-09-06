@@ -91,5 +91,13 @@ export class BulkPurchaseOrderController {
     const fileStatus = await BulkPurchaseOrderService.getBulkUploadStatus(id);
     return reply.send(fileStatus);
   }
-}
 
+  static async getAllBulkFiles(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const { status } = request.query as { status?: string };
+    const files = await BulkPurchaseOrderService.getAllBulkFiles(status);
+    return reply.send(files);
+  }
+}

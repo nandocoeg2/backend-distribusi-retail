@@ -10,11 +10,10 @@ get {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{access_token}}
-}
-
-
 headers {
   accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
 }

@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginCallback, FastifyPluginOptions } from 'fastify';
 import { BulkPurchaseOrderController } from '@/controllers/bulk-purchase-order.controller';
 import { validateRequest } from '@/middleware/validate-request';
-import { getBulkUploadStatusSchema } from '@/schemas/bulk-purchase-order.schema';
+import { getBulkUploadStatusSchema, getBulkUploadsSchema } from '@/schemas/bulk-purchase-order.schema';
 
 export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify,
@@ -22,6 +22,14 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
       preHandler: [fastify.authenticate, validateRequest(getBulkUploadStatusSchema)],
     },
     BulkPurchaseOrderController.getUploadStatus
+  );
+
+  fastify.get(
+    '/bulk/all',
+    {
+      preHandler: [fastify.authenticate, validateRequest(getBulkUploadsSchema)],
+    },
+    BulkPurchaseOrderController.getAllBulkFiles
   );
 
   done();

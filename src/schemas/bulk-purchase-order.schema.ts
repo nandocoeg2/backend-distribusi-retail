@@ -6,3 +6,11 @@ export const getBulkUploadStatusSchema = z.object({
   }),
 });
 
+export const getBulkUploadsSchema = z.object({
+  query: z.object({
+    status: z.enum(['PENDING', 'PROCESSED', 'FAILED']).optional(),
+  }),
+});
+
+export type GetBulkUploadsInput = z.infer<typeof getBulkUploadsSchema>;
+
