@@ -63,3 +63,4 @@ export const searchPurchaseOrderSchema = z.object({
 export type CreatePurchaseOrderInput = z.infer<typeof createPurchaseOrderSchema>['body'];
 export type UpdatePurchaseOrderInput = z.infer<typeof updatePurchaseOrderSchema>;
 export type SearchPurchaseOrderInput = z.infer<typeof searchPurchaseOrderSchema>;
+export type HistoryPurchaseOrderInput = z.infer<typeof paginationSchema>;

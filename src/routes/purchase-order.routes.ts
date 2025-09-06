@@ -10,6 +10,7 @@ import {
   UpdatePurchaseOrderInput,
   SearchPurchaseOrderInput,
   searchPurchaseOrderSchema,
+  HistoryPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 
 export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -37,6 +38,14 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
     '/',
     { preHandler: [fastify.authenticate] },
     PurchaseOrderController.getPurchaseOrders
+  );
+
+  fastify.get<{ Querystring: HistoryPurchaseOrderInput }>(
+    '/history',
+    {
+      preHandler: [fastify.authenticate],
+    },
+    PurchaseOrderController.getHistoryPurchaseOrders
   );
 
   fastify.get<{ Params: { id: string } }>(
@@ -71,4 +80,3 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
 
   done();
 };
-

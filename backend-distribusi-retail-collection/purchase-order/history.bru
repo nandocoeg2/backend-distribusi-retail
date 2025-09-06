@@ -1,0 +1,15 @@
+meta {
+  name: History Purchase Order
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:5050/api/v1/purchase-orders/history
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

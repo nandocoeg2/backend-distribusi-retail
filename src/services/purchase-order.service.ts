@@ -136,6 +136,60 @@ export class PurchaseOrderService {
     }
   }
 
+  static async getHistoryPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
+    const skip = (page - 1) * limit;
+
+    // Get status IDs for "APPROVED PURCHASE ORDER" and "FAILED PURCHASE ORDER"
+    const [approvedStatus, failedStatus] = await Promise.all([
+      prisma.status.findUnique({ where: { status_code: 'APPROVED PURCHASE ORDER' } }),
+      prisma.status.findUnique({ where: { status_code: 'FAILED PURCHASE ORDER' } }),
+    ]);
+
+    const statusIds: string[] = [];
+    if (approvedStatus) statusIds.push(approvedStatus.id);
+    if (failedStatus) statusIds.push(failedStatus.id);
+
+    const [data, totalItems] = await Promise.all([
+      prisma.purchaseOrder.findMany({
+        where: {
+          statusId: {
+            in: statusIds,
+          },
+        },
+        skip,
+        take: parseInt(limit.toString()),
+        include: {
+          customer: true,
+          supplier: true,
+          files: true,
+          status: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      }),
+      prisma.purchaseOrder.count({
+        where: {
+          statusId: {
+            in: statusIds,
+          },
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
   static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PaginatedResult<PurchaseOrder>> {
     const { 
       tanggal_order, 

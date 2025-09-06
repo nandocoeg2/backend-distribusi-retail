@@ -46,6 +46,81 @@ describe('PurchaseOrderService', () => {
     vi.restoreAllMocks();
   });
 
+  describe('getHistoryPurchaseOrders', () => {
+    it('should return purchase orders with APPROVED and FAILED status', async () => {
+      const mockApprovedStatus = { id: 'approved-status-id' };
+      const mockFailedStatus = { id: 'failed-status-id' };
+      
+      const mockHistoryResult = {
+        data: [
+          {
+            id: '1',
+            tanggal_order: new Date('2025-01-15'),
+            customerId: 'cust1',
+            customer: { name: 'Customer A' },
+            suratPO: 'PO-001',
+            invoicePengiriman: 'INV-001',
+            po_number: 'PO-NUM-001',
+            supplierId: 'supp1',
+            statusId: 'approved-status-id',
+            updatedAt: new Date('2025-01-16'),
+          },
+          {
+            id: '2',
+            tanggal_order: new Date('2025-01-16'),
+            customerId: 'cust2',
+            customer: { name: 'Customer B' },
+            suratPO: 'PO-002',
+            invoicePengiriman: 'INV-002',
+            po_number: 'PO-NUM-002',
+            supplierId: 'supp2',
+            statusId: 'failed-status-id',
+            updatedAt: new Date('2025-01-17'),
+          },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 2,
+          itemsPerPage: 10,
+        }
+      };
+
+      // Mock the status lookups
+      vi.spyOn(prisma.status, 'findUnique')
+        .mockResolvedValueOnce(mockApprovedStatus as any)
+        .mockResolvedValueOnce(mockFailedStatus as any);
+
+      // Mock the purchase order queries
+      vi.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockHistoryResult.data as any);
+      vi.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockHistoryResult.pagination.totalItems);
+
+      const result = await PurchaseOrderService.getHistoryPurchaseOrders(1, 10);
+      
+      expect(result).toEqual(mockHistoryResult);
+      expect(prisma.status.findUnique).toHaveBeenCalledWith({ where: { status_code: 'APPROVED PURCHASE ORDER' } });
+      expect(prisma.status.findUnique).toHaveBeenCalledWith({ where: { status_code: 'FAILED PURCHASE ORDER' } });
+      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith({
+        where: {
+          statusId: {
+            in: ['approved-status-id', 'failed-status-id'],
+          },
+        },
+        skip: 0,
+        take: 10,
+        include: {
+          customer: true,
+          supplier: true,
+          files: true,
+          status: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+    });
+  });
+
   describe('searchPurchaseOrders', () => {
     it('should return all purchase orders if no query is provided', async () => {
       const query: SearchPurchaseOrderInput['query'] = { page: 1, limit: 10 };

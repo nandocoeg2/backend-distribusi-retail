@@ -4,7 +4,9 @@ import {
   CreatePurchaseOrderInput,
   UpdatePurchaseOrderInput,
   SearchPurchaseOrderInput,
+  HistoryPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
+import { paginationSchema } from '@/schemas/pagination.schema';
 import { AppError } from '@/utils/app-error';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -135,6 +137,15 @@ export class PurchaseOrderController {
     const result = await PurchaseOrderService.searchPurchaseOrders(
       request.query
     );
+    return reply.send(result);
+  }
+
+  static async getHistoryPurchaseOrders(
+    request: FastifyRequest<{ Querystring: HistoryPurchaseOrderInput }>,
+    reply: FastifyReply
+  ) {
+    const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
+    const result = await PurchaseOrderService.getHistoryPurchaseOrders(page, limit);
     return reply.send(result);
   }
 }

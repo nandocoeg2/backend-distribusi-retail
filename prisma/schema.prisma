@@ -15,13 +15,11 @@ model User {
   firstName String?
   lastName  String?
   roleId    String
-  role      Role     @relation(fields: [roleId], references: [id])
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relations
-  profile  Profile?
+  profile   Profile?
+  role      Role     @relation(fields: [roleId], references: [id])
 
   @@map("users")
 }
@@ -32,33 +30,31 @@ model Profile {
   avatar String?
   bio    String?
   phone  String?
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
 
 model Role {
-  id          String @id @default(cuid())
-  name        String @unique
+  id          String     @id @default(cuid())
+  name        String     @unique
   description String?
-  users       User[]
   menus       RoleMenu[]
+  users       User[]
 
   @@map("roles")
 }
 
 model Menu {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  url       String
-  icon      String?
-  order     Int?
-  parentId  String?
-  parent    Menu?    @relation("SubMenu", fields: [parentId], references: [id])
-  children  Menu[]   @relation("SubMenu")
-  roles     RoleMenu[]
+  id       String     @id @default(cuid())
+  name     String     @unique
+  url      String
+  icon     String?
+  parentId String?
+  order    Int?
+  parent   Menu?      @relation("SubMenu", fields: [parentId], references: [id])
+  children Menu[]     @relation("SubMenu")
+  roles    RoleMenu[]
 
   @@map("menus")
 }
@@ -66,87 +62,79 @@ model Menu {
 model RoleMenu {
   roleId String
   menuId String
-  role   Role   @relation(fields: [roleId], references: [id])
   menu   Menu   @relation(fields: [menuId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
 
   @@id([roleId, menuId])
   @@map("role_menus")
 }
 
 model Customer {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  address     String?
-  phoneNumber String
-  email       String?  @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  address        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  email          String?         @unique
+  phoneNumber    String
   purchaseOrders PurchaseOrder[]
 
   @@map("customers")
 }
 
 model Supplier {
-  id          String   @id @default(cuid())
-  name        String
-  code        String?  @unique
-  description String?
-  address     String?
-  phoneNumber String
-  email       String?  @unique
-  bank        Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  address        String?
+  phoneNumber    String
+  email          String?         @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  bank           Json?
+  code           String?         @unique
   purchaseOrders PurchaseOrder[]
 
   @@map("suppliers")
 }
 
-enum POType {
-  SINGLE
-  BULK
-}
-
 model PurchaseOrder {
-  id                 String   @id @default(cuid())
-  po_number          String
-  suratJalan         String?
-  invoicePengiriman  String?
-  suratPO            String?
-  suratPenagihan     String?
-  customerId         String
-  customer           Customer @relation(fields: [customerId], references: [id])
-  supplierId         String?
-  supplier           Supplier?  @relation(fields: [supplierId], references: [id])
-  total_items        Int?
-  tanggal_order      DateTime?
-  po_type            POType   @default(SINGLE)
-  statusId           String?
-  status             Status?   @relation(fields: [statusId], references: [id])
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  files              FileUploaded[]
+  id                   String                @id @default(cuid())
+  suratJalan           String?
+  invoicePengiriman    String?
+  suratPO              String?
+  suratPenagihan       String?
+  customerId           String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  po_number            String
+  statusId             String?
+  tanggal_order        DateTime?
+  total_items          Int?
+  supplierId           String?
+  po_type              POType                @default(SINGLE)
+  files                FileUploaded[]
   purchaseOrderDetails PurchaseOrderDetail[]
+  customer             Customer              @relation(fields: [customerId], references: [id])
+  status               Status?               @relation(fields: [statusId], references: [id])
+  supplier             Supplier?             @relation(fields: [supplierId], references: [id])
 
   @@map("purchase_orders")
 }
 
 model FileUploaded {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
   filename        String
   path            String
   mimetype        String
   size            Int
   purchaseOrderId String?
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   statusId        String?
-  status          Status?       @relation(fields: [statusId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  status          Status?        @relation(fields: [statusId], references: [id])
 
   @@map("file_uploaded")
 }
@@ -156,42 +144,69 @@ model Status {
   status_code        String          @unique
   status_name        String
   status_description String?
-  purchaseOrders     PurchaseOrder[]
-  fileUploads        FileUploaded[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
+  fileUploads        FileUploaded[]
+  purchaseOrders     PurchaseOrder[]
 
   @@map("statuses")
 }
 
 model Inventory {
-  id           String   @id @default(cuid())
-  kode_barang  String   @unique
-  nama_barang  String
-  stok_barang  Int
-  min_stok     Int      @default(10)
-  harga_barang Float
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  notifications Notification[]
+  id                   String                @id @default(cuid())
+  kode_barang          String                @unique
+  nama_barang          String
+  stok_barang          Int
+  harga_barang         Float
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  min_stok             Int                   @default(10)
+  notifications        Notification[]
   purchaseOrderDetails PurchaseOrderDetail[]
 
   @@map("inventories")
 }
 
 model Notification {
-  id          String         @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   message     String
   type        NotificationType @default(GENERAL)
-  isRead      Boolean        @default(false)
+  isRead      Boolean          @default(false)
   inventoryId String?
-  inventory   Inventory?      @relation(fields: [inventoryId], references: [id])
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  inventory   Inventory?       @relation(fields: [inventoryId], references: [id])
 
   @@map("notifications")
+}
+
+model PurchaseOrderDetail {
+  id                     String        @id @default(cuid())
+  kode_barang            String
+  nama_barang            String
+  quantity               Int
+  isi                    Int
+  harga                  Float
+  potongan_a             Float?
+  harga_after_potongan_a Float?
+  harga_netto            Float
+  total_pembelian        Float
+  potongan_b             Float?
+  harga_after_potongan_b Float?
+  purchaseOrderId        String
+  inventoryId            String
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  inventory              Inventory     @relation(fields: [inventoryId], references: [id])
+  purchaseOrder          PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_details")
+}
+
+enum POType {
+  SINGLE
+  BULK
 }
 
 enum NotificationType {
@@ -200,27 +215,4 @@ enum NotificationType {
   OUT_OF_STOCK
   STOCK_ALERT
   SYSTEM
-}
-
-model PurchaseOrderDetail {
-  id                      String        @id @default(cuid())
-  kode_barang             String
-  nama_barang             String
-  quantity                Int
-  isi                     Int
-  harga                   Float
-  potongan_a              Float?
-  harga_after_potongan_a  Float?
-  harga_netto             Float
-  total_pembelian         Float
-  potongan_b              Float?
-  harga_after_potongan_b  Float?
-  purchaseOrderId         String
-  purchaseOrder           PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  inventoryId             String
-  inventory               Inventory     @relation(fields: [inventoryId], references: [id])
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
-
-  @@map("purchase_order_details")
 }

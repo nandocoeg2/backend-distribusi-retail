@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { PurchaseOrderController } from '@/controllers/purchase-order.controller';
 import { PurchaseOrderService } from '@/services/purchase-order.service';
-import { CreatePurchaseOrderInput, UpdatePurchaseOrderInput } from '@/schemas/purchase-order.schema';
+import { CreatePurchaseOrderInput, UpdatePurchaseOrderInput, HistoryPurchaseOrderInput } from '@/schemas/purchase-order.schema';
 
 jest.mock('@/services/purchase-order.service');
 
@@ -144,6 +144,26 @@ describe('PurchaseOrderController', () => {
       expect(PurchaseOrderService.deletePurchaseOrder).toHaveBeenCalledWith('1');
       expect(reply.code).toHaveBeenCalledWith(404);
       expect(reply.send).toHaveBeenCalledWith({ message: 'Purchase Order not found' });
+    });
+  });
+
+  describe('getHistoryPurchaseOrders', () => {
+    it('should call PurchaseOrderService.getHistoryPurchaseOrders and return result', async () => {
+      const mockResult = {
+        data: [],
+        pagination: { currentPage: 1, totalPages: 0, totalItems: 0, itemsPerPage: 10 }
+      };
+      (PurchaseOrderService.getHistoryPurchaseOrders as jest.Mock).mockResolvedValue(mockResult);
+
+      request.query = { page: 1, limit: 10 };
+
+      await PurchaseOrderController.getHistoryPurchaseOrders(
+        request as FastifyRequest<{ Querystring: any }>,
+        reply as FastifyReply
+      );
+
+      expect(PurchaseOrderService.getHistoryPurchaseOrders).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(mockResult);
     });
   });
 });
