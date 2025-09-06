@@ -1,7 +1,7 @@
 meta {
   name: role
   type: http
-  seq: 6
+  seq: 4
 }
 
 get {
@@ -10,11 +10,10 @@ get {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{access_token}}
-}
-
-
 headers {
   accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
 }

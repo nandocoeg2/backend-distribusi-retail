@@ -75,8 +75,14 @@ export const updateInventoryHandler = async (
 ) => {
   try {
     const inventory = await updateInventory(request.params.id, request.body);
+    
+    if (!inventory) {
+      throw new AppError('Inventory not found', 404);
+    }
+    
     return reply.status(200).send(inventory);
   } catch (e) {
+    if (e instanceof AppError) throw e;
     throw new AppError('Error updating inventory', 500);
   }
 };
@@ -86,10 +92,15 @@ export const deleteInventoryHandler = async (
   reply: FastifyReply
 ) => {
   try {
-    await deleteInventory(request.params.id);
+    const deletedInventory = await deleteInventory(request.params.id);
+    
+    if (!deletedInventory) {
+      throw new AppError('Inventory not found', 404);
+    }
+    
     return reply.status(204).send();
   } catch (e) {
+    if (e instanceof AppError) throw e;
     throw new AppError('Error deleting inventory', 500);
   }
 };
-

@@ -1,16 +1,15 @@
 meta {
   name: delete
   type: http
-  seq: 4
+  seq: 3
 }
 
 delete {
   url: http://localhost:5050/api/v1/roles/cmeef187y0002ydcqnpkk2qn9
   body: none
-   auth: bearer
+  auth: bearer
 }
 
 auth:bearer {
   token: {{access_token}}
 }
-

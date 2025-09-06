@@ -162,12 +162,26 @@ describe('Inventory Controller', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith(updatedInventory);
     });
+
+    it('should return 404 if inventory not found', async () => {
+      const updateInventoryInput: UpdateInventoryInput['body'] = { stok_barang: 150 };
+      request.body = updateInventoryInput;
+      request.params = { id: '1' };
+      jest.spyOn(inventoryService, 'updateInventory').mockResolvedValue(null);
+
+      await expect(
+        updateInventoryHandler(
+          request as FastifyRequest<{ Body: UpdateInventoryInput['body']; Params: { id: string } }>,
+          reply as FastifyReply
+        )
+      ).rejects.toThrow(new AppError('Inventory not found', 404));
+    });
   });
 
   describe('deleteInventoryHandler', () => {
     it('should delete an inventory and return 204', async () => {
       request.params = { id: '1' };
-      jest.spyOn(inventoryService, 'deleteInventory').mockResolvedValue({} as any);
+      jest.spyOn(inventoryService, 'deleteInventory').mockResolvedValue(mockInventory);
 
       await deleteInventoryHandler(
         request as FastifyRequest<{ Params: { id: string } }>,
@@ -177,6 +191,17 @@ describe('Inventory Controller', () => {
       expect(reply.status).toHaveBeenCalledWith(204);
       expect(reply.send).toHaveBeenCalled();
     });
+
+    it('should return 404 if inventory not found', async () => {
+      request.params = { id: '1' };
+      jest.spyOn(inventoryService, 'deleteInventory').mockResolvedValue(null);
+
+      await expect(
+        deleteInventoryHandler(
+          request as FastifyRequest<{ Params: { id: string } }>,
+          reply as FastifyReply
+        )
+      ).rejects.toThrow(new AppError('Inventory not found', 404));
+    });
   });
 });
-

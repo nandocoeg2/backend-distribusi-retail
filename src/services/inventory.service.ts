@@ -105,6 +105,15 @@ export const getInventoryById = async (id: string) => {
 };
 
 export const updateInventory = async (id: string, data: UpdateInventoryInput['body']) => {
+  // First check if the inventory exists
+  const existingInventory = await prisma.inventory.findUnique({
+    where: { id },
+  });
+  
+  if (!existingInventory) {
+    return null; // Return null to indicate record not found
+  }
+  
   return prisma.inventory.update({
     where: { id },
     data,
@@ -112,8 +121,16 @@ export const updateInventory = async (id: string, data: UpdateInventoryInput['bo
 };
 
 export const deleteInventory = async (id: string) => {
+  // First check if the inventory exists
+  const existingInventory = await prisma.inventory.findUnique({
+    where: { id },
+  });
+  
+  if (!existingInventory) {
+    return null; // Return null to indicate record not found
+  }
+  
   return prisma.inventory.delete({
     where: { id },
   });
 };
-
