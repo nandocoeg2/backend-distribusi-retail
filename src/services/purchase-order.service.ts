@@ -20,9 +20,16 @@ export class PurchaseOrderService {
     fileInfos: FileInfo[]
   ): Promise<PurchaseOrder> {
     try {
+      const customer = await prisma.customer.findUnique({
+        where: { id: poData.customerId },
+      });
+
+      if (!customer) {
+        throw new AppError('Customer not found', 404);
+      }
+
       const dataForDb = {
         ...poData,
-        total_items: parseInt(poData.total_items, 10),
         tanggal_order: new Date(poData.tanggal_order),
         files: {
           create: fileInfos,
@@ -55,7 +62,7 @@ export class PurchaseOrderService {
   }
 
   static async getPurchaseOrderById(id: string): Promise<PurchaseOrder | null> {
-    return prisma.purchaseOrder.findUnique({
+    const purchaseOrder = await prisma.purchaseOrder.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -65,6 +72,12 @@ export class PurchaseOrderService {
         status: true,
       },
     });
+
+    if (purchaseOrder && purchaseOrder.po_type === 'BULK' && (!purchaseOrder.files || purchaseOrder.files.length === 0)) {
+      throw new AppError('Data integrity violation: BULK purchase order must have at least one file.', 500);
+    }
+
+    return purchaseOrder;
   }
 
   static async updatePurchaseOrder(

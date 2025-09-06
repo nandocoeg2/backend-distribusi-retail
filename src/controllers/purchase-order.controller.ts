@@ -51,16 +51,12 @@ export class PurchaseOrderController {
         }
       }
 
-      if (fileInfos.length === 0) {
-        throw new AppError('At least one file is required', 400);
-      }
-
       const poData: CreatePurchaseOrderInput = {
         customerId: fields.customerId,
         po_number: fields.po_number,
-        total_items: fields.total_items,
+        total_items: parseInt(fields.total_items, 10),  
         tanggal_order: fields.tanggal_order,
-        po_type: fields.po_type,
+        po_type: fields.po_type as 'BULK' | 'SINGLE',
         statusId: fields.statusId,
         suratJalan: fields.suratJalan,
         invoicePengiriman: fields.invoicePengiriman,

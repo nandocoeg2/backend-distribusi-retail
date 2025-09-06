@@ -228,6 +228,57 @@ async function main() {
     },
   });
 
+  const statusProcessing = await prisma.status.upsert({
+    where: { status_code: 'PROCESSING' },
+    update: {},
+    create: {
+      status_code: 'PROCESSING',
+      status_name: 'Processing',
+      status_description: 'File is currently being processed',
+    },
+  });
+
+  // Statuses for Bulk File Processing
+  await prisma.status.upsert({
+    where: { status_code: 'PENDING BULK FILE' },
+    update: {},
+    create: {
+      status_code: 'PENDING BULK FILE',
+      status_name: 'Pending Bulk File',
+      status_description: 'Bulk file is pending processing',
+    },
+  });
+
+  await prisma.status.upsert({
+    where: { status_code: 'PROCESSING BULK FILE' },
+    update: {},
+    create: {
+      status_code: 'PROCESSING BULK FILE',
+      status_name: 'Processing Bulk File',
+      status_description: 'Bulk file is currently being processed',
+    },
+  });
+
+  await prisma.status.upsert({
+    where: { status_code: 'PROCESSED BULK FILE' },
+    update: {},
+    create: {
+      status_code: 'PROCESSED BULK FILE',
+      status_name: 'Processed Bulk File',
+      status_description: 'Bulk file has been processed successfully',
+    },
+  });
+
+  await prisma.status.upsert({
+    where: { status_code: 'FAILED BULK FILE' },
+    update: {},
+    create: {
+      status_code: 'FAILED BULK FILE',
+      status_name: 'Failed Bulk File',
+      status_description: 'Bulk file processing has failed',
+    },
+  });
+
   // Create customers
   const customer1 = await prisma.customer.upsert({
     where: { email: 'customer1@example.com' },
@@ -250,7 +301,8 @@ async function main() {
     },
   });
 
-  // Create inventory data
+  // Clean up existing data in the correct order to avoid foreign key violations
+  await prisma.purchaseOrder.deleteMany({});
   await prisma.inventory.deleteMany({});
 
   const inventories = await Promise.all([
@@ -338,8 +390,7 @@ async function main() {
 
   console.log(`Created ${inventories.length} inventory items`);
 
-  // Create purchase orders
-  await prisma.purchaseOrder.deleteMany({});
+  // Create a new purchase order
 
   await prisma.purchaseOrder.create({
     data: {

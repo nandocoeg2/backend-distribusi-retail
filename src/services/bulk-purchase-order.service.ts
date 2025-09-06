@@ -10,7 +10,7 @@ export class BulkPurchaseOrderService {
     const pendingFiles = await prisma.fileUploaded.findMany({
       where: {
         status: {
-          status_code: 'PENDING',
+          status_code: 'PENDING BULK FILE',
         },
         purchaseOrderId: null,
       },
@@ -21,16 +21,23 @@ export class BulkPurchaseOrderService {
     }
 
     const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING' } });
-    const fileProcessedStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSED' } });
-    const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED' } });
+    const fileProcessingStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSING BULK FILE' } });
+    const fileProcessedStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSED BULK FILE' } });
+    const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
 
-    if (!poPendingStatus || !fileProcessedStatus || !fileFailedStatus) {
-      logger.error('Core statuses (PENDING, PROCESSED, FAILED) not found. Aborting.');
+    if (!poPendingStatus || !fileProcessingStatus || !fileProcessedStatus || !fileFailedStatus) {
+      logger.error('Core statuses (PENDING, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
       return;
     }
 
     for (const file of pendingFiles) {
       try {
+        // --- Lock the file by setting status to PROCESSING ---
+        await prisma.fileUploaded.update({
+          where: { id: file.id },
+          data: { statusId: fileProcessingStatus.id },
+        });
+        logger.info(`Locked file ${file.id} for processing.`);
         // --- Perform heavy operations outside the transaction ---
         const fileBuffer = await fs.readFile(file.path);
         const jsonResult: any = await convertFileToJson(
@@ -170,4 +177,3 @@ export class BulkPurchaseOrderService {
     });
   }
 }
-

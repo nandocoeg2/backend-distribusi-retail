@@ -21,7 +21,7 @@ export class BulkPurchaseOrderController {
     const tempFilepaths: string[] = [];
 
     const pendingStatus = await prisma.status.findUnique({
-      where: { status_code: 'PENDING' },
+      where: { status_code: 'PENDING BULK FILE' },
     });
 
     if (!pendingStatus) {

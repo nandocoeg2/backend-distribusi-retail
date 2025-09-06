@@ -14,6 +14,7 @@ import { errorHandler } from '@/middleware/error.middleware';
 import routes from '@/routes';
 import { authMiddleware } from '@/middleware/auth.middleware';
 import { cspOptions } from '@/config/csp';
+import { corsOptions } from '@/config/cors';
 
 export const createApp = async () => {
   const app = Fastify({
@@ -29,10 +30,7 @@ export const createApp = async () => {
     contentSecurityPolicy: cspOptions,
   });
 
-  await app.register(cors, {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
-    credentials: true,
-  });
+  await app.register(cors, corsOptions);
 
   await app.register(rateLimit, {
     max: parseInt(process.env.RATE_LIMIT_MAX || '100', 1),

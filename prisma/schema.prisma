@@ -142,7 +142,7 @@ model FileUploaded {
   mimetype        String
   size            Int
   purchaseOrderId String?
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   statusId        String?
   status          Status?       @relation(fields: [statusId], references: [id])
   createdAt       DateTime      @default(now())
@@ -216,7 +216,7 @@ model PurchaseOrderDetail {
   potongan_b              Float?
   harga_after_potongan_b  Float?
   purchaseOrderId         String
-  purchaseOrder           PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder           PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   inventoryId             String
   inventory               Inventory     @relation(fields: [inventoryId], references: [id])
   createdAt               DateTime      @default(now())

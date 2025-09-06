@@ -1,13 +1,14 @@
 import { z } from 'zod';
+import { POType } from '@prisma/client';
 
 export const createPurchaseOrderSchema = z.object({
   body: z.object({
-    customerId: z.string(), // Changed from uuid() to allow CUIDs
+    customerId: z.string(),
     po_number: z.string(),
-    total_items: z.string(),
+    total_items: z.coerce.number().int(),
     tanggal_order: z.string(),
-    po_type: z.string(),
-    statusId: z.string(), // Changed from uuid() to allow CUIDs
+    po_type: z.nativeEnum(POType),
+    statusId: z.string(),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),
@@ -17,21 +18,21 @@ export const createPurchaseOrderSchema = z.object({
 
 export const getPurchaseOrderSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string(),
   }),
 });
 
 export const updatePurchaseOrderSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string(),
   }),
   body: z.object({
-    customerId: z.string().optional(), // Changed from uuid() to allow CUIDs
+    customerId: z.string().optional(),
     po_number: z.string().optional(),
     total_items: z.number().int().optional(),
     tanggal_order: z.string().datetime().optional(),
-    po_type: z.string().optional(),
-    statusId: z.string().optional(), // Changed from uuid() to allow CUIDs
+    po_type: z.nativeEnum(POType).optional(),
+    statusId: z.string().optional(),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),
@@ -41,7 +42,7 @@ export const updatePurchaseOrderSchema = z.object({
 
 export const deletePurchaseOrderSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string(),
   }),
 });
 
@@ -61,3 +62,4 @@ export const searchPurchaseOrderSchema = z.object({
 export type CreatePurchaseOrderInput = z.infer<typeof createPurchaseOrderSchema>['body'];
 export type UpdatePurchaseOrderInput = z.infer<typeof updatePurchaseOrderSchema>;
 export type SearchPurchaseOrderInput = z.infer<typeof searchPurchaseOrderSchema>;
+

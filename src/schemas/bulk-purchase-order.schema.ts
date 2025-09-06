@@ -8,9 +8,8 @@ export const getBulkUploadStatusSchema = z.object({
 
 export const getBulkUploadsSchema = z.object({
   query: z.object({
-    status: z.enum(['PENDING', 'PROCESSED', 'FAILED']).optional(),
+    status: z.enum(['PENDING BULK FILE', 'PROCESSING BULK FILE', 'PROCESSED BULK FILE', 'FAILED BULK FILE']).optional(),
   }),
 });
 
 export type GetBulkUploadsInput = z.infer<typeof getBulkUploadsSchema>;
-
