@@ -18,6 +18,7 @@ jest.mock('@/config/database', () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
   },
 }));
@@ -47,7 +48,7 @@ describe('Inventory Service', () => {
   });
 
   describe('getAllInventories', () => {
-    it('should return all inventories', async () => {
+    it('should return paginated inventories', async () => {
       const mockInventories = [
         {
           id: '1',
@@ -58,21 +59,28 @@ describe('Inventory Service', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
         },
-        {
-          id: '2',
-          kode_barang: 'BRG002',
-          nama_barang: 'Test Item 2',
-          stok_barang: 200,
-          harga_barang: 20000,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
       ];
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
+      (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await getAllInventories();
-      expect(result).toEqual(mockInventories);
-      expect(prisma.inventory.findMany).toHaveBeenCalled();
+      const result = await getAllInventories(1, 10);
+      expect(result).toEqual({
+        data: mockInventories,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        },
+      });
+      expect(prisma.inventory.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      expect(prisma.inventory.count).toHaveBeenCalled();
     });
   });
 
@@ -134,3 +142,4 @@ describe('Inventory Service', () => {
     });
   });
 });
+

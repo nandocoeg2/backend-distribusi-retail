@@ -10,6 +10,8 @@ import {
   createInventorySchema,
   getOrDeleteInventorySchema,
   updateInventorySchema,
+  getAllInventoriesSchema,
+  GetAllInventoriesInput,
 } from '@/schemas/inventory.schema';
 import { validateRequest } from '@/middleware/validate-request';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
@@ -24,7 +26,14 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
     createInventoryHandler
   );
 
-  fastify.get('/', { preHandler: [fastify.authenticate] }, getAllInventoriesHandler);
+  fastify.get<{ Querystring: GetAllInventoriesInput['query'] }>(
+    '/',
+    {
+      schema: getAllInventoriesSchema,
+      preHandler: [fastify.authenticate, validateRequest(getAllInventoriesSchema)],
+    },
+    getAllInventoriesHandler
+  );
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',

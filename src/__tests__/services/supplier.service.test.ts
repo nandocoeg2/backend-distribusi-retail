@@ -128,15 +128,15 @@ describe('SupplierService', () => {
     });
 
     it('should return null if supplier to update is not found', async () => {
-        const supplierId = '999';
-        const input: UpdateSupplierInput['body'] = { name: 'Non Existent' };
+      const supplierId = '999';
+      const input: UpdateSupplierInput['body'] = { name: 'Non Existent' };
+      const prismaError = { code: 'P2025' };
+      (prisma.supplier.update as jest.Mock).mockRejectedValue(prismaError);
 
-        (prisma.supplier.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
+      const result = await SupplierService.updateSupplier(supplierId, input);
 
-        const result = await SupplierService.updateSupplier(supplierId, input);
-
-        expect(result).toBeNull();
-      });
+      expect(result).toBeNull();
+    });
   });
 
   describe('deleteSupplier', () => {
@@ -153,14 +153,14 @@ describe('SupplierService', () => {
     });
 
     it('should return null if supplier to delete is not found', async () => {
-        const supplierId = '999';
+      const supplierId = '999';
+      const prismaError = { code: 'P2025' };
+      (prisma.supplier.delete as jest.Mock).mockRejectedValue(prismaError);
 
-        (prisma.supplier.delete as jest.Mock).mockRejectedValue(new Error('Record not found'));
+      const result = await SupplierService.deleteSupplier(supplierId);
 
-        const result = await SupplierService.deleteSupplier(supplierId);
-
-        expect(result).toBeNull();
-      });
+      expect(result).toBeNull();
+    });
   });
 
   describe('searchSuppliers', () => {
@@ -246,3 +246,4 @@ describe('SupplierService', () => {
     });
   });
 });
+

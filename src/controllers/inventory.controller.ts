@@ -6,7 +6,11 @@ import {
   updateInventory,
   deleteInventory,
 } from '@/services/inventory.service';
-import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
+import { 
+  CreateInventoryInput, 
+  UpdateInventoryInput, 
+  GetAllInventoriesInput 
+} from '@/schemas/inventory.schema';
 import { AppError } from '@/utils/app-error';
 
 export const createInventoryHandler = async (
@@ -22,11 +26,12 @@ export const createInventoryHandler = async (
 };
 
 export const getAllInventoriesHandler = async (
-  request: FastifyRequest,
+  request: FastifyRequest<{ Querystring: GetAllInventoriesInput['query'] }>,
   reply: FastifyReply
 ) => {
   try {
-    const inventories = await getAllInventories();
+    const { page = 1, limit = 10 } = request.query;
+    const inventories = await getAllInventories(page, limit);
     return reply.status(200).send(inventories);
   } catch (e) {
     throw new AppError('Error fetching inventories', 500);

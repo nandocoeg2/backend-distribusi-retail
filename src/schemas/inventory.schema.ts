@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationSchema } from './pagination.schema';
 
 export const createInventorySchema = z.object({
   body: z.object({
@@ -37,5 +38,11 @@ export const getOrDeleteInventorySchema = z.object({
   }),
 });
 
+export const getAllInventoriesSchema = z.object({
+  query: paginationSchema,
+});
+
 export type CreateInventoryInput = z.infer<typeof createInventorySchema>['body'];
 export type UpdateInventoryInput = z.infer<typeof updateInventorySchema>;
+export type GetAllInventoriesInput = z.infer<typeof getAllInventoriesSchema>;
+

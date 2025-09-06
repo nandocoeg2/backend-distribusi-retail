@@ -8,7 +8,11 @@ import {
 } from '@/controllers/inventory.controller';
 import * as inventoryService from '@/services/inventory.service';
 import { AppError } from '@/utils/app-error';
-import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
+import { 
+  CreateInventoryInput, 
+  UpdateInventoryInput, 
+  GetAllInventoriesInput 
+} from '@/schemas/inventory.schema';
 
 const mockInventory = {
   id: '1',
@@ -29,6 +33,7 @@ describe('Inventory Controller', () => {
     request = {
       body: {},
       params: {},
+      query: {},
     };
     reply = {
       status: jest.fn().mockReturnThis(),
@@ -63,14 +68,27 @@ describe('Inventory Controller', () => {
   });
 
   describe('getAllInventoriesHandler', () => {
-    it('should get all inventories and return 200', async () => {
-      const mockInventories = [mockInventory];
-      jest.spyOn(inventoryService, 'getAllInventories').mockResolvedValue(mockInventories);
+    it('should get all inventories with pagination and return 200', async () => {
+      const mockPaginatedInventories = {
+        data: [mockInventory],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        },
+      };
+      request.query = { page: 1, limit: 10 };
+      jest.spyOn(inventoryService, 'getAllInventories').mockResolvedValue(mockPaginatedInventories as any);
 
-      await getAllInventoriesHandler(request as FastifyRequest, reply as FastifyReply);
+      await getAllInventoriesHandler(
+        request as FastifyRequest<{ Querystring: GetAllInventoriesInput['query'] }>,
+        reply as FastifyReply
+      );
 
       expect(reply.status).toHaveBeenCalledWith(200);
-      expect(reply.send).toHaveBeenCalledWith(mockInventories);
+      expect(reply.send).toHaveBeenCalledWith(mockPaginatedInventories);
+      expect(inventoryService.getAllInventories).toHaveBeenCalledWith(1, 10);
     });
   });
 
