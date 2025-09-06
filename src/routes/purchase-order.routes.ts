@@ -11,6 +11,8 @@ import {
   SearchPurchaseOrderInput,
   searchPurchaseOrderSchema,
   HistoryPurchaseOrderInput,
+  processPurchaseOrderSchema,
+  ProcessPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 
 export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -76,6 +78,17 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
       ],
     },
     PurchaseOrderController.deletePurchaseOrder
+  );
+
+  fastify.patch<{ Params: { id: string }; Body: ProcessPurchaseOrderInput['body'] }>(
+    '/process/:id',
+    {
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(processPurchaseOrderSchema),
+      ],
+    },
+    PurchaseOrderController.processPurchaseOrder
   );
 
   done();

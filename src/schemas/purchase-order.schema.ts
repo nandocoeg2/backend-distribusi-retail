@@ -77,7 +77,19 @@ export const searchPurchaseOrderSchema = z.object({
   }).merge(paginationSchema),
 });
 
+export const processPurchaseOrderSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    statusId: z.string(),
+  }),
+});
+
+
 export type CreatePurchaseOrderInput = z.infer<typeof createPurchaseOrderSchema>['body'];
 export type UpdatePurchaseOrderInput = z.infer<typeof updatePurchaseOrderSchema>;
 export type SearchPurchaseOrderInput = z.infer<typeof searchPurchaseOrderSchema>;
 export type HistoryPurchaseOrderInput = z.infer<typeof paginationSchema>;
+export type ProcessPurchaseOrderInput = z.infer<typeof processPurchaseOrderSchema>;
+

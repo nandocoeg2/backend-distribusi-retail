@@ -350,4 +350,30 @@ export class PurchaseOrderService {
       },
     };
   }
+
+  static async processPurchaseOrder(
+    id: string,
+    statusId: string
+  ): Promise<PurchaseOrder> {
+    const purchaseOrder = await prisma.purchaseOrder.findUnique({
+      where: { id },
+    });
+
+    if (!purchaseOrder) {
+      throw new AppError('Purchase Order not found', 404);
+    }
+
+    const status = await prisma.status.findUnique({
+      where: { id: statusId },
+    });
+
+    if (!status) {
+      throw new AppError('Status not found', 404);
+    }
+
+    return await prisma.purchaseOrder.update({
+      where: { id },
+      data: { statusId },
+    });
+  }
 }

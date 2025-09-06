@@ -1,0 +1,30 @@
+meta {
+  name: Process Purchase Order
+  type: http
+  seq: 5
+}
+
+patch {
+  url: http://localhost:5050/api/v1/purchase-orders/process/{{purchaseOrderId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "statusId": "your-status-id"
+  }
+}
+
+vars:pre-request {
+  purchaseOrderId: your-purchase-order-id
+}
+

@@ -5,6 +5,7 @@ import {
   UpdatePurchaseOrderInput,
   SearchPurchaseOrderInput,
   HistoryPurchaseOrderInput,
+  ProcessPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { paginationSchema } from '@/schemas/pagination.schema';
 import { AppError } from '@/utils/app-error';
@@ -147,5 +148,19 @@ export class PurchaseOrderController {
     const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
     const result = await PurchaseOrderService.getHistoryPurchaseOrders(page, limit);
     return reply.send(result);
+  }
+
+  static async processPurchaseOrder(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: ProcessPurchaseOrderInput['body'];
+    }>,
+    reply: FastifyReply
+  ) {
+    const purchaseOrder = await PurchaseOrderService.processPurchaseOrder(
+      request.params.id,
+      request.body.statusId
+    );
+    return reply.send(purchaseOrder);
   }
 }
