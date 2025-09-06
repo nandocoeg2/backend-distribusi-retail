@@ -11,6 +11,7 @@ import { inventoryRoutes } from './inventory.routes';
 import notificationRoutes from './notification.routes';
 import { statusRoutes } from './status.routes';
 import { bulkPurchaseOrderRoutes } from './bulk-purchase-order.routes';
+import { packingRoutes } from './packing.routes';
 
 import { fileRoutes } from './file.routes';
 
@@ -31,4 +32,5 @@ export default async (fastify: App) => {
   fastify.register(statusRoutes, { prefix: '/statuses' });
   fastify.register(fileRoutes, { prefix: '/files' });
   fastify.register(bulkPurchaseOrderRoutes, { prefix: '/purchase-orders' });
+  fastify.register(packingRoutes, { prefix: '/packings' });
 };

@@ -1,0 +1,19 @@
+meta {
+  name: Delete Packing
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://localhost:5050/api/v1/packings/{{packingId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

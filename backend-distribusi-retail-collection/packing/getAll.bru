@@ -1,0 +1,19 @@
+meta {
+  name: Get Packings
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:5050/api/v1/packings/
+  body: none
+  auth: bearer
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

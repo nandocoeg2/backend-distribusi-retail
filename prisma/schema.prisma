@@ -116,6 +116,7 @@ model PurchaseOrder {
   po_type              POType                @default(SINGLE)
   files                FileUploaded[]
   purchaseOrderDetails PurchaseOrderDetail[]
+  packings             Packing[]
   customer             Customer              @relation(fields: [customerId], references: [id])
   status               Status?               @relation(fields: [statusId], references: [id])
   supplier             Supplier?             @relation(fields: [supplierId], references: [id])
@@ -148,6 +149,7 @@ model Status {
   updatedAt          DateTime        @updatedAt
   fileUploads        FileUploaded[]
   purchaseOrders     PurchaseOrder[]
+  packings           Packing[]
 
   @@map("statuses")
 }
@@ -163,6 +165,7 @@ model Inventory {
   min_stok             Int                   @default(10)
   notifications        Notification[]
   purchaseOrderDetails PurchaseOrderDetail[]
+  packingItems         PackingItem[]
 
   @@map("inventories")
 }
@@ -215,4 +218,36 @@ enum NotificationType {
   OUT_OF_STOCK
   STOCK_ALERT
   SYSTEM
+}
+
+model Packing {
+  id              String        @id @default(cuid())
+  tanggal_packing DateTime
+  statusId        String
+  purchaseOrderId String        @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  updatedBy       String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  status          Status        @relation(fields: [statusId], references: [id])
+  packingItems    PackingItem[]
+
+  @@map("packings")
+}
+
+model PackingItem {
+  id             String      @id @default(cuid())
+  nama_barang    String
+  total_qty      Int
+  jumlah_carton  Int
+  isi_per_carton Int
+  no_box         String
+  packingId      String
+  inventoryId    String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  packing        Packing     @relation(fields: [packingId], references: [id], onDelete: Cascade)
+  inventory      Inventory   @relation(fields: [inventoryId], references: [id])
+
+  @@map("packing_items")
 }

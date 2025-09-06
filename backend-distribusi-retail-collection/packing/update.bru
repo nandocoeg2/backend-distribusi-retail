@@ -1,0 +1,36 @@
+meta {
+  name: Update Packing
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:5050/api/v1/packings/{{packingId}}
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "tanggal_packing": "2025-09-06T00:00:00.000Z",
+    "statusId": "{{statusId}}",
+    "packingItems": [
+      {
+        "nama_barang": "Updated Product Name",
+        "total_qty": 200,
+        "jumlah_carton": 20,
+        "isi_per_carton": 10,
+        "no_box": "BOX002",
+        "inventoryId": "{{inventoryId}}"
+      }
+    ]
+  }
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
