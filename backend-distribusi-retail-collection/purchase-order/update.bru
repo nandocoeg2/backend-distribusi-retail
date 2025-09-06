@@ -10,22 +10,21 @@ put {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{access_token}}
-}
-
-
 headers {
   accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
 }
 
 body:json {
   {
     "total_items": 15,
-    "po_type": "Express"
+    "po_number": "2PZ1POC2500302312312311"
   }
 }
 
 vars:pre-request {
-  purchaseOrderId: clwtu45n4000008l89k2e56e0
+  purchaseOrderId: cmf7t4pbk00397lsxp8cnp18m
 }

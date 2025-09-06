@@ -142,13 +142,59 @@ export class PurchaseOrderService {
     id: string,
     data: UpdatePurchaseOrderInput['body']
   ): Promise<PurchaseOrder | null> {
+    const { purchaseOrderDetails, ...poData } = data;
+
     try {
-      return await prisma.purchaseOrder.update({
-        where: { id },
-        data,
+      const updatedPurchaseOrder = await prisma.$transaction(async (tx) => {
+        // 1. Check if the purchase order exists
+        const existingPO = await tx.purchaseOrder.findUnique({
+          where: { id },
+        });
+
+        if (!existingPO) {
+          throw new AppError('Purchase Order not found', 404);
+        }
+
+        // 2. If purchaseOrderDetails are provided, delete old ones and create new ones
+        if (purchaseOrderDetails) {
+          await tx.purchaseOrderDetail.deleteMany({
+            where: { purchaseOrderId: id },
+          });
+
+          await tx.purchaseOrderDetail.createMany({
+            data: purchaseOrderDetails.map((detail) => ({
+              ...detail,
+              purchaseOrderId: id,
+            })),
+          });
+        }
+
+        // 3. Update the PurchaseOrder itself
+        const purchaseOrder = await tx.purchaseOrder.update({
+          where: { id },
+          data: poData,
+          include: {
+            purchaseOrderDetails: true,
+            customer: true,
+            supplier: true,
+            status: true,
+            files: true,
+          },
+        });
+
+        return purchaseOrder;
       });
+
+      return updatedPurchaseOrder;
     } catch (error) {
-      return null;
+      // Re-throw AppError or handle other prisma errors
+      if (error instanceof AppError) {
+        throw error;
+      }
+      // Log the error for debugging
+      console.error('Error updating purchase order:', error);
+      // You might want to throw a generic error or handle it as needed
+      throw new AppError('Failed to update purchase order', 500);
     }
   }
 

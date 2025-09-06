@@ -4,11 +4,16 @@ import { z, ZodSchema } from 'zod';
 export const validateRequest = (schema: ZodSchema) => {
   return (req: FastifyRequest, reply: FastifyReply, done: DoneFuncWithErrOrRes) => {
     try {
-      schema.parse({
+      const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
       });
+
+      if (parsed.body) req.body = parsed.body;
+      if (parsed.query) req.query = parsed.query;
+      if (parsed.params) req.params = parsed.params;
+
       done();
     } catch (e) {
       if (e instanceof z.ZodError) {

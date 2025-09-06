@@ -23,6 +23,22 @@ export const getPurchaseOrderSchema = z.object({
   }),
 });
 
+const purchaseOrderDetailSchema = z.object({
+  id: z.string().optional(),
+  kode_barang: z.string(),
+  nama_barang: z.string(),
+  quantity: z.coerce.number().int(),
+  isi: z.coerce.number().int(),
+  harga: z.coerce.number(),
+  potongan_a: z.coerce.number().nullable().optional(),
+  harga_after_potongan_a: z.coerce.number().nullable().optional(),
+  harga_netto: z.coerce.number(),
+  total_pembelian: z.coerce.number(),
+  potongan_b: z.coerce.number().nullable().optional(),
+  harga_after_potongan_b: z.coerce.number().nullable().optional(),
+  inventoryId: z.string(),
+});
+
 export const updatePurchaseOrderSchema = z.object({
   params: z.object({
     id: z.string(),
@@ -31,13 +47,14 @@ export const updatePurchaseOrderSchema = z.object({
     customerId: z.string().optional(),
     po_number: z.string().optional(),
     total_items: z.number().int().optional(),
-    tanggal_order: z.string().datetime().optional(),
+    tanggal_order: z.coerce.date().optional(),
     po_type: z.nativeEnum(POType).optional(),
     statusId: z.string().optional(),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),
     suratPenagihan: z.string().optional(),
+    purchaseOrderDetails: z.array(purchaseOrderDetailSchema).optional(),
   }),
 });
 
