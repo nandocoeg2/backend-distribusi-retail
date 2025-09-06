@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationSchema } from './pagination.schema';
 
 export const createSupplierSchema = z.object({
   body: z.object({
@@ -51,8 +52,14 @@ export const searchSupplierSchema = z.object({
   params: z.object({
     q: z.string().optional(),
   }),
+  query: paginationSchema,
+});
+
+export const getAllSuppliersSchema = z.object({
+  query: paginationSchema,
 });
 
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>['body'];
 export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
 export type SearchSupplierInput = z.infer<typeof searchSupplierSchema>;
+export type GetAllSuppliersInput = z.infer<typeof getAllSuppliersSchema>;

@@ -9,10 +9,12 @@ import {
   updateSupplierSchema,
   UpdateSupplierInput,
   searchSupplierSchema,
+  GetAllSuppliersInput,
+  getAllSuppliersSchema,
 } from '@/schemas/supplier.schema';
 
 export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
-  fastify.get(
+  fastify.get<{ Params: { q: string }; Querystring: GetAllSuppliersInput['query'] }>(
     '/search/:q',
     {
       preHandler: [fastify.authenticate, validateRequest(searchSupplierSchema)],
@@ -20,10 +22,10 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
     SupplierController.searchSuppliers
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: GetAllSuppliersInput['query'] }>(
     '/search',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, validateRequest(getAllSuppliersSchema)],
     },
     SupplierController.searchSuppliers
   );
@@ -36,7 +38,9 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
     SupplierController.createSupplier
   );
 
-  fastify.get('/', { preHandler: [fastify.authenticate] }, SupplierController.getSuppliers);
+  fastify.get<{ Querystring: GetAllSuppliersInput['query'] }>('/', { 
+    preHandler: [fastify.authenticate, validateRequest(getAllSuppliersSchema)] 
+  }, SupplierController.getSuppliers);
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
@@ -64,4 +68,3 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
 
   done();
 };
-

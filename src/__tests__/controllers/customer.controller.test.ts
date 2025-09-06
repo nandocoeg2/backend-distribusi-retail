@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CustomerController } from '@/controllers/customer.controller';
 import { CustomerService } from '@/services/customer.service';
-import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput } from '@/schemas/customer.schema';
+import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput, GetAllCustomersInput } from '@/schemas/customer.schema';
 
 jest.mock('@/services/customer.service');
 
@@ -13,6 +13,7 @@ describe('CustomerController', () => {
     request = {
       body: {},
       params: {},
+      query: {},
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -40,14 +41,23 @@ describe('CustomerController', () => {
   });
 
   describe('getCustomers', () => {
-    it('should return all customers', async () => {
-      const customers = [{ id: '1', name: 'Test Customer', address: '123 Test St', phoneNumber: '1234567890', email: 'test@customer.com', createdAt: new Date(), updatedAt: new Date() }];
-      (CustomerService.getAllCustomers as jest.Mock).mockResolvedValue(customers);
+    it('should return all customers with pagination', async () => {
+      const paginatedResult = {
+        data: [{ id: '1', name: 'Test Customer', address: '123 Test St', phoneNumber: '1234567890', email: 'test@customer.com', createdAt: new Date(), updatedAt: new Date() }],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        }
+      };
+      request.query = { page: 1, limit: 10 };
+      (CustomerService.getAllCustomers as jest.Mock).mockResolvedValue(paginatedResult);
 
-      await CustomerController.getCustomers(request as FastifyRequest, reply as FastifyReply);
+      await CustomerController.getCustomers(request as FastifyRequest<{ Querystring: GetAllCustomersInput['query'] }>, reply as FastifyReply);
 
-      expect(CustomerService.getAllCustomers).toHaveBeenCalled();
-      expect(reply.send).toHaveBeenCalledWith(customers);
+      expect(CustomerService.getAllCustomers).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
   });
 
@@ -129,52 +139,79 @@ describe('CustomerController', () => {
   });
 
   describe('searchCustomers', () => {
-    it('should return customers that match the param', async () => {
+    it('should return customers that match the param with pagination', async () => {
       const query = 'John';
-      const customers = [
-        { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com' },
-      ];
+      const paginatedResult = {
+        data: [
+          { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com', createdAt: new Date(), updatedAt: new Date() },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        }
+      };
       request.params = { q: query };
-      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(customers);
+      request.query = { page: 1, limit: 10 };
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(paginatedResult);
 
       await CustomerController.searchCustomers(
-        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
+        request as FastifyRequest<{ Params: { q: string }; Querystring: GetAllCustomersInput['query'] }>,
         reply as FastifyReply
       );
 
-      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query);
-      expect(reply.send).toHaveBeenCalledWith(customers);
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query, 1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
 
     it('should return an empty array if no customers match', async () => {
       const query = 'NonExistent';
+      const paginatedResult = {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: 10,
+        }
+      };
       request.params = { q: query };
-      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue([]);
+      request.query = { page: 1, limit: 10 };
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(paginatedResult);
 
       await CustomerController.searchCustomers(
-        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
+        request as FastifyRequest<{ Params: { q: string }; Querystring: GetAllCustomersInput['query'] }>,
         reply as FastifyReply
       );
 
-      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query);
-      expect(reply.send).toHaveBeenCalledWith([]);
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(query, 1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
 
     it('should return all customers if param is not provided', async () => {
-      const customers = [
-        { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com' },
-      ];
+      const paginatedResult = {
+        data: [
+          { id: '1', name: 'John Doe', address: '123 Test St', phoneNumber: '1234567890', email: 'john@test.com', createdAt: new Date(), updatedAt: new Date() },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        }
+      };
       request.params = {};
-      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(customers);
+      request.query = { page: 1, limit: 10 };
+      (CustomerService.searchCustomers as jest.Mock).mockResolvedValue(paginatedResult);
 
       await CustomerController.searchCustomers(
-        request as FastifyRequest<{ Params: SearchCustomerInput['params'] }>,
+        request as FastifyRequest<{ Params: { q?: string }; Querystring: GetAllCustomersInput['query'] }>,
         reply as FastifyReply
       );
 
-      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(undefined);
-      expect(reply.send).toHaveBeenCalledWith(customers);
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith(undefined, 1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
   });
 });
-

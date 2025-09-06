@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { POType } from '@prisma/client';
+import { paginationSchema } from './pagination.schema';
 
 export const createPurchaseOrderSchema = z.object({
   body: z.object({
@@ -56,10 +57,9 @@ export const searchPurchaseOrderSchema = z.object({
     po_number: z.string().optional(),
     supplierId: z.string().optional(),
     statusId: z.string().optional(),
-  }),
+  }).merge(paginationSchema),
 });
 
 export type CreatePurchaseOrderInput = z.infer<typeof createPurchaseOrderSchema>['body'];
 export type UpdatePurchaseOrderInput = z.infer<typeof updatePurchaseOrderSchema>;
 export type SearchPurchaseOrderInput = z.infer<typeof searchPurchaseOrderSchema>;
-

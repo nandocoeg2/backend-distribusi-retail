@@ -9,10 +9,12 @@ import {
   searchCustomerSchema,
   updateCustomerSchema,
   UpdateCustomerInput,
+  GetAllCustomersInput,
+  getAllCustomersSchema,
 } from '@/schemas/customer.schema';
 
 export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
-  fastify.get(
+  fastify.get<{ Params: { q: string }; Querystring: GetAllCustomersInput['query'] }>(
     '/search/:q',
     {
       preHandler: [fastify.authenticate, validateRequest(searchCustomerSchema)],
@@ -20,10 +22,10 @@ export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
     CustomerController.searchCustomers
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: GetAllCustomersInput['query'] }>(
     '/search',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, validateRequest(getAllCustomersSchema)],
     },
     CustomerController.searchCustomers
   );
@@ -36,7 +38,9 @@ export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
     CustomerController.createCustomer
   );
 
-  fastify.get('/', { preHandler: [fastify.authenticate] }, CustomerController.getCustomers);
+  fastify.get<{ Querystring: GetAllCustomersInput['query'] }>('/', { 
+    preHandler: [fastify.authenticate, validateRequest(getAllCustomersSchema)] 
+  }, CustomerController.getCustomers);
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
@@ -64,4 +68,3 @@ export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
 
   done();
 };
-

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CustomerService } from '@/services/customer.service';
-import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
+import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput, GetAllCustomersInput } from '@/schemas/customer.schema';
 
 export class CustomerController {
   static async createCustomer(request: FastifyRequest<{ Body: CreateCustomerInput }>, reply: FastifyReply) {
@@ -8,9 +8,10 @@ export class CustomerController {
     return reply.code(201).send(customer);
   }
 
-  static async getCustomers(request: FastifyRequest, reply: FastifyReply) {
-    const customers = await CustomerService.getAllCustomers();
-    return reply.send(customers);
+  static async getCustomers(request: FastifyRequest<{ Querystring: GetAllCustomersInput['query'] }>, reply: FastifyReply) {
+    const { page = 1, limit = 10 } = request.query;
+    const result = await CustomerService.getAllCustomers(page, limit);
+    return reply.send(result);
   }
 
   static async getCustomer(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
@@ -40,10 +41,10 @@ export class CustomerController {
     return reply.code(204).send();
   }
 
-  static async searchCustomers(request: FastifyRequest, reply: FastifyReply) {
+  static async searchCustomers(request: FastifyRequest<{ Querystring: SearchCustomerInput['query'] }>, reply: FastifyReply) {
     const params = request.params as { q?: string };
-    const customers = await CustomerService.searchCustomers(params.q);
-    return reply.send(customers);
+    const { page = 1, limit = 10 } = request.query;
+    const result = await CustomerService.searchCustomers(params.q, page, limit);
+    return reply.send(result);
   }
 }
-

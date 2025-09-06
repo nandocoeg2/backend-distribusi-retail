@@ -14,6 +14,16 @@ export interface FileInfo {
   size: number;
 }
 
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+}
+
 export class PurchaseOrderService {
   static async createPurchaseOrder(
     poData: CreatePurchaseOrderInput,
@@ -50,15 +60,37 @@ export class PurchaseOrderService {
     }
   }
 
-  static async getAllPurchaseOrders(): Promise<PurchaseOrder[]> {
-    return prisma.purchaseOrder.findMany({
-      include: {
-        customer: true,
-        supplier: true,
-        files: true,
-        status: true,
+  static async getAllPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
+    const skip = (page - 1) * limit;
+    
+    const [data, totalItems] = await Promise.all([
+      prisma.purchaseOrder.findMany({
+        skip,
+        take: parseInt(limit.toString()),
+        include: {
+          customer: true,
+          supplier: true,
+          files: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.purchaseOrder.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
       },
-    });
+    };
   }
 
   static async getPurchaseOrderById(id: string): Promise<PurchaseOrder | null> {
@@ -104,8 +136,21 @@ export class PurchaseOrderService {
     }
   }
 
-  static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PurchaseOrder[]> {
-    const { tanggal_order, customer_name, customerId, suratPO, invoicePengiriman, po_number, supplierId, statusId } = query;
+  static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PaginatedResult<PurchaseOrder>> {
+    const { 
+      tanggal_order, 
+      customer_name, 
+      customerId, 
+      suratPO, 
+      invoicePengiriman, 
+      po_number, 
+      supplierId, 
+      statusId,
+      page = 1,
+      limit = 10
+    } = query;
+
+    const skip = (page - 1) * limit;
 
     const filters: Prisma.PurchaseOrderWhereInput[] = [];
     if (tanggal_order) {
@@ -143,16 +188,40 @@ export class PurchaseOrderService {
       filters.push({ statusId });
     }
 
-    return prisma.purchaseOrder.findMany({
-      where: {
-        AND: filters.length > 0 ? filters : undefined,
+    const [data, totalItems] = await Promise.all([
+      prisma.purchaseOrder.findMany({
+        where: {
+          AND: filters.length > 0 ? filters : undefined,
+        },
+        skip,
+        take: parseInt(limit.toString()),
+        include: {
+          customer: true,
+          supplier: true,
+          files: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.purchaseOrder.count({
+        where: {
+          AND: filters.length > 0 ? filters : undefined,
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
       },
-      include: {
-        customer: true,
-        supplier: true,
-        files: true,
-        status: true,
-      },
-    });
+    };
   }
 }

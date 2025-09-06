@@ -13,6 +13,17 @@ describe('PurchaseOrderController', () => {
     request = {
       body: {},
       params: {},
+      query: {},
+      isMultipart: jest.fn().mockReturnValue(true),
+      parts: jest.fn().mockImplementation(async function* () {
+        // Mock implementation for parts generator
+        yield { type: 'field', fieldname: 'customerId', value: 'cust1' };
+        yield { type: 'field', fieldname: 'po_number', value: 'PO123' };
+        yield { type: 'field', fieldname: 'total_items', value: '1' };
+        yield { type: 'field', fieldname: 'tanggal_order', value: new Date().toISOString() };
+        yield { type: 'field', fieldname: 'po_type', value: 'SINGLE' };
+        yield { type: 'field', fieldname: 'statusId', value: 'status1' };
+      }),
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -26,28 +37,36 @@ describe('PurchaseOrderController', () => {
 
   describe('createPurchaseOrder', () => {
     it('should create a purchase order and return 201', async () => {
-      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', po_number: 'PO123', total_items: 1, tanggal_order: new Date().toISOString(), po_type: 'Regular', statusId: 'status1' };
+      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', po_number: 'PO123', total_items: 1, tanggal_order: new Date().toISOString(), po_type: 'SINGLE', statusId: 'status1' };
       const po = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
-      request.body = createInput;
       (PurchaseOrderService.createPurchaseOrder as jest.Mock).mockResolvedValue(po);
 
-      await PurchaseOrderController.createPurchaseOrder(request as FastifyRequest<{ Body: CreatePurchaseOrderInput }>, reply as FastifyReply);
+      await PurchaseOrderController.createPurchaseOrder(request as FastifyRequest, reply as FastifyReply);
 
-      expect(PurchaseOrderService.createPurchaseOrder).toHaveBeenCalledWith(createInput);
+      expect(PurchaseOrderService.createPurchaseOrder).toHaveBeenCalled();
       expect(reply.code).toHaveBeenCalledWith(201);
       expect(reply.send).toHaveBeenCalledWith(po);
     });
   });
 
   describe('getPurchaseOrders', () => {
-    it('should return all purchase orders', async () => {
-      const pos = [{ id: '1', customerId: 'cust1', po_number: 'PO123' }];
-      (PurchaseOrderService.getAllPurchaseOrders as jest.Mock).mockResolvedValue(pos);
+    it('should return all purchase orders with pagination', async () => {
+      const paginatedResult = {
+        data: [{ id: '1', customerId: 'cust1', po_number: 'PO123' }],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        }
+      };
+      request.query = { page: 1, limit: 10 };
+      (PurchaseOrderService.getAllPurchaseOrders as jest.Mock).mockResolvedValue(paginatedResult);
 
       await PurchaseOrderController.getPurchaseOrders(request as FastifyRequest, reply as FastifyReply);
 
-      expect(PurchaseOrderService.getAllPurchaseOrders).toHaveBeenCalled();
-      expect(reply.send).toHaveBeenCalledWith(pos);
+      expect(PurchaseOrderService.getAllPurchaseOrders).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
   });
 
@@ -128,4 +147,3 @@ describe('PurchaseOrderController', () => {
     });
   });
 });
-

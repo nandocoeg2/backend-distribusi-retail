@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { SupplierService } from '@/services/supplier.service';
-import { CreateSupplierInput, UpdateSupplierInput } from '@/schemas/supplier.schema';
+import { CreateSupplierInput, UpdateSupplierInput, SearchSupplierInput, GetAllSuppliersInput } from '@/schemas/supplier.schema';
 
 export class SupplierController {
   static async createSupplier(request: FastifyRequest<{ Body: CreateSupplierInput }>, reply: FastifyReply) {
@@ -8,9 +8,10 @@ export class SupplierController {
     return reply.code(201).send(supplier);
   }
 
-  static async getSuppliers(request: FastifyRequest, reply: FastifyReply) {
-    const suppliers = await SupplierService.getAllSuppliers();
-    return reply.send(suppliers);
+  static async getSuppliers(request: FastifyRequest<{ Querystring: GetAllSuppliersInput['query'] }>, reply: FastifyReply) {
+    const { page = 1, limit = 10 } = request.query;
+    const result = await SupplierService.getAllSuppliers(page, limit);
+    return reply.send(result);
   }
 
   static async getSupplier(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
@@ -40,10 +41,10 @@ export class SupplierController {
     return reply.code(204).send();
   }
 
-  static async searchSuppliers(request: FastifyRequest, reply: FastifyReply) {
+  static async searchSuppliers(request: FastifyRequest<{ Querystring: SearchSupplierInput['query'] }>, reply: FastifyReply) {
     const params = request.params as { q?: string };
-    const suppliers = await SupplierService.searchSuppliers(params.q);
-    return reply.send(suppliers);
+    const { page = 1, limit = 10 } = request.query;
+    const result = await SupplierService.searchSuppliers(params.q, page, limit);
+    return reply.send(result);
   }
 }
-

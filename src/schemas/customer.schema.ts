@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationSchema } from './pagination.schema';
 
 export const createCustomerSchema = z.object({
   body: z.object({
@@ -37,9 +38,14 @@ export const searchCustomerSchema = z.object({
   params: z.object({
     q: z.string().optional(),
   }),
+  query: paginationSchema,
+});
+
+export const getAllCustomersSchema = z.object({
+  query: paginationSchema,
 });
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>['body'];
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type SearchCustomerInput = z.infer<typeof searchCustomerSchema>;
-
+export type GetAllCustomersInput = z.infer<typeof getAllCustomersSchema>;

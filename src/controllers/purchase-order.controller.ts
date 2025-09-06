@@ -80,8 +80,9 @@ export class PurchaseOrderController {
   }
 
   static async getPurchaseOrders(request: FastifyRequest, reply: FastifyReply) {
-    const purchaseOrders = await PurchaseOrderService.getAllPurchaseOrders();
-    return reply.send(purchaseOrders);
+    const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
+    const result = await PurchaseOrderService.getAllPurchaseOrders(page, limit);
+    return reply.send(result);
   }
 
   static async getPurchaseOrder(
@@ -131,9 +132,9 @@ export class PurchaseOrderController {
     request: FastifyRequest<{ Querystring: SearchPurchaseOrderInput['query'] }>,
     reply: FastifyReply
   ) {
-    const purchaseOrders = await PurchaseOrderService.searchPurchaseOrders(
+    const result = await PurchaseOrderService.searchPurchaseOrders(
       request.query
     );
-    return reply.send(purchaseOrders);
+    return reply.send(result);
   }
 }

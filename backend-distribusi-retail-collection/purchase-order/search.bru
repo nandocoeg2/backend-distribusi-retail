@@ -5,13 +5,15 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/purchase-orders/search?customer_name=Customer One
+  url: http://localhost:5050/api/v1/purchase-orders/search
   body: none
   auth: bearer
 }
 
 params:query {
   customer_name: Customer One
+  page: 1
+  limit: 10
 }
 
 auth:bearer {

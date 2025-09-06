@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { SupplierController } from '@/controllers/supplier.controller';
 import { SupplierService } from '@/services/supplier.service';
-import { CreateSupplierInput, UpdateSupplierInput } from '@/schemas/supplier.schema';
+import { CreateSupplierInput, UpdateSupplierInput, GetAllSuppliersInput } from '@/schemas/supplier.schema';
 
 jest.mock('@/services/supplier.service');
 
@@ -13,6 +13,7 @@ describe('SupplierController', () => {
     request = {
       body: {},
       params: {},
+      query: { page: 1, limit: 10 },
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -26,7 +27,18 @@ describe('SupplierController', () => {
 
   describe('createSupplier', () => {
     it('should create a supplier and return 201', async () => {
-      const createInput: CreateSupplierInput = { name: 'Test Supplier', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com' };
+      const createInput: CreateSupplierInput = { 
+        name: 'Test Supplier', 
+        code: 'SUP001',
+        address: '123 Test St', 
+        phoneNumber: '1234567890', 
+        email: 'test@supplier.com',
+        bank: {
+          name: 'Test Bank',
+          account: '1234567890',
+          holder: 'Test Supplier'
+        }
+      };
       const supplier = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
       request.body = createInput;
       (SupplierService.createSupplier as jest.Mock).mockResolvedValue(supplier);
@@ -40,20 +52,29 @@ describe('SupplierController', () => {
   });
 
   describe('getSuppliers', () => {
-    it('should return all suppliers', async () => {
-      const suppliers = [{ id: '1', name: 'Test Supplier', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() }];
-      (SupplierService.getAllSuppliers as jest.Mock).mockResolvedValue(suppliers);
+    it('should return all suppliers with pagination', async () => {
+      const paginatedResult = {
+        data: [{ id: '1', name: 'Test Supplier', code: 'SUP001', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() }],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        }
+      };
+      request.query = { page: 1, limit: 10 };
+      (SupplierService.getAllSuppliers as jest.Mock).mockResolvedValue(paginatedResult);
 
-      await SupplierController.getSuppliers(request as FastifyRequest, reply as FastifyReply);
+      await SupplierController.getSuppliers(request as FastifyRequest<{ Querystring: GetAllSuppliersInput['query'] }>, reply as FastifyReply);
 
-      expect(SupplierService.getAllSuppliers).toHaveBeenCalled();
-      expect(reply.send).toHaveBeenCalledWith(suppliers);
+      expect(SupplierService.getAllSuppliers).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
     });
   });
 
   describe('getSupplier', () => {
     it('should return a single supplier by id', async () => {
-      const supplier = { id: '1', name: 'Test Supplier', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
+      const supplier = { id: '1', name: 'Test Supplier', code: 'SUP001', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
       request.params = { id: '1' };
       (SupplierService.getSupplierById as jest.Mock).mockResolvedValue(supplier);
 
@@ -78,7 +99,7 @@ describe('SupplierController', () => {
   describe('updateSupplier', () => {
     it('should update a supplier and return it', async () => {
       const updateInput: UpdateSupplierInput['body'] = { name: 'Updated Name' };
-      const supplier = { id: '1', name: 'Updated Name', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
+      const supplier = { id: '1', name: 'Updated Name', code: 'SUP001', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
       request.params = { id: '1' };
       request.body = updateInput;
       (SupplierService.updateSupplier as jest.Mock).mockResolvedValue(supplier);
@@ -105,7 +126,7 @@ describe('SupplierController', () => {
 
   describe('deleteSupplier', () => {
     it('should delete a supplier and return 204', async () => {
-      const supplier = { id: '1', name: 'Test Supplier', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
+      const supplier = { id: '1', name: 'Test Supplier', code: 'SUP001', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
       request.params = { id: '1' };
       (SupplierService.deleteSupplier as jest.Mock).mockResolvedValue(supplier);
 
