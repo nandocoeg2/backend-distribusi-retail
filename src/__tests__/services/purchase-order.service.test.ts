@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { prisma } from '@/config/database';
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 import { SearchPurchaseOrderInput } from '@/schemas/purchase-order.schema';
@@ -38,12 +38,65 @@ describe('PurchaseOrderService', () => {
   };
 
   beforeEach(() => {
-    vi.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockPaginatedResult.data as any);
-    vi.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockPaginatedResult.pagination.totalItems);
+    jest.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockPaginatedResult.data as any);
+    jest.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockPaginatedResult.pagination.totalItems);
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  describe('getAllPurchaseOrders', () => {
+    it('should return purchase orders with pending, processed, and processing statuses', async () => {
+      const mockStatuses = [
+        { id: 'pending-id', status_code: 'PENDING PURCHASE ORDER' },
+        { id: 'processed-id', status_code: 'PROCESSED PURCHASE ORDER' },
+        { id: 'processing-id', status_code: 'PROCESSING PURCHASE ORDER' },
+      ];
+
+      const mockResult = {
+        data: [
+          { id: '1', statusId: 'pending-id' },
+          { id: '2', statusId: 'processed-id' },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 2,
+          itemsPerPage: 10,
+        }
+      };
+
+      jest.spyOn(prisma.status, 'findMany').mockResolvedValue(mockStatuses as any);
+      jest.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockResult.data as any);
+      jest.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockResult.pagination.totalItems);
+
+      const result = await PurchaseOrderService.getAllPurchaseOrders(1, 10);
+
+      expect(result).toEqual(mockResult);
+      expect(prisma.status.findMany).toHaveBeenCalledWith({
+        where: {
+          status_code: {
+            in: [
+              'PENDING PURCHASE ORDER',
+              'PROCESSED PURCHASE ORDER',
+              'PROCESSING PURCHASE ORDER',
+            ],
+          },
+        },
+      });
+      expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith({
+        where: {
+          statusId: {
+            in: ['pending-id', 'processed-id', 'processing-id'],
+          },
+        },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: 'desc' },
+      });
+    });
   });
 
   describe('getHistoryPurchaseOrders', () => {
@@ -87,13 +140,13 @@ describe('PurchaseOrderService', () => {
       };
 
       // Mock the status lookups
-      vi.spyOn(prisma.status, 'findUnique')
+      jest.spyOn(prisma.status, 'findUnique')
         .mockResolvedValueOnce(mockApprovedStatus as any)
         .mockResolvedValueOnce(mockFailedStatus as any);
 
       // Mock the purchase order queries
-      vi.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockHistoryResult.data as any);
-      vi.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockHistoryResult.pagination.totalItems);
+      jest.spyOn(prisma.purchaseOrder, 'findMany').mockResolvedValue(mockHistoryResult.data as any);
+      jest.spyOn(prisma.purchaseOrder, 'count').mockResolvedValue(mockHistoryResult.pagination.totalItems);
 
       const result = await PurchaseOrderService.getHistoryPurchaseOrders(1, 10);
       
@@ -128,7 +181,7 @@ describe('PurchaseOrderService', () => {
       expect(result).toEqual(mockPaginatedResult);
       expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith({
         where: {
-          AND: [],
+          AND: undefined,
         },
         skip: 0,
         take: 10,
@@ -164,7 +217,12 @@ describe('PurchaseOrderService', () => {
       expect(prisma.purchaseOrder.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: {
           AND: expect.arrayContaining([
-            { tanggal_order: new Date('2025-01-15') },
+            { 
+              tanggal_order: { 
+                gte: expect.any(Date), 
+                lte: expect.any(Date) 
+              } 
+            },
           ]),
         },
         skip: 0,

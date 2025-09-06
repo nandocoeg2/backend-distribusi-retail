@@ -62,9 +62,29 @@ export class PurchaseOrderService {
 
   static async getAllPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
     const skip = (page - 1) * limit;
-    
+
+    // Get status IDs
+    const statuses = await prisma.status.findMany({
+      where: {
+        status_code: {
+          in: [
+            'PENDING PURCHASE ORDER',
+            'PROCESSED PURCHASE ORDER',
+            'PROCESSING PURCHASE ORDER',
+          ],
+        },
+      },
+    });
+
+    const statusIds = statuses.map(status => status.id);
+
     const [data, totalItems] = await Promise.all([
       prisma.purchaseOrder.findMany({
+        where: {
+          statusId: {
+            in: statusIds,
+          },
+        },
         skip,
         take: parseInt(limit.toString()),
         include: {
@@ -77,7 +97,13 @@ export class PurchaseOrderService {
           createdAt: 'desc',
         },
       }),
-      prisma.purchaseOrder.count(),
+      prisma.purchaseOrder.count({
+        where: {
+          statusId: {
+            in: statusIds,
+          },
+        },
+      }),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);
