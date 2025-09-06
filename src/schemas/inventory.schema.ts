@@ -42,7 +42,14 @@ export const getAllInventoriesSchema = z.object({
   query: paginationSchema,
 });
 
+export const searchInventorySchema = z.object({
+  query: z.object({
+    query: z.string().optional(),
+  }).merge(paginationSchema),
+});
+
 export type CreateInventoryInput = z.infer<typeof createInventorySchema>['body'];
 export type UpdateInventoryInput = z.infer<typeof updateInventorySchema>;
 export type GetAllInventoriesInput = z.infer<typeof getAllInventoriesSchema>;
+export type SearchInventoryInput = z.infer<typeof searchInventorySchema>;
 

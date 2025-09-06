@@ -5,13 +5,15 @@ import {
   getInventoryByIdHandler,
   updateInventoryHandler,
   deleteInventoryHandler,
+  searchInventoriesHandler,
 } from '@/controllers/inventory.controller';
 import * as inventoryService from '@/services/inventory.service';
 import { AppError } from '@/utils/app-error';
 import { 
   CreateInventoryInput, 
   UpdateInventoryInput, 
-  GetAllInventoriesInput 
+  GetAllInventoriesInput, 
+  SearchInventoryInput
 } from '@/schemas/inventory.schema';
 
 const mockInventory = {
@@ -89,6 +91,31 @@ describe('Inventory Controller', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith(mockPaginatedInventories);
       expect(inventoryService.getAllInventories).toHaveBeenCalledWith(1, 10);
+    });
+  });
+
+  describe('searchInventoriesHandler', () => {
+    it('should search inventories with pagination and return 200', async () => {
+      const mockPaginatedInventories = {
+        data: [mockInventory],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        },
+      };
+      request.query = { query: 'Test', page: 1, limit: 10 };
+      jest.spyOn(inventoryService, 'searchInventories').mockResolvedValue(mockPaginatedInventories as any);
+
+      await searchInventoriesHandler(
+        request as FastifyRequest<{ Querystring: SearchInventoryInput['query'] }>,
+        reply as FastifyReply
+      );
+
+      expect(reply.status).toHaveBeenCalledWith(200);
+      expect(reply.send).toHaveBeenCalledWith(mockPaginatedInventories);
+      expect(inventoryService.searchInventories).toHaveBeenCalledWith('Test', 1, 10);
     });
   });
 

@@ -1,5 +1,5 @@
 import { prisma } from '@/config/database';
-import { Inventory } from '@prisma/client';
+import { Inventory, Prisma } from '@prisma/client';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
 
 export interface PaginatedResult<T> {
@@ -30,6 +30,59 @@ export const getAllInventories = async (page: number = 1, limit: number = 10): P
       },
     }),
     prisma.inventory.count(),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return {
+    data,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+    },
+  };
+};
+
+export const searchInventories = async (query?: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<Inventory>> => {
+  const skip = (page - 1) * limit;
+  
+  if (!query) {
+    return getAllInventories(page, limit);
+  }
+
+  const filters: Prisma.InventoryWhereInput[] = [
+    {
+      nama_barang: {
+        contains: query,
+        mode: 'insensitive',
+      },
+    },
+    {
+      kode_barang: {
+        contains: query,
+        mode: 'insensitive',
+      },
+    },
+  ];
+
+  const [data, totalItems] = await Promise.all([
+    prisma.inventory.findMany({
+      where: {
+        OR: filters,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }),
+    prisma.inventory.count({
+      where: {
+        OR: filters,
+      },
+    }),
   ]);
 
   const totalPages = Math.ceil(totalItems / limit);

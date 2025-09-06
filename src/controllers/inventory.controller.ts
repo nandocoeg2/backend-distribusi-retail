@@ -5,11 +5,13 @@ import {
   getInventoryById,
   updateInventory,
   deleteInventory,
+  searchInventories,
 } from '@/services/inventory.service';
 import { 
   CreateInventoryInput, 
   UpdateInventoryInput, 
-  GetAllInventoriesInput 
+  GetAllInventoriesInput, 
+  SearchInventoryInput
 } from '@/schemas/inventory.schema';
 import { AppError } from '@/utils/app-error';
 
@@ -35,6 +37,19 @@ export const getAllInventoriesHandler = async (
     return reply.status(200).send(inventories);
   } catch (e) {
     throw new AppError('Error fetching inventories', 500);
+  }
+};
+
+export const searchInventoriesHandler = async (
+  request: FastifyRequest<{ Querystring: SearchInventoryInput['query'] }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { query, page = 1, limit = 10 } = request.query;
+    const inventories = await searchInventories(query, page, limit);
+    return reply.status(200).send(inventories);
+  } catch (e) {
+    throw new AppError('Error searching inventories', 500);
   }
 };
 

@@ -6,6 +6,7 @@ import {
   getInventoryById,
   updateInventory,
   deleteInventory,
+  searchInventories,
 } from '@/services/inventory.service';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
 
@@ -64,6 +65,112 @@ describe('Inventory Service', () => {
       (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
 
       const result = await getAllInventories(1, 10);
+      expect(result).toEqual({
+        data: mockInventories,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        },
+      });
+      expect(prisma.inventory.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      expect(prisma.inventory.count).toHaveBeenCalled();
+    });
+  });
+
+  describe('searchInventories', () => {
+    it('should return inventories matching the query with pagination', async () => {
+      const query = 'Test';
+      const mockInventories = [
+        {
+          id: '1',
+          kode_barang: 'BRG001',
+          nama_barang: 'Test Item 1',
+          stok_barang: 100,
+          harga_barang: 10000,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
+      (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await searchInventories(query, 1, 10);
+      expect(result).toEqual({
+        data: mockInventories,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 10,
+        },
+      });
+      expect(prisma.inventory.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              nama_barang: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              kode_barang: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+        skip: 0,
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      expect(prisma.inventory.count).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              nama_barang: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              kode_barang: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should return all inventories with pagination if no query is provided', async () => {
+      const mockInventories = [
+        {
+          id: '1',
+          kode_barang: 'BRG001',
+          nama_barang: 'Test Item 1',
+          stok_barang: 100,
+          harga_barang: 10000,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
+      (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await searchInventories(undefined, 1, 10);
       expect(result).toEqual({
         data: mockInventories,
         pagination: {
