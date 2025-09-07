@@ -1,0 +1,27 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/invoices/:id
+  body: json
+  auth: bearer
+}
+
+params {
+  id: 
+}
+
+body:json {
+  {
+    "deliver_to": "Customer Updated",
+    "sub_total": 1200000,
+    "total_discount": 60000,
+    "total_price": 1140000,
+    "ppn_percentage": 11,
+    "ppn_rupiah": 125400,
+    "grand_total": 1265400
+  }
+}

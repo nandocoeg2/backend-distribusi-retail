@@ -1,0 +1,16 @@
+meta {
+  name: getAll
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/invoices
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  limit: 10
+}

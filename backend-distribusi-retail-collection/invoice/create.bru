@@ -1,0 +1,41 @@
+meta {
+  name: create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/invoices
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "no_invoice": "INV-2024-001",
+    "deliver_to": "Customer ABC",
+    "sub_total": 1000000,
+    "total_discount": 50000,
+    "total_price": 950000,
+    "ppn_percentage": 11,
+    "ppn_rupiah": 104500,
+    "grand_total": 1054500,
+    "expired_date": "2024-12-31",
+    "TOP": "30 days",
+    "type": "PEMBAYARAN",
+    "invoiceDetails": [
+      {
+        "nama_barang": "Product A",
+        "PLU": "PLU001",
+        "quantity": 10,
+        "satuan": "pcs",
+        "harga": 100000,
+        "total": 1000000,
+        "discount_percentage": 5,
+        "discount_rupiah": 50000,
+        "PPN_pecentage": 11,
+        "ppn_rupiah": 104500
+      }
+    ]
+  }
+}

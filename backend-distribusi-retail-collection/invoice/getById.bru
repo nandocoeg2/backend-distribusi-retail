@@ -1,0 +1,15 @@
+meta {
+  name: getById
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/invoices/:id
+  body: none
+  auth: bearer
+}
+
+params {
+  id: 
+}
