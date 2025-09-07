@@ -1,0 +1,15 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/surat-jalan/search?no_surat_jalan=SJ-2024&deliver_to=Customer&page=1&limit=10
+  body: json
+  auth: bearer
+}
+
+body:json {
+  
+}

@@ -1,0 +1,336 @@
+import { SuratJalan, Prisma } from '@prisma/client';
+import { prisma } from '@/config/database';
+import {
+  CreateSuratJalanInput,
+  UpdateSuratJalanInput,
+  SearchSuratJalanInput,
+} from '@/schemas/surat-jalan.schema';
+import { AppError } from '@/utils/app-error';
+
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+}
+
+export class SuratJalanService {
+  static async createSuratJalan(suratJalanData: CreateSuratJalanInput): Promise<SuratJalan> {
+    try {
+      const { suratJalanDetails, ...suratJalanInfo } = suratJalanData;
+
+      return await prisma.suratJalan.create({
+        data: {
+          ...suratJalanInfo,
+          suratJalanDetails: {
+            create: suratJalanDetails.map(detail => ({
+              no_box: detail.no_box,
+              total_quantity_in_box: detail.total_quantity_in_box,
+              isi_box: detail.isi_box,
+              sisa: detail.sisa,
+              total_box: detail.total_box,
+              suratJalanDetailItems: {
+                create: detail.items.map(item => ({
+                  nama_barang: item.nama_barang,
+                  PLU: item.PLU,
+                  quantity: item.quantity,
+                  satuan: item.satuan,
+                  total_box: item.total_box,
+                  keterangan: item.keterangan,
+                  createdBy: 'system',
+                  updatedBy: 'system',
+                }))
+              }
+            }))
+          }
+        },
+        include: {
+          suratJalanDetails: {
+            include: {
+              suratJalanDetailItems: true
+            }
+          },
+          invoice: true,
+          historyPengiriman: {
+            include: {
+              status: true
+            }
+          }
+        }
+      });
+    } catch (error: any) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2002' && 
+          'meta' in error && error.meta && typeof error.meta === 'object' && 
+          'target' in error.meta && Array.isArray(error.meta.target) && 
+          error.meta.target.includes('no_surat_jalan')) {
+        throw new AppError('Surat jalan with this number already exists', 409);
+      }
+      throw error;
+    }
+  }
+
+  static async getAllSuratJalan(page: number = 1, limit: number = 10): Promise<PaginatedResult<SuratJalan>> {
+    const skip = (page - 1) * limit;
+
+    const [data, totalItems] = await Promise.all([
+      prisma.suratJalan.findMany({
+        skip,
+        take: parseInt(limit.toString()),
+        include: {
+          suratJalanDetails: {
+            include: {
+              suratJalanDetailItems: true
+            }
+          },
+          invoice: true,
+        },
+        orderBy: {
+          id: 'desc',
+        }
+      }),
+      prisma.suratJalan.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
+  static async getSuratJalanById(id: string): Promise<SuratJalan | null> {
+    const suratJalan = await prisma.suratJalan.findUnique({
+      where: { id },
+      include: {
+        suratJalanDetails: {
+          include: {
+            suratJalanDetailItems: true
+          }
+        },
+        invoice: {
+          include: {
+            purchaseOrder: {
+              include: {
+                customer: true,
+                supplier: true,
+              },
+            },
+          },
+        },
+        historyPengiriman: {
+          include: {
+            status: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      },
+    });
+
+    return suratJalan;
+  }
+
+  static async updateSuratJalan(
+    id: string,
+    data: UpdateSuratJalanInput['body']
+  ): Promise<SuratJalan | null> {
+    const { suratJalanDetails, ...suratJalanInfo } = data;
+
+    try {
+      const updatedSuratJalan = await prisma.$transaction(async (tx) => {
+        // Check if the surat jalan exists
+        const existingSuratJalan = await tx.suratJalan.findUnique({
+          where: { id },
+        });
+
+        if (!existingSuratJalan) {
+          throw new AppError('Surat jalan not found', 404);
+        }
+
+        // If suratJalanDetails are provided, handle them
+        if (suratJalanDetails) {
+          // Delete existing details and items
+          const existingDetails = await tx.suratJalanDetail.findMany({
+            where: { surat_jalan_id: id },
+            select: { id: true }
+          });
+
+          for (const detail of existingDetails) {
+            await tx.suratJalanDetailItem.deleteMany({
+              where: { surat_jalan_detail_id: detail.id }
+            });
+          }
+
+          await tx.suratJalanDetail.deleteMany({
+            where: { surat_jalan_id: id },
+          });
+
+          // Create new details
+          for (const detail of suratJalanDetails) {
+            const newDetail = await tx.suratJalanDetail.create({
+              data: {
+                surat_jalan_id: id,
+                no_box: detail.no_box,
+                total_quantity_in_box: detail.total_quantity_in_box,
+                isi_box: detail.isi_box,
+                sisa: detail.sisa,
+                total_box: detail.total_box,
+              }
+            });
+
+            // Create detail items
+            await tx.suratJalanDetailItem.createMany({
+              data: detail.items.map(item => ({
+                surat_jalan_detail_id: newDetail.id,
+                nama_barang: item.nama_barang,
+                PLU: item.PLU,
+                quantity: item.quantity,
+                satuan: item.satuan,
+                total_box: item.total_box,
+                keterangan: item.keterangan,
+                createdBy: 'system',
+                updatedBy: 'system',
+              }))
+            });
+          }
+        }
+
+        // Update the surat jalan itself
+        const suratJalan = await tx.suratJalan.update({
+          where: { id },
+          data: suratJalanInfo,
+          include: {
+            suratJalanDetails: {
+              include: {
+                suratJalanDetailItems: true
+              }
+            },
+            invoice: true,
+          },
+        });
+
+        return suratJalan;
+      });
+
+      return updatedSuratJalan;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (error instanceof Error && 'code' in error && error.code === 'P2002' && 
+          'meta' in error && error.meta && typeof error.meta === 'object' && 
+          'target' in error.meta && Array.isArray(error.meta.target) && 
+          error.meta.target.includes('no_surat_jalan')) {
+        throw new AppError('Surat jalan with this number already exists', 409);
+      }
+      console.error('Error updating surat jalan:', error);
+      throw new AppError('Failed to update surat jalan', 500);
+    }
+  }
+
+  static async deleteSuratJalan(id: string): Promise<SuratJalan | null> {
+    try {
+      return await prisma.suratJalan.delete({
+        where: { id },
+        include: {
+          suratJalanDetails: {
+            include: {
+              suratJalanDetailItems: true
+            }
+          },
+          invoice: true,
+        },
+      });
+    } catch (error) {
+      return null;
+    }
+  }
+
+  static async searchSuratJalan(query: SearchSuratJalanInput['query']): Promise<PaginatedResult<SuratJalan>> {
+    const { 
+      no_surat_jalan, 
+      deliver_to, 
+      PIC,
+      invoiceId,
+      is_printed,
+      page = 1,
+      limit = 10
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const filters: Prisma.SuratJalanWhereInput[] = [];
+    
+    if (no_surat_jalan) {
+      filters.push({ no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' } });
+    }
+    if (deliver_to) {
+      filters.push({ deliver_to: { contains: deliver_to, mode: 'insensitive' } });
+    }
+    if (PIC) {
+      filters.push({ PIC: { contains: PIC, mode: 'insensitive' } });
+    }
+    if (invoiceId) {
+      filters.push({ invoiceId });
+    }
+    if (is_printed !== undefined) {
+      filters.push({ is_printed });
+    }
+
+    const [data, totalItems] = await Promise.all([
+      prisma.suratJalan.findMany({
+        where: {
+          AND: filters.length > 0 ? filters : undefined,
+        },
+        skip,
+        take: parseInt(limit.toString()),
+        include: {
+          suratJalanDetails: {
+            include: {
+              suratJalanDetailItems: true
+            }
+          },
+          invoice: {
+            include: {
+              purchaseOrder: {
+                include: {
+                  customer: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          id: 'desc',
+        }
+      }),
+      prisma.suratJalan.count({
+        where: {
+          AND: filters.length > 0 ? filters : undefined,
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
+  }
+}

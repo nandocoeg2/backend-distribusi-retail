@@ -1,0 +1,48 @@
+meta {
+  name: create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/surat-jalan
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "no_surat_jalan": "SJ-2024-001",
+    "deliver_to": "Customer ABC",
+    "PIC": "John Doe",
+    "alamat_tujuan": "Jl. Example No. 123, Jakarta",
+    "invoiceId": "inv123",
+    "suratJalanDetails": [
+      {
+        "no_box": "BOX-001",
+        "total_quantity_in_box": 100,
+        "isi_box": 10,
+        "sisa": 0,
+        "total_box": 10,
+        "items": [
+          {
+            "nama_barang": "Product A",
+            "PLU": "PLU001",
+            "quantity": 50,
+            "satuan": "pcs",
+            "total_box": 5,
+            "keterangan": "Fragile"
+          },
+          {
+            "nama_barang": "Product B",
+            "PLU": "PLU002",
+            "quantity": 50,
+            "satuan": "pcs",
+            "total_box": 5,
+            "keterangan": "Handle with care"
+          }
+        ]
+      }
+    ]
+  }
+}

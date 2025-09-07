@@ -1,0 +1,39 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/surat-jalan/:id
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "no_surat_jalan": "SJ-2024-001-UPDATED",
+    "deliver_to": "Customer ABC Updated",
+    "PIC": "Jane Doe",
+    "alamat_tujuan": "Jl. Updated No. 456, Jakarta",
+    "suratJalanDetails": [
+      {
+        "no_box": "BOX-001-UPDATED",
+        "total_quantity_in_box": 150,
+        "isi_box": 15,
+        "sisa": 0,
+        "total_box": 10,
+        "items": [
+          {
+            "nama_barang": "Product A Updated",
+            "PLU": "PLU001",
+            "quantity": 75,
+            "satuan": "pcs",
+            "total_box": 5,
+            "keterangan": "Updated description"
+          }
+        ]
+      }
+    ]
+  }
+}

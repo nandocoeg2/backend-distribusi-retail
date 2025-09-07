@@ -1,0 +1,15 @@
+meta {
+  name: delete
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/surat-jalan/:id
+  body: json
+  auth: bearer
+}
+
+body:json {
+  
+}

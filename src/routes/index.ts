@@ -14,6 +14,7 @@ import { bulkPurchaseOrderRoutes } from './bulk-purchase-order.routes';
 import { packingRoutes } from './packing.routes';
 import { invoiceRoutes } from './invoice.routes';
 import { fileRoutes } from './file.routes';
+import { suratJalanRoutes } from './surat-jalan.routes';
 
 
 
@@ -34,4 +35,5 @@ export default async (fastify: App) => {
   fastify.register(bulkPurchaseOrderRoutes, { prefix: '/purchase-orders' });
   fastify.register(packingRoutes, { prefix: '/packings' });
   fastify.register(invoiceRoutes, { prefix: '/invoices' });
+  fastify.register(suratJalanRoutes, { prefix: '/surat-jalan' });
 };
