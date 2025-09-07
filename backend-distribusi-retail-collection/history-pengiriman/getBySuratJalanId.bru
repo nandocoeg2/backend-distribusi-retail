@@ -1,0 +1,16 @@
+meta {
+  name: getBySuratJalanId
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/history-pengiriman/surat-jalan/:suratJalanId
+  body: none
+  auth: none
+}
+
+params:query {
+  suratJalanId: 
+}
+

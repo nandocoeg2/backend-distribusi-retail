@@ -1,0 +1,16 @@
+meta {
+  name: getByStatusCode
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/history-pengiriman/status/:statusCode
+  body: none
+  auth: none
+}
+
+params:query {
+  statusCode: 
+}
+

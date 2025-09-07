@@ -1,0 +1,16 @@
+meta {
+  name: getByTanggalKirim
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/history-pengiriman/tanggal/:tanggalKirim
+  body: none
+  auth: none
+}
+
+params:query {
+  tanggalKirim: 
+}
+
