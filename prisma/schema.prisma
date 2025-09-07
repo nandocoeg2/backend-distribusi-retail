@@ -142,16 +142,17 @@ model FileUploaded {
 }
 
 model Status {
-  id                 String                @id @default(cuid())
-  status_code        String                @unique
-  status_name        String
-  status_description String?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-  fileUploads        FileUploaded[]
-  purchaseOrders     PurchaseOrder[]
-  packings           Packing[]
-  historyPengiriman  HistoryPengiriman[]
+  id                      String              @id @default(cuid())
+  status_code             String              @unique
+  status_name             String
+  status_description      String?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  fileUploads             FileUploaded[]
+  purchaseOrders          PurchaseOrder[]
+  packings                Packing[]
+  historyPengiriman       HistoryPengiriman[]
+  invoiceStatusPembayaran Invoice[]           @relation("InvoiceStatusPembayaran")
 
   @@map("statuses")
 }
@@ -222,6 +223,11 @@ enum NotificationType {
   SYSTEM
 }
 
+enum InvoiceType {
+  PEMBAYARAN
+  PENGIRIMAN
+}
+
 model Packing {
   id              String        @id @default(cuid())
   tanggal_packing DateTime
@@ -238,7 +244,7 @@ model Packing {
 }
 
 model PackingItem {
-  id             String      @id @default(cuid())
+  id             String    @id @default(cuid())
   nama_barang    String
   total_qty      Int
   jumlah_carton  Int
@@ -246,121 +252,124 @@ model PackingItem {
   no_box         String
   packingId      String
   inventoryId    String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  packing        Packing     @relation(fields: [packingId], references: [id], onDelete: Cascade)
-  inventory      Inventory   @relation(fields: [inventoryId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  packing        Packing   @relation(fields: [packingId], references: [id], onDelete: Cascade)
+  inventory      Inventory @relation(fields: [inventoryId], references: [id])
 
   @@map("packing_items")
 }
 
 model Invoice {
-  id                String            @id @default(cuid())
-  no_invoice        String            @unique
-  tanggal           DateTime          @default(now())
-  deliver_to        String
-  sub_total         Decimal           @db.Decimal(15, 2)
-  total_discount    Decimal           @db.Decimal(15, 2)
-  total_price       Decimal           @db.Decimal(15, 2)
-  ppn_percentage    Decimal           @db.Decimal(5, 2)
-  ppn_rupiah        Decimal           @db.Decimal(15, 2)
-  grand_total       Decimal           @db.Decimal(15, 2)
-  expired_date      DateTime?
-  TOP               String?           @db.VarChar(50)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  createdBy         String
-  updatedBy         String
-  purchaseOrderId   String?
-  purchaseOrder     PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id])
-  invoiceDetails    InvoiceDetail[]
-  suratJalan        SuratJalan[]
+  id                 String          @id @default(cuid())
+  no_invoice         String          @unique
+  tanggal            DateTime        @default(now())
+  deliver_to         String
+  sub_total          Decimal         @db.Decimal(15, 2)
+  total_discount     Decimal         @db.Decimal(15, 2)
+  total_price        Decimal         @db.Decimal(15, 2)
+  ppn_percentage     Decimal         @db.Decimal(5, 2)
+  ppn_rupiah         Decimal         @db.Decimal(15, 2)
+  grand_total        Decimal         @db.Decimal(15, 2)
+  expired_date       DateTime?
+  TOP                String?         @db.VarChar(50)
+  type               InvoiceType     @default(PEMBAYARAN)
+  statusPembayaranId String?
+  statusPembayaran   Status?         @relation(name: "InvoiceStatusPembayaran", fields: [statusPembayaranId], references: [id])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdBy          String
+  updatedBy          String
+  purchaseOrderId    String?
+  purchaseOrder      PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  invoiceDetails     InvoiceDetail[]
+  suratJalan         SuratJalan[]
 
   @@map("invoice")
 }
 
 model InvoiceDetail {
-  id                  String      @id @default(cuid())
+  id                  String   @id @default(cuid())
   invoiceId           String
   nama_barang         String
-  PLU                 String      @db.VarChar(50)
+  PLU                 String   @db.VarChar(50)
   quantity            Int
-  satuan              String      @db.VarChar(50)
-  harga               Decimal     @db.Decimal(15, 2)
-  total               Decimal     @db.Decimal(15, 2)
-  discount_percentage   Decimal     @db.Decimal(5, 2)
-  discount_rupiah     Decimal     @db.Decimal(15, 2)
-  PPN_pecentage       Decimal     @db.Decimal(5, 2)
-  ppn_rupiah          Decimal     @db.Decimal(15, 2)
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  satuan              String   @db.VarChar(50)
+  harga               Decimal  @db.Decimal(15, 2)
+  total               Decimal  @db.Decimal(15, 2)
+  discount_percentage Decimal  @db.Decimal(5, 2)
+  discount_rupiah     Decimal  @db.Decimal(15, 2)
+  PPN_pecentage       Decimal  @db.Decimal(5, 2)
+  ppn_rupiah          Decimal  @db.Decimal(15, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
   createdBy           String
   updatedBy           String
-  invoice             Invoice     @relation(fields: [invoiceId], references: [id])
+  invoice             Invoice  @relation(fields: [invoiceId], references: [id])
 
   @@map("invoice_detail")
 }
 
 model SuratJalan {
-  id                  String                  @id @default(cuid())
-  no_surat_jalan      String                  @unique
-  deliver_to          String
-  PIC                 String
-  alamat_tujuan       String                  @db.Text
-  is_printed          Boolean                 @default(false)
-  print_counter       Int                     @default(0)
-  invoiceId           String?
-  invoice             Invoice?                @relation(fields: [invoiceId], references: [id])
-  suratJalanDetails   SuratJalanDetail[]
-  historyPengiriman   HistoryPengiriman[]
+  id                String              @id @default(cuid())
+  no_surat_jalan    String              @unique
+  deliver_to        String
+  PIC               String
+  alamat_tujuan     String              @db.Text
+  is_printed        Boolean             @default(false)
+  print_counter     Int                 @default(0)
+  invoiceId         String?
+  invoice           Invoice?            @relation(fields: [invoiceId], references: [id])
+  suratJalanDetails SuratJalanDetail[]
+  historyPengiriman HistoryPengiriman[]
 
   @@map("surat_jalan")
 }
 
 model SuratJalanDetail {
-  id                      String                      @id @default(cuid())
-  surat_jalan_id          String
-  no_box                  String                      @db.VarChar(50)
-  total_quantity_in_box   Int
-  isi_box                 Int
-  sisa                    Int
-  total_box               Int
-  suratJalan              SuratJalan                  @relation(fields: [surat_jalan_id], references: [id])
-  suratJalanDetailItems   SuratJalanDetailItem[]
+  id                    String                 @id @default(cuid())
+  surat_jalan_id        String
+  no_box                String                 @db.VarChar(50)
+  total_quantity_in_box Int
+  isi_box               Int
+  sisa                  Int
+  total_box             Int
+  suratJalan            SuratJalan             @relation(fields: [surat_jalan_id], references: [id])
+  suratJalanDetailItems SuratJalanDetailItem[]
 
   @@map("surat_jalan_details")
 }
 
 model SuratJalanDetailItem {
-  id                          String                  @id @default(cuid())
-  surat_jalan_detail_id       String
-  nama_barang                 String
-  PLU                         String                  @db.VarChar(50)
-  quantity                    Int
-  satuan                      String                  @db.VarChar(50)
-  total_box                   Int
-  keterangan                  String?                 @db.Text
-  createdAt                   DateTime                @default(now())
-  updatedAt                   DateTime                @updatedAt
-  createdBy                   String
-  updatedBy                   String
-  suratJalanDetail            SuratJalanDetail        @relation(fields: [surat_jalan_detail_id], references: [id])
+  id                    String           @id @default(cuid())
+  surat_jalan_detail_id String
+  nama_barang           String
+  PLU                   String           @db.VarChar(50)
+  quantity              Int
+  satuan                String           @db.VarChar(50)
+  total_box             Int
+  keterangan            String?          @db.Text
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  createdBy             String
+  updatedBy             String
+  suratJalanDetail      SuratJalanDetail @relation(fields: [surat_jalan_detail_id], references: [id])
 
   @@map("surat_jalan_detail_items")
 }
 
 model HistoryPengiriman {
-  id                  String          @id @default(cuid())
-  surat_jalan_id      String
-  status_id           String
-  tanggal_kirim       DateTime        @default(now())
-  keterangan          String?         @db.Text
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  createdBy           String
-  updatedBy           String
-  suratJalan          SuratJalan      @relation(fields: [surat_jalan_id], references: [id])
-  status              Status          @relation(fields: [status_id], references: [id])
+  id             String     @id @default(cuid())
+  surat_jalan_id String
+  status_id      String
+  tanggal_kirim  DateTime   @default(now())
+  keterangan     String?    @db.Text
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  createdBy      String
+  updatedBy      String
+  suratJalan     SuratJalan @relation(fields: [surat_jalan_id], references: [id])
+  status         Status     @relation(fields: [status_id], references: [id])
 
   @@map("history_pengiriman")
 }
