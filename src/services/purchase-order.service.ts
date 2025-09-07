@@ -128,6 +128,16 @@ export class PurchaseOrderService {
         purchaseOrderDetails: true,
         files: true,
         status: true,
+        packings: {
+          include: {
+            packingItems: {
+              include: {
+                inventory: true,
+              },
+            },
+            status: true,
+          },
+        },
       },
     });
 
@@ -353,10 +363,14 @@ export class PurchaseOrderService {
 
   static async processPurchaseOrder(
     id: string,
-    statusId: string
+    statusId: string,
+    userId: string = 'system'
   ): Promise<PurchaseOrder> {
     const purchaseOrder = await prisma.purchaseOrder.findUnique({
       where: { id },
+      include: {
+        purchaseOrderDetails: true,
+      },
     });
 
     if (!purchaseOrder) {
@@ -371,9 +385,63 @@ export class PurchaseOrderService {
       throw new AppError('Status not found', 404);
     }
 
-    return await prisma.purchaseOrder.update({
-      where: { id },
-      data: { statusId },
+    // Check if PENDING PACKING status exists
+    const pendingPackingStatus = await prisma.status.findUnique({
+      where: { status_code: 'PENDING PACKING' },
+    });
+
+    if (!pendingPackingStatus) {
+      throw new AppError('PENDING PACKING status not found', 404);
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // Update purchase order status
+      const updatedPurchaseOrder = await tx.purchaseOrder.update({
+        where: { id },
+        data: { statusId },
+        include: {
+          purchaseOrderDetails: true,
+          customer: true,
+          supplier: true,
+          status: true,
+          files: true,
+        },
+      });
+
+      // Create packing record
+      if (purchaseOrder.purchaseOrderDetails && purchaseOrder.purchaseOrderDetails.length > 0) {
+        // Check if packing already exists for this purchase order
+        const existingPacking = await tx.packing.findUnique({
+          where: { purchaseOrderId: id },
+        });
+
+        if (!existingPacking) {
+          // Create packing items from purchase order details
+          const packingItems = purchaseOrder.purchaseOrderDetails.map(detail => ({
+            nama_barang: detail.nama_barang,
+            total_qty: detail.quantity,
+            jumlah_carton: Math.ceil(detail.quantity / detail.isi), // Calculate cartons
+            isi_per_carton: detail.isi,
+            no_box: '', // Will be filled later during actual packing
+            inventoryId: detail.inventoryId,
+          }));
+
+          // Create packing record
+          await tx.packing.create({
+            data: {
+              tanggal_packing: new Date(), // Current date/time
+              statusId: 'cmf7s8zn2000vh1trq9whv9x1', // PENDING PACKING status
+              purchaseOrderId: id,
+              updatedBy: userId, // User who processed the purchase order
+              packingItems: {
+                create: packingItems,
+              },
+            },
+          });
+        }
+      }
+
+      return updatedPurchaseOrder;
     });
   }
 }

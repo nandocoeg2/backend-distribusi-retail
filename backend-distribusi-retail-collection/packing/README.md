@@ -2,6 +2,12 @@
 
 This collection contains requests for managing packing operations in the backend-distribusi-retail system.
 
+**Note:** Packing records are automatically created when a Purchase Order is processed. The system will:
+- Set the packing date to the current date/time
+- Assign the "PENDING PACKING" status (ID: cmf7s8zn2000vh1trq9whv9x1)
+- Create packing items based on the purchase order details
+- Set the updatedBy field to the user who processed the purchase order
+
 ## Endpoints
 
 1. **Create Packing** - POST `/packings/`

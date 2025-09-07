@@ -157,9 +157,13 @@ export class PurchaseOrderController {
     }>,
     reply: FastifyReply
   ) {
+    // Extract user ID from token for packing record
+    const userId = (request.user as any)?.sub || (request.user as any)?.id || 'system';
+    
     const purchaseOrder = await PurchaseOrderService.processPurchaseOrder(
       request.params.id,
-      request.body.statusId
+      request.body.statusId,
+      userId
     );
     return reply.send(purchaseOrder);
   }
