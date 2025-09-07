@@ -117,6 +117,7 @@ model PurchaseOrder {
   files                FileUploaded[]
   purchaseOrderDetails PurchaseOrderDetail[]
   packings             Packing[]
+  invoices             Invoice[]
   customer             Customer              @relation(fields: [customerId], references: [id])
   status               Status?               @relation(fields: [statusId], references: [id])
   supplier             Supplier?             @relation(fields: [supplierId], references: [id])
@@ -270,7 +271,10 @@ model Invoice {
   updatedAt         DateTime          @updatedAt
   createdBy         String
   updatedBy         String
+  purchaseOrderId   String?
+  purchaseOrder     PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id])
   invoiceDetails    InvoiceDetail[]
+  suratJalan        SuratJalan[]
 
   @@map("invoice")
 }
@@ -305,6 +309,8 @@ model SuratJalan {
   alamat_tujuan       String                  @db.Text
   is_printed          Boolean                 @default(false)
   print_counter       Int                     @default(0)
+  invoiceId           String?
+  invoice             Invoice?                @relation(fields: [invoiceId], references: [id])
   suratJalanDetails   SuratJalanDetail[]
   historyPengiriman   HistoryPengiriman[]
 
