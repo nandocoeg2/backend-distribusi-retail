@@ -97,7 +97,7 @@ export class NotificationController {
   }
 
   static async getNotificationsByType(
-    request: FastifyRequest<{ Params: { type: 'GENERAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'STOCK_ALERT' | 'SYSTEM' } }>,
+    request: FastifyRequest<{ Params: { type: 'GENERAL' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'STOCK_ALERT' | 'PRICE_DIFFERENCE' | 'SYSTEM' } }>,
     reply: FastifyReply
   ) {
     try {
@@ -113,6 +113,27 @@ export class NotificationController {
       return reply.code(500).send({
         success: false,
         error: 'Failed to fetch notifications by type',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  static async getPriceDifferenceNotifications(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    try {
+      const notifications = await NotificationService.getNotificationsByType('PRICE_DIFFERENCE');
+      return reply.code(200).send({
+        success: true,
+        data: notifications,
+        count: notifications.length,
+        message: 'Price difference notifications retrieved successfully',
+      });
+    } catch (error) {
+      return reply.code(500).send({
+        success: false,
+        error: 'Failed to fetch price difference notifications',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }

@@ -233,5 +233,56 @@ export class NotificationService {
 
     return { total, unread, byType };
   }
+
+  static async checkPriceDifferenceAlerts(
+    purchaseOrderId: string,
+    poDetails: Array<{
+      kode_barang: string;
+      nama_barang: string;
+      harga: number;
+      harga_netto: number;
+    }>
+  ): Promise<Notification[]> {
+    const notifications: Notification[] = [];
+
+    for (const poDetail of poDetails) {
+      // Cari inventory dengan kode_barang yang sama
+      const inventory = await prisma.inventory.findUnique({
+        where: { kode_barang: poDetail.kode_barang }
+      });
+
+      if (inventory) {
+        // Bandingkan harga PO dengan harga inventory
+        const priceDifference = Math.abs(poDetail.harga - inventory.harga_barang);
+        const priceDifferencePercentage = (priceDifference / inventory.harga_barang) * 100;
+
+        // Jika perbedaan harga lebih dari 10%, buat notifikasi
+        if (priceDifferencePercentage > 10) {
+          const existingNotification = await prisma.notification.findFirst({
+            where: {
+              inventoryId: inventory.id,
+              type: 'PRICE_DIFFERENCE',
+              isRead: false,
+              message: {
+                contains: `PO ${purchaseOrderId}`
+              }
+            },
+          });
+
+          if (!existingNotification) {
+            const notification = await this.createNotification({
+              title: `Perbedaan Harga: ${poDetail.nama_barang}`,
+              message: `Harga barang ${poDetail.nama_barang} di PO ${purchaseOrderId} (Rp ${poDetail.harga.toLocaleString()}) berbeda ${priceDifferencePercentage.toFixed(1)}% dengan harga di inventory (Rp ${inventory.harga_barang.toLocaleString()})`,
+              type: 'PRICE_DIFFERENCE',
+              inventoryId: inventory.id,
+            });
+            notifications.push(notification);
+          }
+        }
+      }
+    }
+
+    return notifications;
+  }
 }
 

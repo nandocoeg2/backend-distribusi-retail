@@ -4,6 +4,7 @@ import { AppError } from '@/utils/app-error';
 import logger from '@/config/logger';
 import fs from 'fs/promises';
 import { POType, Supplier, Prisma } from '@prisma/client';
+import { NotificationService } from './notification.service';
 
 export class BulkPurchaseOrderService {
   static async processPendingFiles() {
@@ -20,7 +21,7 @@ export class BulkPurchaseOrderService {
       return;
     }
 
-    const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING' } });
+    const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING BULK FILE' } });
     const fileProcessingStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSING BULK FILE' } });
     const fileProcessedStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSED BULK FILE' } });
     const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
@@ -47,6 +48,14 @@ export class BulkPurchaseOrderService {
         );
 
         // --- Start transaction for database operations only ---
+        let newPurchaseOrder: any;
+        let poDetails: Array<{
+          kode_barang: string;
+          nama_barang: string;
+          harga: number;
+          harga_netto: number;
+        }> = [];
+
         await prisma.$transaction(async (tx) => {
           const poNumber = jsonResult.order?.id;
           if (!poNumber) throw new Error('Conversion result missing PO number.');
@@ -75,7 +84,7 @@ export class BulkPurchaseOrderService {
             }
           }
 
-          const newPurchaseOrder = await tx.purchaseOrder.create({
+          newPurchaseOrder = await tx.purchaseOrder.create({
             data: {
               po_number: poNumber,
               customerId: customer.id,
@@ -105,7 +114,7 @@ export class BulkPurchaseOrderService {
               },
             });
 
-            await tx.purchaseOrderDetail.create({
+            const poDetail = await tx.purchaseOrderDetail.create({
               data: {
                 purchaseOrderId: newPurchaseOrder.id,
                 inventoryId: inventoryItem.id,
@@ -117,6 +126,14 @@ export class BulkPurchaseOrderService {
                 harga_netto: item.netPrice_perPcs || 0,
                 total_pembelian: item.totalLine_net || 0,
               },
+            });
+
+            // Simpan detail untuk pengecekan harga
+            poDetails.push({
+              kode_barang: poDetail.kode_barang,
+              nama_barang: poDetail.nama_barang,
+              harga: poDetail.harga,
+              harga_netto: poDetail.harga_netto,
             });
           }
 
@@ -130,6 +147,21 @@ export class BulkPurchaseOrderService {
 
           logger.info(`Successfully processed file ${file.id} and created PO ${newPurchaseOrder.id} with details.`);
         });
+
+        // Periksa perbedaan harga setelah transaksi selesai
+        try {
+          const priceDifferenceNotifications = await NotificationService.checkPriceDifferenceAlerts(
+            newPurchaseOrder.id,
+            poDetails
+          );
+          
+          if (priceDifferenceNotifications.length > 0) {
+            logger.info(`Created ${priceDifferenceNotifications.length} price difference notifications for PO ${newPurchaseOrder.id}`);
+          }
+        } catch (notificationError) {
+          logger.error(`Failed to create price difference notifications for PO ${newPurchaseOrder.id}:`, { error: notificationError });
+          // Jangan throw error di sini karena PO sudah berhasil dibuat
+        }
       } catch (error) {
         logger.error(`Failed to process file ${file.id}:`, { error });
         await prisma.fileUploaded.update({

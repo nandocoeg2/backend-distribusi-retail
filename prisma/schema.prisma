@@ -220,6 +220,7 @@ enum NotificationType {
   LOW_STOCK
   OUT_OF_STOCK
   STOCK_ALERT
+  PRICE_DIFFERENCE
   SYSTEM
 }
 

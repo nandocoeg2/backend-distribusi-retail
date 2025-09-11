@@ -25,6 +25,8 @@ export default async function (fastify: FastifyInstance) {
 
   fastify.get('/alerts', NotificationController.checkAllInventoryAlerts);
 
+  fastify.get('/price-differences', NotificationController.getPriceDifferenceNotifications);
+
   fastify.get(
     '/:id',
     {
