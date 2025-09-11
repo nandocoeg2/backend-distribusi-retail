@@ -104,6 +104,39 @@ npm run prisma:migrate
 npm run prisma:seed
 ```
 
+### 5. Seeding Data
+Sistem ini menyediakan seeding data yang terpisah untuk fleksibilitas:
+
+```bash
+# Seed roles (super admin, admin, user)
+npm run seed:roles
+
+# Seed master data (customers, suppliers, inventories)
+npm run seed:master-data
+
+# Seed menus (Master Data, Role Management)
+npm run seed:menus
+
+# Assign all menus to all roles
+npm run seed:role-menus
+
+# Seed statuses (PENDING, APPROVED, PROCESSED, etc.)
+npm run seed:statuses
+
+# Seed purchase orders (requires master data first)
+npm run seed:purchase-order
+```
+
+**Urutan seeding yang disarankan:**
+```bash
+npm run seed:roles
+npm run seed:master-data
+npm run seed:menus
+npm run seed:role-menus
+npm run seed:statuses
+npm run seed:purchase-order
+```
+
 ## ▶️ Menjalankan Aplikasi
 
 ### Dengan Docker (Recommended)
@@ -154,7 +187,13 @@ backend-distribusi-retail/
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   ├── migrations/       # Database migrations
-│   └── seed.ts          # Database seeding
+│   ├── seed-roles.ts     # Seed roles data
+│   ├── seed-menus.ts     # Seed menus data
+│   ├── seed-role-menus.ts # Assign menus to roles
+│   ├── seed-master-data.ts # Seed customers, suppliers, inventories
+│   ├── seed-statuses.ts  # Seed status data
+│   ├── seed-purchase-order.ts # Seed purchase orders
+│   └── README.md         # Prisma documentation
 ├── backend-distribusi-retail-collection/
 │   └── ...              # Bruno API collections
 ├── logs/                # Application logs
@@ -764,6 +803,12 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | `npm run prisma:migrate` | Jalankan database migration |
 | `npm run prisma:generate` | Generate Prisma client |
 | `npm run prisma:seed` | Seed database dengan data awal |
+| `npm run seed:roles` | Seed roles data |
+| `npm run seed:menus` | Seed menus data |
+| `npm run seed:role-menus` | Assign menus to roles |
+| `npm run seed:master-data` | Seed master data (customers, suppliers, inventories) |
+| `npm run seed:statuses` | Seed status data |
+| `npm run seed:purchase-order` | Seed purchase orders |
 
 ## 🌐 Default URLs
 

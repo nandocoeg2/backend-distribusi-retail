@@ -13,6 +13,7 @@
     "seed:purchase-order": "ts-node prisma/seed-purchase-order.ts",
     "seed:menus": "ts-node prisma/seed-menus.ts",
     "seed:roles": "ts-node prisma/seed-roles.ts",
+    "seed:role-menus": "ts-node prisma/seed-role-menus.ts",
     "seed:master-data": "ts-node prisma/seed-master-data.ts",
     "seed:statuses": "ts-node prisma/seed-statuses.ts",
     "seed:statuses:reset": "ts-node -e \"import('./prisma/seed-statuses').then(m => m.resetAllStatuses())\""
