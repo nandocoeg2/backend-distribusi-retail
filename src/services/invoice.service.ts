@@ -171,16 +171,42 @@ export class InvoiceService {
 
   static async deleteInvoice(id: string): Promise<Invoice | null> {
     try {
-      return await prisma.invoice.delete({
-        where: { id },
-        include: {
-          invoiceDetails: true,
-          statusPembayaran: true,
-          purchaseOrder: true,
-        },
+      return await prisma.$transaction(async (tx) => {
+        // Check if the invoice exists
+        const existingInvoice = await tx.invoice.findUnique({
+          where: { id },
+          include: {
+            invoiceDetails: true,
+            statusPembayaran: true,
+            purchaseOrder: true,
+          },
+        });
+
+        if (!existingInvoice) {
+          throw new AppError('Invoice not found', 404);
+        }
+
+        // Delete invoice details first to avoid foreign key constraint
+        await tx.invoiceDetail.deleteMany({
+          where: { invoiceId: id },
+        });
+
+        // Then delete the invoice
+        return await tx.invoice.delete({
+          where: { id },
+          include: {
+            invoiceDetails: true,
+            statusPembayaran: true,
+            purchaseOrder: true,
+          },
+        });
       });
     } catch (error) {
-      return null;
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error('Error deleting invoice:', error);
+      throw new AppError('Failed to delete invoice', 500);
     }
   }
 

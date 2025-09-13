@@ -5,9 +5,13 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/surat-jalan
+  url: http://localhost:5050/api/v1/surat-jalan
   body: json
   auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
 }
 
 body:json {
@@ -16,7 +20,7 @@ body:json {
     "deliver_to": "Customer ABC",
     "PIC": "John Doe",
     "alamat_tujuan": "Jl. Example No. 123, Jakarta",
-    "invoiceId": "inv123",
+    "invoiceId": null,
     "suratJalanDetails": [
       {
         "no_box": "BOX-001",

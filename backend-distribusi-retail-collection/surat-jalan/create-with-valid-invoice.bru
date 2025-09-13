@@ -1,0 +1,52 @@
+meta {
+  name: create-with-valid-invoice
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5050/api/v1/surat-jalan
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "no_surat_jalan": "SJ-2024-002",
+    "deliver_to": "Customer XYZ",
+    "PIC": "Jane Smith",
+    "alamat_tujuan": "Jl. Test No. 456, Bandung",
+    "invoiceId": "cmfi41jra000512j7pt27ziog",
+    "suratJalanDetails": [
+      {
+        "no_box": "BOX-002",
+        "total_quantity_in_box": 200,
+        "isi_box": 20,
+        "sisa": 0,
+        "total_box": 10,
+        "items": [
+          {
+            "nama_barang": "Product C",
+            "PLU": "PLU003",
+            "quantity": 100,
+            "satuan": "pcs",
+            "total_box": 5,
+            "keterangan": "Handle with care"
+          },
+          {
+            "nama_barang": "Product D",
+            "PLU": "PLU004",
+            "quantity": 100,
+            "satuan": "pcs",
+            "total_box": 5,
+            "keterangan": "Fragile"
+          }
+        ]
+      }
+    ]
+  }
+}

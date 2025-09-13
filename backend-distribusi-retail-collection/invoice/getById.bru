@@ -5,11 +5,11 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/invoices/:id
+  url: http://localhost:5050/api/v1/invoices/:id
   body: none
   auth: bearer
 }
 
-params {
-  id: 
+auth:bearer {
+  token: {{access_token}}
 }

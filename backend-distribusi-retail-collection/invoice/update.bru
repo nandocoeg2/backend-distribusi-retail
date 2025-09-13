@@ -5,13 +5,13 @@ meta {
 }
 
 put {
-  url: {{baseUrl}}/invoices/:id
+  url: http://localhost:5050/api/v1/invoices/{{invoice_id}}
   body: json
   auth: bearer
 }
 
-params {
-  id: 
+auth:bearer {
+  token: {{access_token}}
 }
 
 body:json {
@@ -24,4 +24,8 @@ body:json {
     "ppn_rupiah": 125400,
     "grand_total": 1265400
   }
+}
+
+vars:pre-request {
+  invoice_id: 
 }

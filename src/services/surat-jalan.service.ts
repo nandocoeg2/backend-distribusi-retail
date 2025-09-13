@@ -22,6 +22,17 @@ export class SuratJalanService {
     try {
       const { suratJalanDetails, ...suratJalanInfo } = suratJalanData;
 
+      // Validate invoiceId if provided and not null
+      if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
+        const invoice = await prisma.invoice.findUnique({
+          where: { id: suratJalanInfo.invoiceId },
+        });
+
+        if (!invoice) {
+          throw new AppError('Invoice not found', 404);
+        }
+      }
+
       return await prisma.suratJalan.create({
         data: {
           ...suratJalanInfo,
@@ -62,13 +73,25 @@ export class SuratJalanService {
         }
       });
     } catch (error: any) {
-      if (error instanceof Error && 'code' in error && error.code === 'P2002' && 
-          'meta' in error && error.meta && typeof error.meta === 'object' && 
-          'target' in error.meta && Array.isArray(error.meta.target) && 
-          error.meta.target.includes('no_surat_jalan')) {
-        throw new AppError('Surat jalan with this number already exists', 409);
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw error;
+      
+      if (error instanceof Error && 'code' in error) {
+        if (error.code === 'P2002' && 
+            'meta' in error && error.meta && typeof error.meta === 'object' && 
+            'target' in error.meta && Array.isArray(error.meta.target) && 
+            error.meta.target.includes('no_surat_jalan')) {
+          throw new AppError('Surat jalan with this number already exists', 409);
+        }
+        
+        if (error.code === 'P2003') {
+          throw new AppError('Foreign key constraint violation. Please check if the referenced invoice exists.', 400);
+        }
+      }
+      
+      console.error('Error creating surat jalan:', error);
+      throw new AppError('Failed to create surat jalan', 500);
     }
   }
 
@@ -240,7 +263,8 @@ export class SuratJalanService {
 
   static async deleteSuratJalan(id: string): Promise<SuratJalan | null> {
     try {
-      return await prisma.suratJalan.delete({
+      // Ambil data surat jalan terlebih dahulu untuk return
+      const suratJalan = await prisma.suratJalan.findUnique({
         where: { id },
         include: {
           suratJalanDetails: {
@@ -251,7 +275,45 @@ export class SuratJalanService {
           invoice: true,
         },
       });
+
+      if (!suratJalan) {
+        return null;
+      }
+
+      // Hapus data terkait terlebih dahulu menggunakan transaction
+      await prisma.$transaction(async (tx) => {
+        // Hapus surat jalan detail items terlebih dahulu
+        await tx.suratJalanDetailItem.deleteMany({
+          where: {
+            suratJalanDetail: {
+              surat_jalan_id: id
+            }
+          }
+        });
+
+        // Hapus surat jalan details
+        await tx.suratJalanDetail.deleteMany({
+          where: {
+            surat_jalan_id: id
+          }
+        });
+
+        // Hapus history pengiriman
+        await tx.historyPengiriman.deleteMany({
+          where: {
+            surat_jalan_id: id
+          }
+        });
+
+        // Hapus surat jalan
+        await tx.suratJalan.delete({
+          where: { id }
+        });
+      });
+
+      return suratJalan;
     } catch (error) {
+      console.error('Error deleting surat jalan:', error);
       return null;
     }
   }

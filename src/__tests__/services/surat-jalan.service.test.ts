@@ -22,6 +22,12 @@ jest.mock('@/config/database', () => ({
       createMany: jest.fn(),
       deleteMany: jest.fn(),
     },
+    historyPengiriman: {
+      deleteMany: jest.fn(),
+    },
+    invoice: {
+      findUnique: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }));
@@ -69,6 +75,7 @@ describe('SuratJalanService', () => {
         updatedAt: new Date(),
       };
 
+      (prisma.invoice.findUnique as jest.Mock).mockResolvedValue({ id: 'inv123' });
       (prisma.suratJalan.create as jest.Mock).mockResolvedValue(createdSuratJalan);
 
       const result = await SuratJalanService.createSuratJalan(createInput);
@@ -229,25 +236,65 @@ describe('SuratJalanService', () => {
   });
 
   describe('deleteSuratJalan', () => {
-    it('should delete surat jalan successfully', async () => {
-      const deletedSuratJalan = { id: '1', no_surat_jalan: 'SJ-001' };
+    it('should delete surat jalan successfully with related data', async () => {
+      const suratJalanToDelete = {
+        id: '1',
+        no_surat_jalan: 'SJ-001',
+        suratJalanDetails: [
+          {
+            id: 'detail1',
+            suratJalanDetailItems: [
+              { id: 'item1', nama_barang: 'Product A' }
+            ]
+          }
+        ],
+        invoice: null,
+        historyPengiriman: []
+      };
 
-      (prisma.suratJalan.delete as jest.Mock).mockResolvedValue(deletedSuratJalan);
+      (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(suratJalanToDelete);
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          suratJalanDetailItem: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          suratJalanDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          historyPengiriman: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 })
+          },
+          suratJalan: {
+            delete: jest.fn().mockResolvedValue(suratJalanToDelete)
+          }
+        };
+        return callback(mockTx);
+      });
 
       const result = await SuratJalanService.deleteSuratJalan('1');
 
-      expect(prisma.suratJalan.delete).toHaveBeenCalledWith({
+      expect(prisma.suratJalan.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
         include: expect.any(Object),
       });
-      expect(result).toEqual(deletedSuratJalan);
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(result).toEqual(suratJalanToDelete);
     });
 
     it('should return null when surat jalan not found', async () => {
-      const error = new Error('Record not found');
-      (prisma.suratJalan.delete as jest.Mock).mockRejectedValue(error);
+      (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await SuratJalanService.deleteSuratJalan('999');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when deletion fails', async () => {
+      const suratJalanToDelete = { id: '1', no_surat_jalan: 'SJ-001' };
+      (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(suratJalanToDelete);
+      (prisma.$transaction as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      const result = await SuratJalanService.deleteSuratJalan('1');
 
       expect(result).toBeNull();
     });

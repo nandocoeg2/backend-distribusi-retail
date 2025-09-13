@@ -5,11 +5,11 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/surat-jalan/:id
+  url: http://localhost:5050/api/v1/surat-jalan/cmfi4af6700019otr9qzt3r4r
   body: json
   auth: bearer
 }
 
-body:json {
-  
+auth:bearer {
+  token: {{access_token}}
 }

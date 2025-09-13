@@ -6,7 +6,7 @@ export const createSuratJalanSchema = z.object({
     deliver_to: z.string().min(1, 'Deliver to is required'),
     PIC: z.string().min(1, 'PIC is required'),
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required'),
-    invoiceId: z.string().optional(),
+    invoiceId: z.string().optional().nullable(),
     suratJalanDetails: z.array(
       z.object({
         no_box: z.string().min(1, 'Nomor box is required'),

@@ -284,27 +284,36 @@ describe('InvoiceService', () => {
   describe('deleteInvoice', () => {
     it('should delete invoice successfully', async () => {
       const deletedInvoice = { id: '1', no_invoice: 'INV-001' };
-      (prisma.invoice.delete as jest.Mock).mockResolvedValue(deletedInvoice);
+      const existingInvoice = { id: '1', no_invoice: 'INV-001', invoiceDetails: [] };
+      
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        return callback({
+          invoice: {
+            findUnique: jest.fn().mockResolvedValue(existingInvoice),
+            delete: jest.fn().mockResolvedValue(deletedInvoice),
+          },
+          invoiceDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+        });
+      });
 
       const result = await InvoiceService.deleteInvoice('1');
 
-      expect(prisma.invoice.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-        include: {
-          invoiceDetails: true,
-          statusPembayaran: true,
-          purchaseOrder: true,
-        },
-      });
+      expect(prisma.$transaction).toHaveBeenCalled();
       expect(result).toEqual(deletedInvoice);
     });
 
-    it('should return null when invoice not found', async () => {
-      (prisma.invoice.delete as jest.Mock).mockRejectedValue(new Error('Not found'));
+    it('should throw error when invoice not found', async () => {
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        return callback({
+          invoice: {
+            findUnique: jest.fn().mockResolvedValue(null),
+          },
+        });
+      });
 
-      const result = await InvoiceService.deleteInvoice('999');
-
-      expect(result).toBeNull();
+      await expect(InvoiceService.deleteInvoice('999')).rejects.toThrow('Invoice not found');
     });
   });
 

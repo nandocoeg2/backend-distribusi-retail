@@ -5,15 +5,11 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/invoices/search
+  url: http://localhost:5050/api/v1/invoices/search?no_invoice=&deliver_to=&type=&statusPembayaranId=&purchaseOrderId=&tanggal_start=&tanggal_end=&page=1&limit=10
   body: none
   auth: bearer
 }
 
-query {
-  no_invoice: INV
-  deliver_to: Customer
-  type: PEMBAYARAN
-  page: 1
-  limit: 10
+auth:bearer {
+  token: {{access_token}}
 }

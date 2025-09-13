@@ -5,11 +5,11 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/invoices/:id
+  url: http://localhost:5050/api/v1/invoices/cmfi2c45z0000g5djxuvvu1fm
   body: none
   auth: bearer
 }
 
-params {
-  id: 
+auth:bearer {
+  token: {{access_token}}
 }
