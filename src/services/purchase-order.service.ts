@@ -430,7 +430,7 @@ export class PurchaseOrderService {
           await tx.packing.create({
             data: {
               tanggal_packing: new Date(), // Current date/time
-              statusId: 'cmf7s8zn2000vh1trq9whv9x1', // PENDING PACKING status
+              statusId: pendingPackingStatus.id, // PENDING PACKING status
               purchaseOrderId: id,
               updatedBy: userId, // User who processed the purchase order
               packingItems: {
