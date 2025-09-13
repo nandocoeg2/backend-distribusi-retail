@@ -4,6 +4,15 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.menu.upsert({
+    where: { name: 'Dashboard' },
+    update: {},
+    create: {
+      name: 'Dashboard',
+      url: '/dashboard',
+    },
+  });
+
+  await prisma.menu.upsert({
     where: { name: 'Role Management' },
     update: {},
     create: {
