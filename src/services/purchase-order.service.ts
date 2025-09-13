@@ -6,6 +6,7 @@ import {
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
+import { generatePackingNumber } from '@/utils/packing.utils';
 
 export interface FileInfo {
   filename: string;
@@ -430,6 +431,7 @@ export class PurchaseOrderService {
           // Create packing record
           const createdPacking = await tx.packing.create({
             data: {
+              packing_number: generatePackingNumber(), // Generate unique packing number
               tanggal_packing: new Date(), // Current date/time
               statusId: pendingPackingStatus.id, // PENDING PACKING status
               purchaseOrderId: id,

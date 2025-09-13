@@ -79,6 +79,7 @@ describe('PackingService', () => {
       });
       expect(prisma.packing.create).toHaveBeenCalledWith({
         data: {
+          packing_number: expect.stringMatching(/^PN-\d{8}-[A-Z0-9]{4}$/), // Match PN-YYYYMMDD-XXXX format
           tanggal_packing: mockPackingData.tanggal_packing,
           statusId: 'status1',
           purchaseOrderId: 'po1',
@@ -209,6 +210,7 @@ describe('PackingService', () => {
 
       expect(prisma.packing.create).toHaveBeenCalledWith({
         data: {
+          packing_number: expect.stringMatching(/^PN-\d{8}-[A-Z0-9]{4}$/), // Match PN-YYYYMMDD-XXXX format
           tanggal_packing: mockPackingData.tanggal_packing,
           statusId: 'status1',
           purchaseOrderId: 'po1',
@@ -247,6 +249,7 @@ describe('PackingService', () => {
       const mockPackings = [
         {
           id: 'packing1',
+          packing_number: 'PN-20250113-ABCD', // Mock generated packing number
           tanggal_packing: new Date(),
           statusId: 'status1',
           purchaseOrderId: 'po1',
@@ -305,6 +308,7 @@ describe('PackingService', () => {
   describe('updatePacking', () => {
     it('should update packing successfully', async () => {
       const mockUpdateData = {
+        packing_number: 'PKG002',
         tanggal_packing: new Date(),
         statusId: 'status2',
         updatedBy: 'user2',
@@ -349,6 +353,7 @@ describe('PackingService', () => {
 
     it('should throw error if packing not found', async () => {
       const mockUpdateData = {
+        packing_number: 'PKG002',
         tanggal_packing: new Date(),
         statusId: 'status2',
         updatedBy: 'user2',
@@ -371,6 +376,7 @@ describe('PackingService', () => {
 
     it('should handle general errors', async () => {
       const mockUpdateData = {
+        packing_number: 'PKG002',
         tanggal_packing: new Date(),
         statusId: 'status2',
         updatedBy: 'user2',
@@ -462,6 +468,7 @@ describe('PackingService', () => {
       const mockPackings = [
         {
           id: 'packing1',
+          packing_number: 'PN-20250113-ABCD', // Mock generated packing number
           tanggal_packing: new Date(),
           statusId: 'status1',
           purchaseOrderId: 'po1',

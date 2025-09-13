@@ -1,6 +1,7 @@
 import { prisma } from '@/config/database';
 import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/schemas/packing.schema';
 import { AppError } from '@/utils/app-error';
+import { generatePackingNumber } from '@/utils/packing.utils';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -33,6 +34,28 @@ export class PackingService {
         throw new AppError('Packing already exists for this Purchase Order', 409);
       }
 
+      // Generate unique packing number
+      let packingNumber: string;
+      let isUnique = false;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (!isUnique && attempts < maxAttempts) {
+        packingNumber = generatePackingNumber();
+        const existingPackingNumber = await prisma.packing.findUnique({
+          where: { packing_number: packingNumber },
+        });
+        
+        if (!existingPackingNumber) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+
+      if (!isUnique) {
+        throw new AppError('Failed to generate unique packing number', 500);
+      }
+
       // Check if status exists
       const status = await prisma.status.findUnique({
         where: { id: packingData.statusId },
@@ -62,6 +85,7 @@ export class PackingService {
       // Create packing with items
       return await prisma.packing.create({
         data: {
+          packing_number: packingNumber!,
           tanggal_packing: packingData.tanggal_packing,
           statusId: packingData.statusId,
           purchaseOrderId: packingData.purchaseOrderId,
@@ -197,6 +221,7 @@ export class PackingService {
 
   static async searchPackings(query: SearchPackingInput['query']): Promise<PaginatedResult<any>> {
     const { 
+      packing_number,
       tanggal_packing, 
       statusId, 
       purchaseOrderId, 
@@ -207,6 +232,15 @@ export class PackingService {
     const skip = (page - 1) * limit;
 
     const filters: any[] = [];
+    
+    if (packing_number) {
+      filters.push({
+        packing_number: {
+          contains: packing_number,
+          mode: 'insensitive'
+        }
+      });
+    }
     
     if (tanggal_packing) {
       const date = new Date(tanggal_packing);

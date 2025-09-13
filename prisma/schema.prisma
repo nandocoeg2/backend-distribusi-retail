@@ -231,6 +231,7 @@ enum InvoiceType {
 
 model Packing {
   id              String        @id @default(cuid())
+  packing_number  String        @unique
   tanggal_packing DateTime
   statusId        String
   purchaseOrderId String        @unique

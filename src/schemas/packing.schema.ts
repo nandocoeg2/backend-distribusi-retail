@@ -3,6 +3,7 @@ import { paginationSchema } from './pagination.schema';
 
 export const createPackingSchema = z.object({
   body: z.object({
+    packing_number: z.string().optional(), // Auto-generated, optional in input
     tanggal_packing: z.coerce.date(),
     statusId: z.string(),
     purchaseOrderId: z.string(),
@@ -29,6 +30,7 @@ export const updatePackingSchema = z.object({
     id: z.string(),
   }),
   body: z.object({
+    packing_number: z.string().optional(),
     tanggal_packing: z.coerce.date().optional(),
     statusId: z.string().optional(),
     updatedBy: z.string().optional(),
@@ -52,6 +54,7 @@ export const deletePackingSchema = z.object({
 
 export const searchPackingSchema = z.object({
   query: z.object({
+    packing_number: z.string().optional(),
     tanggal_packing: z.string().optional(),
     statusId: z.string().optional(),
     purchaseOrderId: z.string().optional(),
