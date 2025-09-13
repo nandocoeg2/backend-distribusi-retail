@@ -363,7 +363,7 @@ export class PurchaseOrderService {
 
   static async processPurchaseOrder(
     id: string,
-    statusId: string,
+    status_code: string,
     userId: string = 'system'
   ): Promise<PurchaseOrder> {
     const purchaseOrder = await prisma.purchaseOrder.findUnique({
@@ -378,7 +378,7 @@ export class PurchaseOrderService {
     }
 
     const status = await prisma.status.findUnique({
-      where: { id: statusId },
+      where: { status_code: status_code },
     });
 
     if (!status) {
@@ -398,7 +398,7 @@ export class PurchaseOrderService {
       // Update purchase order status
       const updatedPurchaseOrder = await tx.purchaseOrder.update({
         where: { id },
-        data: { statusId },
+        data: { statusId: status.id },
         include: {
           purchaseOrderDetails: true,
           customer: true,

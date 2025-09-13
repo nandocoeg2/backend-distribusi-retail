@@ -82,7 +82,7 @@ export const processPurchaseOrderSchema = z.object({
     id: z.string(),
   }),
   body: z.object({
-    statusId: z.string(),
+    status_code: z.string(),
   }),
 });
 

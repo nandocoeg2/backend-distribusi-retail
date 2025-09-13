@@ -162,7 +162,7 @@ export class PurchaseOrderController {
     
     const purchaseOrder = await PurchaseOrderService.processPurchaseOrder(
       request.params.id,
-      request.body.statusId,
+      request.body.status_code,
       userId
     );
     return reply.send(purchaseOrder);
