@@ -21,13 +21,13 @@ export class BulkPurchaseOrderService {
       return;
     }
 
-    const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING BULK FILE' } });
+    const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING PURCHASE ORDER' } });
     const fileProcessingStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSING BULK FILE' } });
     const fileProcessedStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSED BULK FILE' } });
     const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
 
     if (!poPendingStatus || !fileProcessingStatus || !fileProcessedStatus || !fileFailedStatus) {
-      logger.error('Core statuses (PENDING, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
+      logger.error('Core statuses (PENDING PURCHASE ORDER, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
       return;
     }
 

@@ -45,6 +45,11 @@ jest.mock('@/config/logger', () => ({
 jest.mock('fs/promises', () => ({
   readFile: jest.fn(),
 }));
+jest.mock('@/services/notification.service', () => ({
+  NotificationService: {
+    checkPriceDifferenceAlerts: jest.fn().mockResolvedValue([]),
+  },
+}));
 
 describe('BulkPurchaseOrderService', () => {
   afterEach(() => {
@@ -53,7 +58,7 @@ describe('BulkPurchaseOrderService', () => {
 
   describe('processPendingFiles', () => {
     const statuses = {
-      poPending: { id: 'status_po_pending', status_code: 'PENDING' },
+      poPending: { id: 'status_po_pending', status_code: 'PENDING PURCHASE ORDER' },
       pending: { id: 'status_pending', status_code: 'PENDING BULK FILE' },
       processing: { id: 'status_processing', status_code: 'PROCESSING BULK FILE' },
       processed: { id: 'status_processed', status_code: 'PROCESSED BULK FILE' },
@@ -62,7 +67,7 @@ describe('BulkPurchaseOrderService', () => {
 
     beforeEach(() => {
       (prisma.status.findUnique as jest.Mock).mockImplementation((options) => {
-        if (options.where.status_code === 'PENDING') return statuses.poPending;
+        if (options.where.status_code === 'PENDING PURCHASE ORDER') return statuses.poPending;
         if (options.where.status_code === 'PENDING BULK FILE') return statuses.pending;
         if (options.where.status_code === 'PROCESSING BULK FILE') return statuses.processing;
         if (options.where.status_code === 'PROCESSED BULK FILE') return statuses.processed;
@@ -93,7 +98,7 @@ describe('BulkPurchaseOrderService', () => {
 
       await BulkPurchaseOrderService.processPendingFiles();
 
-      expect(logger.error).toHaveBeenCalledWith('Core statuses (PENDING, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
+      expect(logger.error).toHaveBeenCalledWith('Core statuses (PENDING PURCHASE ORDER, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -138,16 +143,19 @@ describe('BulkPurchaseOrderService', () => {
           upsert: jest.fn().mockResolvedValue({ id: 'inv1' }),
         },
         purchaseOrderDetail: {
-          create: jest.fn(),
+          create: jest.fn().mockResolvedValue({ id: 'detail1' }),
         },
         fileUploaded: {
-          update: jest.fn(),
+          update: jest.fn().mockResolvedValue({}),
         },
       };
 
       (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
         await callback(txMock);
       });
+
+      // Also mock the non-transaction update calls
+      (prisma.fileUploaded.update as jest.Mock).mockResolvedValue({});
 
       await BulkPurchaseOrderService.processPendingFiles();
 
@@ -156,7 +164,7 @@ describe('BulkPurchaseOrderService', () => {
       expect(txMock.inventory.upsert).toHaveBeenCalledTimes(1);
       expect(txMock.purchaseOrderDetail.create).toHaveBeenCalledTimes(1);
       expect(txMock.fileUploaded.update).toHaveBeenCalledWith({ where: { id: pendingFile.id }, data: { statusId: statuses.processed.id, purchaseOrderId: 'po1' } });
-      expect(logger.info).toHaveBeenCalledWith(`Successfully processed file ${pendingFile.id} and created PO po1 with details.`);
+      expect(logger.info).toHaveBeenCalledWith(`Successfully processed file file1 and created PO po1 with details.`);
     });
 
     it('should handle processing failure and update file status to FAILED', async () => {
