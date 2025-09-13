@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create or update Role Management (independent menu)
   await prisma.menu.upsert({
     where: { name: 'Role Management' },
     update: {},
@@ -13,7 +12,6 @@ async function main() {
     },
   });
 
-  // Create Master Data as parent with '#'
   const masterDataMenu = await prisma.menu.upsert({
     where: { name: 'Master Data' },
     update: {},
@@ -23,7 +21,6 @@ async function main() {
     },
   });
 
-  // Children under Master Data
   await prisma.menu.upsert({
     where: { name: 'Customers' },
     update: {},
@@ -54,7 +51,6 @@ async function main() {
     },
   });
 
-  // Create Purchase Order Management as parent with '#'
   const purchaseOrderMenu = await prisma.menu.upsert({
     where: { name: 'Purchase Order Management' },
     update: {},
@@ -64,7 +60,6 @@ async function main() {
     },
   });
 
-  // Children under Purchase Order Management
   await prisma.menu.upsert({
     where: { name: 'Purchase Order' },
     update: {},
