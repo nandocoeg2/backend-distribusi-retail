@@ -370,6 +370,7 @@ export class PurchaseOrderService {
       where: { id },
       include: {
         purchaseOrderDetails: true,
+        customer: true,
       },
     });
 
@@ -408,7 +409,7 @@ export class PurchaseOrderService {
         },
       });
 
-      // Create packing record
+      // Create packing record, invoice, and surat jalan
       if (purchaseOrder.purchaseOrderDetails && purchaseOrder.purchaseOrderDetails.length > 0) {
         // Check if packing already exists for this purchase order
         const existingPacking = await tx.packing.findUnique({
@@ -427,7 +428,7 @@ export class PurchaseOrderService {
           }));
 
           // Create packing record
-          await tx.packing.create({
+          const createdPacking = await tx.packing.create({
             data: {
               tanggal_packing: new Date(), // Current date/time
               statusId: pendingPackingStatus.id, // PENDING PACKING status
@@ -435,6 +436,125 @@ export class PurchaseOrderService {
               updatedBy: userId, // User who processed the purchase order
               packingItems: {
                 create: packingItems,
+              },
+            },
+          });
+
+          // Get status for invoice and surat jalan
+          const pendingInvoiceStatus = await tx.status.findUnique({
+            where: { status_code: 'PENDING INVOICE' },
+          });
+
+          const pendingSuratJalanStatus = await tx.status.findUnique({
+            where: { status_code: 'PENDING SURAT JALAN' },
+          });
+
+          if (!pendingInvoiceStatus) {
+            throw new AppError('PENDING INVOICE status not found', 404);
+          }
+
+          if (!pendingSuratJalanStatus) {
+            throw new AppError('PENDING SURAT JALAN status not found', 404);
+          }
+
+          // Create invoice with details from purchase order
+          const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(detail => {
+            const unitPrice = detail.harga || 0;
+            const quantity = detail.quantity;
+            const total = unitPrice * quantity;
+            
+            return {
+              nama_barang: detail.nama_barang,
+              PLU: detail.kode_barang || '',
+              quantity: quantity,
+              satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
+              harga: unitPrice,
+              total: total,
+              discount_percentage: 0,
+              discount_rupiah: 0,
+              PPN_pecentage: 0,
+              ppn_rupiah: 0,
+              createdBy: userId,
+              updatedBy: userId,
+            };
+          });
+
+          const subTotal = invoiceDetails.reduce((sum, detail) => sum + Number(detail.total), 0);
+          const grandTotal = subTotal; // No discount or tax for now
+
+          // Generate invoice number based on current date and purchase order
+          const currentDate = new Date();
+          const invoiceNumber = `INV-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${purchaseOrder.po_number}`;
+
+          const createdInvoice = await tx.invoice.create({
+            data: {
+              no_invoice: invoiceNumber,
+              tanggal: new Date(),
+              deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+              sub_total: subTotal,
+              total_discount: 0,
+              total_price: subTotal,
+              ppn_percentage: 0,
+              ppn_rupiah: 0,
+              grand_total: grandTotal,
+              expired_date: null, // Can be set based on business logic
+              TOP: '30', // Default 30 days
+              type: 'PEMBAYARAN',
+              statusPembayaranId: pendingInvoiceStatus.id,
+              purchaseOrderId: id,
+              createdBy: userId,
+              updatedBy: userId,
+              invoiceDetails: {
+                create: invoiceDetails,
+              },
+            },
+          });
+
+          // Create surat jalan details from packing items
+          const suratJalanDetails = packingItems.map((item, index) => ({
+            no_box: `BOX-${String(index + 1).padStart(3, '0')}`,
+            total_quantity_in_box: item.total_qty,
+            isi_box: item.jumlah_carton,
+            sisa: 0, // Initially no remaining items
+            total_box: item.jumlah_carton,
+            items: [
+              {
+                nama_barang: item.nama_barang,
+                PLU: purchaseOrder.purchaseOrderDetails?.find(pd => pd.nama_barang === item.nama_barang)?.kode_barang || '',
+                quantity: item.total_qty,
+                satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
+                total_box: item.jumlah_carton,
+                keterangan: `From Purchase Order: ${purchaseOrder.po_number}`,
+                createdBy: userId,
+                updatedBy: userId,
+              },
+            ],
+          }));
+
+          // Generate surat jalan number
+          const suratJalanNumber = `SJ-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${purchaseOrder.po_number}`;
+
+          // Create surat jalan
+          await tx.suratJalan.create({
+            data: {
+              no_surat_jalan: suratJalanNumber,
+              deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+              PIC: purchaseOrder.customer?.name || 'Unknown PIC',
+              alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
+              is_printed: false,
+              print_counter: 0,
+              invoiceId: createdInvoice.id,
+              suratJalanDetails: {
+                create: suratJalanDetails.map(detail => ({
+                  no_box: detail.no_box,
+                  total_quantity_in_box: detail.total_quantity_in_box,
+                  isi_box: detail.isi_box,
+                  sisa: detail.sisa,
+                  total_box: detail.total_box,
+                  suratJalanDetailItems: {
+                    create: detail.items,
+                  },
+                })),
               },
             },
           });

@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { prisma } from '@/config/database';
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 
@@ -59,4 +58,9 @@ describe('PurchaseOrderService', () => {
       expect(result).toEqual(mockPaginatedResult);
     });
   });
+
+  // Note: The processPurchaseOrder method has been enhanced to automatically
+  // create packing, invoice, and surat jalan when processing a purchase order.
+  // This ensures that all downstream documents are generated with details
+  // matching the purchase order details.
 });
