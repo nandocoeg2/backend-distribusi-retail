@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/packings/search
+  url: http://localhost:5050/api/v1/packings/search?page=1&limit=10&statusId={{statusId}}
   body: none
   auth: bearer
 }
@@ -14,6 +14,8 @@ params:query {
   page: 1
   limit: 10
   statusId: {{statusId}}
+  ~tanggal_packing: {{tanggal_packing}}
+  ~purchaseOrderId: {{purchaseOrderId}}
 }
 
 headers {
@@ -22,4 +24,8 @@ headers {
 
 auth:bearer {
   token: {{access_token}}
+}
+
+vars:pre-request {
+  tanggal_packing: 2025-09-13T13:01:18.180Z
 }

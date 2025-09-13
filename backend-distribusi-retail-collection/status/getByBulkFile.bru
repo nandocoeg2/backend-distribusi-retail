@@ -1,11 +1,11 @@
 meta {
-  name: Get All Statuses
+  name: Get Statuses by Bulk File
   type: http
-  seq: 1
+  seq: 3
 }
 
 get {
-  url: {{baseUrl}}/statuses
+  url: {{baseUrl}}/statuses/bulk_file
   body: none
   auth: bearer
 }

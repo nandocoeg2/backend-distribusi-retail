@@ -6,10 +6,46 @@ export const statusRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   options: FastifyPluginOptions,
   done: (err?: Error) => void
 ) => {
+  // Get all statuses
   fastify.get(
     '/',
     { preHandler: [fastify.authenticate] },
     StatusController.getStatuses
+  );
+
+  // Get statuses by Purchase Order
+  fastify.get(
+    '/purchase_order',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByPurchaseOrder
+  );
+
+  // Get statuses by Bulk File
+  fastify.get(
+    '/bulk_file',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByBulkFile
+  );
+
+  // Get statuses by Packing
+  fastify.get(
+    '/packing',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByPacking
+  );
+
+  // Get statuses by Invoice
+  fastify.get(
+    '/invoice',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByInvoice
+  );
+
+  // Get statuses by Surat Jalan
+  fastify.get(
+    '/surat_jalan',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesBySuratJalan
   );
 
   done();

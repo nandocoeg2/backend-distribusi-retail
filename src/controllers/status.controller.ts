@@ -6,5 +6,30 @@ export class StatusController {
     const statuses = await StatusService.getAllStatuses();
     return reply.send(statuses);
   }
+
+  static async getStatusesByPurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByPurchaseOrder();
+    return reply.send(statuses);
+  }
+
+  static async getStatusesByBulkFile(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByBulkFile();
+    return reply.send(statuses);
+  }
+
+  static async getStatusesByPacking(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByPacking();
+    return reply.send(statuses);
+  }
+
+  static async getStatusesByInvoice(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByInvoice();
+    return reply.send(statuses);
+  }
+
+  static async getStatusesBySuratJalan(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesBySuratJalan();
+    return reply.send(statuses);
+  }
 }
 

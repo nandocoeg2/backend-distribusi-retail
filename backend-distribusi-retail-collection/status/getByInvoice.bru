@@ -1,11 +1,11 @@
 meta {
-  name: Get All Statuses
+  name: Get Statuses by Invoice
   type: http
-  seq: 1
+  seq: 5
 }
 
 get {
-  url: {{baseUrl}}/statuses
+  url: {{baseUrl}}/statuses/invoice
   body: none
   auth: bearer
 }

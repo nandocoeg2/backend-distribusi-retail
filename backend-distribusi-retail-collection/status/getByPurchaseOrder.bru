@@ -1,11 +1,11 @@
 meta {
-  name: Get All Statuses
+  name: Get Statuses by Purchase Order
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
-  url: {{baseUrl}}/statuses
+  url: {{baseUrl}}/statuses/purchase_order
   body: none
   auth: bearer
 }
