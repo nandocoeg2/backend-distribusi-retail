@@ -109,20 +109,20 @@ const ALL_STATUSES: StatusData[] = [
     category: 'Invoice'
   },
   {
-    status_code: 'PAID',
-    status_name: 'Paid',
+    status_code: 'PAID INVOICE',
+    status_name: 'Paid Invoice',
     status_description: 'Invoice has been paid',
     category: 'Invoice'
   },
   {
-    status_code: 'OVERDUE',
-    status_name: 'Overdue',
+    status_code: 'OVERDUE INVOICE',
+    status_name: 'Overdue Invoice',
     status_description: 'Invoice payment is overdue',
     category: 'Invoice'
   },
   {
-    status_code: 'CANCELLED',
-    status_name: 'Cancelled',
+    status_code: 'CANCELLED INVOICE',
+    status_name: 'Cancelled Invoice',
     status_description: 'Invoice has been cancelled',
     category: 'Invoice'
   },
@@ -135,20 +135,20 @@ const ALL_STATUSES: StatusData[] = [
     category: 'Surat Jalan'
   },
   {
-    status_code: 'SENT',
-    status_name: 'Sent',
+    status_code: 'SENT SURAT JALAN',
+    status_name: 'Sent Surat Jalan',
     status_description: 'Surat jalan has been sent',
     category: 'Surat Jalan'
   },
   {
-    status_code: 'DELIVERED',
-    status_name: 'Delivered',
+    status_code: 'DELIVERED SURAT JALAN',
+    status_name: 'Delivered Surat Jalan',
     status_description: 'Surat jalan has been delivered',
     category: 'Surat Jalan'
   },
   {
-    status_code: 'RETURNED',
-    status_name: 'Returned',
+    status_code: 'RETURNED SURAT JALAN',
+    status_name: 'Returned Surat Jalan',
     status_description: 'Surat jalan has been returned',
     category: 'Surat Jalan'
   }
