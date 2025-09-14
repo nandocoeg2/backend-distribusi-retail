@@ -11,7 +11,7 @@ export class BulkPurchaseOrderService {
     const pendingFiles = await prisma.fileUploaded.findMany({
       where: {
         status: {
-          status_code: 'PENDING BULK FILE',
+          status_code: { in: ['PENDING BULK FILE', 'FAILED BULK FILE'] },
         },
         purchaseOrderId: null,
       },
