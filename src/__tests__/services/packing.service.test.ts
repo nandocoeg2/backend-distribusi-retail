@@ -54,7 +54,7 @@ describe('PackingService', () => {
         ],
       };
 
-      const mockPurchaseOrder = { id: 'po1' };
+      const mockPurchaseOrder = { id: 'po1', po_number: 'PO-2024-001' };
       const mockStatus = { id: 'status1' };
       const mockInventories = [{ id: 'inv1' }];
       const mockPackingResult = {
@@ -79,7 +79,7 @@ describe('PackingService', () => {
       });
       expect(prisma.packing.create).toHaveBeenCalledWith({
         data: {
-          packing_number: expect.stringMatching(/^PN-\d{8}-[A-Z0-9]{4}$/), // Match PN-YYYYMMDD-XXXX format
+          packing_number: expect.stringMatching(/^PN-\d{8}-PO-2024-001$/), // Base format with specific PO number for first attempt
           tanggal_packing: mockPackingData.tanggal_packing,
           statusId: 'status1',
           purchaseOrderId: 'po1',
@@ -89,7 +89,11 @@ describe('PackingService', () => {
           },
         },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            },
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -121,7 +125,7 @@ describe('PackingService', () => {
         packingItems: [],
       };
 
-      const mockPurchaseOrder = { id: 'po1' };
+      const mockPurchaseOrder = { id: 'po1', po_number: 'PO-2024-001' };
       const mockExistingPacking = { id: 'existing-packing' };
 
       (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(mockPurchaseOrder);
@@ -141,7 +145,7 @@ describe('PackingService', () => {
         packingItems: [],
       };
 
-      const mockPurchaseOrder = { id: 'po1' };
+      const mockPurchaseOrder = { id: 'po1', po_number: 'PO-2024-001' };
 
       (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(mockPurchaseOrder);
       (prisma.packing.findUnique as jest.Mock).mockResolvedValue(null);
@@ -170,7 +174,7 @@ describe('PackingService', () => {
         ],
       };
 
-      const mockPurchaseOrder = { id: 'po1' };
+      const mockPurchaseOrder = { id: 'po1', po_number: 'PO-2024-001' };
       const mockStatus = { id: 'status1' };
       const mockInventories = []; // No inventories found
 
@@ -192,7 +196,7 @@ describe('PackingService', () => {
         packingItems: [],
       };
 
-      const mockPurchaseOrder = { id: 'po1' };
+      const mockPurchaseOrder = { id: 'po1', po_number: 'PO-2024-001' };
       const mockStatus = { id: 'status1' };
       const mockPackingResult = {
         id: 'packing1',
@@ -210,7 +214,7 @@ describe('PackingService', () => {
 
       expect(prisma.packing.create).toHaveBeenCalledWith({
         data: {
-          packing_number: expect.stringMatching(/^PN-\d{8}-[A-Z0-9]{4}$/), // Match PN-YYYYMMDD-XXXX format
+          packing_number: expect.stringMatching(/^PN-\d{8}-PO-2024-001$/), // Base format with specific PO number for first attempt
           tanggal_packing: mockPackingData.tanggal_packing,
           statusId: 'status1',
           purchaseOrderId: 'po1',
@@ -220,7 +224,11 @@ describe('PackingService', () => {
           },
         },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            },
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -297,7 +305,11 @@ describe('PackingService', () => {
       expect(prisma.packing.findUnique).toHaveBeenCalledWith({
         where: { id: 'packing1' },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            },
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -408,7 +420,11 @@ describe('PackingService', () => {
       expect(prisma.packing.delete).toHaveBeenCalledWith({
         where: { id: 'packing1' },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            },
+          },
           purchaseOrder: true,
           status: true,
         },

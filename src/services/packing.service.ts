@@ -1,7 +1,7 @@
 import { prisma } from '@/config/database';
 import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/schemas/packing.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber } from '@/utils/random.utils';
+import { generateUniquePackingNumber } from '@/utils/random.utils';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -34,27 +34,13 @@ export class PackingService {
         throw new AppError('Packing already exists for this Purchase Order', 409);
       }
 
-      // Generate unique packing number
-      let packingNumber: string;
-      let isUnique = false;
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      while (!isUnique && attempts < maxAttempts) {
-        packingNumber = generatePackingNumber();
+      // Generate unique packing number using standardized approach
+      const packingNumber = await generateUniquePackingNumber(async (number: string) => {
         const existingPackingNumber = await prisma.packing.findUnique({
-          where: { packing_number: packingNumber },
+          where: { packing_number: number },
         });
-        
-        if (!existingPackingNumber) {
-          isUnique = true;
-        }
-        attempts++;
-      }
-
-      if (!isUnique) {
-        throw new AppError('Failed to generate unique packing number', 500);
-      }
+        return !existingPackingNumber; // Return true if unique (no existing packing)
+      }, purchaseOrder.po_number);
 
       // Check if status exists
       const status = await prisma.status.findUnique({

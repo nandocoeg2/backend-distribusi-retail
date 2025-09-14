@@ -6,7 +6,7 @@ import {
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber } from '@/utils/random.utils';
+import { generatePackingNumber, generateUniqueInvoiceNumber, generateUniqueSuratJalanWithCreate, generateRandomString, generateSuratJalanNumber } from '@/utils/random.utils';
 
 export interface FileInfo {
   filename: string;
@@ -166,17 +166,71 @@ export class PurchaseOrderService {
           throw new AppError('Purchase Order not found', 404);
         }
 
-        // 2. If purchaseOrderDetails are provided, delete old ones and create new ones
+        // 2. If purchaseOrderDetails are provided, process them
         if (purchaseOrderDetails) {
+          // Delete old purchase order details
           await tx.purchaseOrderDetail.deleteMany({
             where: { purchaseOrderId: id },
           });
 
-          await tx.purchaseOrderDetail.createMany({
-            data: purchaseOrderDetails.map((detail) => ({
-              ...detail,
+          // Process each detail to ensure inventory exists
+          const processedDetails: Array<{
+            kode_barang: string;
+            nama_barang: string;
+            quantity: number;
+            isi: number;
+            harga: number;
+            potongan_a?: number | null;
+            harga_after_potongan_a?: number | null;
+            harga_netto: number;
+            total_pembelian: number;
+            potongan_b?: number | null;
+            harga_after_potongan_b?: number | null;
+            inventoryId: string;
+            purchaseOrderId: string;
+          }> = [];
+          for (const detail of purchaseOrderDetails) {
+            let inventoryId = detail.inventoryId;
+            
+            // If inventoryId is not provided (new item), find or create inventory
+            if (!inventoryId) {
+              const inventoryItem = await tx.inventory.upsert({
+                where: { kode_barang: detail.kode_barang },
+                create: {
+                  kode_barang: detail.kode_barang,
+                  nama_barang: detail.nama_barang,
+                  stok_barang: detail.quantity || 0,
+                  harga_barang: detail.harga || 0,
+                },
+                update: {
+                  // Optionally update name and price if they've changed
+                  nama_barang: detail.nama_barang,
+                  harga_barang: detail.harga || 0,
+                },
+              });
+              inventoryId = inventoryItem.id;
+            }
+
+            processedDetails.push({
+              kode_barang: detail.kode_barang,
+              nama_barang: detail.nama_barang,
+              quantity: detail.quantity,
+              isi: detail.isi,
+              harga: detail.harga,
+              potongan_a: detail.potongan_a,
+              harga_after_potongan_a: detail.harga_after_potongan_a,
+              harga_netto: detail.harga_netto,
+              total_pembelian: detail.total_pembelian,
+              potongan_b: detail.potongan_b,
+              harga_after_potongan_b: detail.harga_after_potongan_b,
+              inventoryId,
               purchaseOrderId: id,
-            })),
+            });
+          }
+
+          // Create new purchase order details with proper inventoryId
+          await tx.purchaseOrderDetail.createMany({
+            data: processedDetails,
           });
         }
 
@@ -441,7 +495,7 @@ export class PurchaseOrderService {
           // Create packing record
           const createdPacking = await tx.packing.create({
             data: {
-              packing_number: generatePackingNumber(), // Generate unique packing number
+              packing_number: generatePackingNumber(purchaseOrder.po_number), // Generate unique packing number
               tanggal_packing: new Date(), // Current date/time
               statusId: pendingPackingStatus.id, // PENDING PACKING status
               purchaseOrderId: id,
@@ -469,58 +523,72 @@ export class PurchaseOrderService {
             throw new AppError('PENDING SURAT JALAN status not found', 404);
           }
 
-          // Create invoice with details from purchase order
-          const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(detail => {
-            const unitPrice = detail.harga || 0;
-            const quantity = detail.quantity;
-            const total = unitPrice * quantity;
-            
-            return {
-              nama_barang: detail.nama_barang,
-              PLU: detail.kode_barang || '',
-              quantity: quantity,
-              satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
-              harga: unitPrice,
-              total: total,
-              discount_percentage: 0,
-              discount_rupiah: 0,
-              PPN_pecentage: 0,
-              ppn_rupiah: 0,
-              createdBy: userId,
-              updatedBy: userId,
-            };
+          // Check if invoice already exists for this purchase order
+          let createdInvoice = await tx.invoice.findFirst({
+            where: { purchaseOrderId: id },
           });
 
-          const subTotal = invoiceDetails.reduce((sum, detail) => sum + Number(detail.total), 0);
-          const grandTotal = subTotal; // No discount or tax for now
+          if (!createdInvoice) {
+            // Create invoice with details from purchase order
+            const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(detail => {
+              const unitPrice = detail.harga || 0;
+              const quantity = detail.quantity;
+              const total = unitPrice * quantity;
+              
+              return {
+                nama_barang: detail.nama_barang,
+                PLU: detail.kode_barang || '',
+                quantity: quantity,
+                satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
+                harga: unitPrice,
+                total: total,
+                discount_percentage: 0,
+                discount_rupiah: 0,
+                PPN_pecentage: 0,
+                ppn_rupiah: 0,
+                createdBy: userId,
+                updatedBy: userId,
+              };
+            });
 
-          // Generate invoice number based on current date and purchase order
-          const currentDate = new Date();
-          const invoiceNumber = `INV-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${purchaseOrder.po_number}`;
+            const subTotal = invoiceDetails.reduce((sum, detail) => sum + Number(detail.total), 0);
+            const grandTotal = subTotal; // No discount or tax for now
 
-          const createdInvoice = await tx.invoice.create({
-            data: {
-              no_invoice: invoiceNumber,
-              tanggal: new Date(),
-              deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
-              sub_total: subTotal,
-              total_discount: 0,
-              total_price: subTotal,
-              ppn_percentage: 0,
-              ppn_rupiah: 0,
-              grand_total: grandTotal,
-              expired_date: null, // Can be set based on business logic
-              TOP: '30', // Default 30 days
-              type: 'PEMBAYARAN',
-              statusPembayaranId: pendingInvoiceStatus.id,
-              purchaseOrderId: id,
-              createdBy: userId,
-              updatedBy: userId,
-              invoiceDetails: {
-                create: invoiceDetails,
+            // Generate unique invoice number using utility function
+            const invoiceNumber = await generateUniqueInvoiceNumber(
+              purchaseOrder.po_number,
+              async (number: string) => {
+                const existingInvoice = await tx.invoice.findUnique({
+                  where: { no_invoice: number },
+                });
+                return !existingInvoice; // Return true if unique (no existing invoice)
+              }
+            );
+
+            createdInvoice = await tx.invoice.create({
+              data: {
+                no_invoice: invoiceNumber,
+                tanggal: new Date(),
+                deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+                sub_total: subTotal,
+                total_discount: 0,
+                total_price: subTotal,
+                ppn_percentage: 0,
+                ppn_rupiah: 0,
+                grand_total: grandTotal,
+                expired_date: null, // Can be set based on business logic
+                TOP: '30', // Default 30 days
+                type: 'PEMBAYARAN',
+                statusPembayaranId: pendingInvoiceStatus.id,
+                purchaseOrderId: id,
+                createdBy: userId,
+                updatedBy: userId,
+                invoiceDetails: {
+                  create: invoiceDetails,
+                },
               },
-            },
-          });
+            });
+          }
 
           // Create surat jalan details from packing items
           const suratJalanDetails = packingItems.map((item, index) => ({
@@ -543,34 +611,43 @@ export class PurchaseOrderService {
             ],
           }));
 
-          // Generate surat jalan number
-          const suratJalanNumber = `SJ-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${purchaseOrder.po_number}`;
-
-          // Create surat jalan with status
-          await tx.suratJalan.create({
-            data: {
-              no_surat_jalan: suratJalanNumber,
-              deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
-              PIC: purchaseOrder.customer?.name || 'Unknown PIC',
-              alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
-              is_printed: false,
-              print_counter: 0,
-              invoiceId: createdInvoice.id,
-              statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
-              suratJalanDetails: {
-                create: suratJalanDetails.map(detail => ({
-                  no_box: detail.no_box,
-                  total_quantity_in_box: detail.total_quantity_in_box,
-                  isi_box: detail.isi_box,
-                  sisa: detail.sisa,
-                  total_box: detail.total_box,
-                  suratJalanDetailItems: {
-                    create: detail.items,
-                  },
-                })),
-              },
-            },
+          // Check if surat jalan already exists for this invoice
+          const existingSuratJalan = await tx.suratJalan.findFirst({
+            where: { invoiceId: createdInvoice.id },
           });
+
+          if (!existingSuratJalan) {
+            // Generate surat jalan using utility function with database constraint handling
+            await generateUniqueSuratJalanWithCreate(
+              purchaseOrder.po_number,
+              async (suratJalanNumber: string) => {
+                return await tx.suratJalan.create({
+                  data: {
+                    no_surat_jalan: suratJalanNumber,
+                    deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+                    PIC: purchaseOrder.customer?.name || 'Unknown PIC',
+                    alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
+                    is_printed: false,
+                    print_counter: 0,
+                    invoiceId: createdInvoice.id,
+                    statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
+                    suratJalanDetails: {
+                      create: suratJalanDetails.map(detail => ({
+                        no_box: detail.no_box,
+                        total_quantity_in_box: detail.total_quantity_in_box,
+                        isi_box: detail.isi_box,
+                        sisa: detail.sisa,
+                        total_box: detail.total_box,
+                        suratJalanDetailItems: {
+                          create: detail.items,
+                        },
+                      })),
+                    },
+                  },
+                });
+              }
+            );
+          }
         }
       }
 

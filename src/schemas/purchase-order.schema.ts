@@ -36,7 +36,7 @@ const purchaseOrderDetailSchema = z.object({
   total_pembelian: z.coerce.number(),
   potongan_b: z.coerce.number().nullable().optional(),
   harga_after_potongan_b: z.coerce.number().nullable().optional(),
-  inventoryId: z.string(),
+  inventoryId: z.string().optional(),
 });
 
 export const updatePurchaseOrderSchema = z.object({
