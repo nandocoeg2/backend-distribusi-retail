@@ -791,6 +791,12 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/statuses` | Mendapatkan semua status |
+| `GET` | `/api/statuses/purchase_order` | Mendapatkan status untuk Purchase Order |
+| `GET` | `/api/statuses/bulk_file` | Mendapatkan status untuk Bulk File |
+| `GET` | `/api/statuses/packing` | Mendapatkan status untuk Packing |
+| `GET` | `/api/statuses/packing_item` | Mendapatkan status untuk Packing Item |
+| `GET` | `/api/statuses/invoice` | Mendapatkan status untuk Invoice |
+| `GET` | `/api/statuses/surat_jalan` | Mendapatkan status untuk Surat Jalan |
 
 ## 🔧 Development Scripts
 

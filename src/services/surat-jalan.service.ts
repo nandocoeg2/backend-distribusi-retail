@@ -33,6 +33,17 @@ export class SuratJalanService {
         }
       }
 
+      // Validate statusId if provided and not null
+      if (suratJalanInfo.statusId && suratJalanInfo.statusId !== null) {
+        const status = await prisma.status.findUnique({
+          where: { id: suratJalanInfo.statusId },
+        });
+
+        if (!status) {
+          throw new AppError('Status not found', 404);
+        }
+      }
+
       return await prisma.suratJalan.create({
         data: {
           ...suratJalanInfo,
@@ -65,6 +76,7 @@ export class SuratJalanService {
             }
           },
           invoice: true,
+          status: true,
           historyPengiriman: {
             include: {
               status: true
@@ -86,7 +98,7 @@ export class SuratJalanService {
         }
         
         if (error.code === 'P2003') {
-          throw new AppError('Foreign key constraint violation. Please check if the referenced invoice exists.', 400);
+          throw new AppError('Foreign key constraint violation. Please check if the referenced invoice or status exists.', 400);
         }
       }
       
@@ -109,6 +121,7 @@ export class SuratJalanService {
             }
           },
           invoice: true,
+          status: true,
         },
         orderBy: {
           id: 'desc',
@@ -149,6 +162,7 @@ export class SuratJalanService {
             },
           },
         },
+        status: true,
         historyPengiriman: {
           include: {
             status: true
@@ -239,6 +253,7 @@ export class SuratJalanService {
               }
             },
             invoice: true,
+            status: true,
           },
         });
 
@@ -273,6 +288,7 @@ export class SuratJalanService {
             }
           },
           invoice: true,
+          status: true,
         },
       });
 
@@ -324,6 +340,7 @@ export class SuratJalanService {
       deliver_to, 
       PIC,
       invoiceId,
+      statusId,
       is_printed,
       page = 1,
       limit = 10
@@ -344,6 +361,9 @@ export class SuratJalanService {
     }
     if (invoiceId) {
       filters.push({ invoiceId });
+    }
+    if (statusId) {
+      filters.push({ statusId });
     }
     if (is_printed !== undefined) {
       filters.push({ is_printed });
@@ -371,6 +391,7 @@ export class SuratJalanService {
               },
             },
           },
+          status: true,
         },
         orderBy: {
           id: 'desc',

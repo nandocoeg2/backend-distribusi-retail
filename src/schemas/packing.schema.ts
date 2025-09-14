@@ -15,6 +15,7 @@ export const createPackingSchema = z.object({
       isi_per_carton: z.number().int(),
       no_box: z.string(),
       inventoryId: z.string(),
+      statusId: z.string().optional().nullable(),
     })),
   }),
 });
@@ -42,6 +43,7 @@ export const updatePackingSchema = z.object({
       isi_per_carton: z.number().int(),
       no_box: z.string(),
       inventoryId: z.string(),
+      statusId: z.string().optional().nullable(),
     })).optional(),
   }),
 });

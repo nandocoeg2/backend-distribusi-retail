@@ -396,6 +396,15 @@ export class PurchaseOrderService {
       throw new AppError('PENDING PACKING status not found', 404);
     }
 
+    // Check if PENDING ITEM status exists for packing items
+    const pendingItemStatus = await prisma.status.findUnique({
+      where: { status_code: 'PENDING ITEM' },
+    });
+
+    if (!pendingItemStatus) {
+      throw new AppError('PENDING ITEM status not found', 404);
+    }
+
     return await prisma.$transaction(async (tx) => {
       // Update purchase order status
       const updatedPurchaseOrder = await tx.purchaseOrder.update({
@@ -418,7 +427,7 @@ export class PurchaseOrderService {
         });
 
         if (!existingPacking) {
-          // Create packing items from purchase order details
+          // Create packing items from purchase order details with status
           const packingItems = purchaseOrder.purchaseOrderDetails.map(detail => ({
             nama_barang: detail.nama_barang,
             total_qty: detail.quantity,
@@ -426,6 +435,7 @@ export class PurchaseOrderService {
             isi_per_carton: detail.isi,
             no_box: '', // Will be filled later during actual packing
             inventoryId: detail.inventoryId,
+            statusId: pendingItemStatus.id, // PENDING ITEM status for packing items
           }));
 
           // Create packing record
@@ -536,7 +546,7 @@ export class PurchaseOrderService {
           // Generate surat jalan number
           const suratJalanNumber = `SJ-${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${purchaseOrder.po_number}`;
 
-          // Create surat jalan
+          // Create surat jalan with status
           await tx.suratJalan.create({
             data: {
               no_surat_jalan: suratJalanNumber,
@@ -546,6 +556,7 @@ export class PurchaseOrderService {
               is_printed: false,
               print_counter: 0,
               invoiceId: createdInvoice.id,
+              statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
               suratJalanDetails: {
                 create: suratJalanDetails.map(detail => ({
                   no_box: detail.no_box,

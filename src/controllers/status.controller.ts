@@ -22,6 +22,11 @@ export class StatusController {
     return reply.send(statuses);
   }
 
+  static async getStatusesByPackingItem(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByPackingItem();
+    return reply.send(statuses);
+  }
+
   static async getStatusesByInvoice(request: FastifyRequest, reply: FastifyReply) {
     const statuses = await StatusService.getStatusesByInvoice();
     return reply.send(statuses);

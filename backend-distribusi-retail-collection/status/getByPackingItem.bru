@@ -1,0 +1,19 @@
+meta {
+  name: Get Statuses by Packing Item
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/statuses/packing_item
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

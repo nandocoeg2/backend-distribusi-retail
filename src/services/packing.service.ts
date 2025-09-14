@@ -82,6 +82,28 @@ export class PackingService {
         throw new AppError(`Inventories not found: ${missingInventoryIds.join(', ')}`, 404);
       }
 
+      // Check if all packing item statuses exist (if provided)
+      const packingItemStatusIds = packingData.packingItems
+        .map(item => item.statusId)
+        .filter(Boolean) as string[];
+      
+      if (packingItemStatusIds.length > 0) {
+        const packingItemStatuses = await prisma.status.findMany({
+          where: {
+            id: {
+              in: packingItemStatusIds,
+            },
+          },
+        });
+
+        const foundStatusIds = new Set(packingItemStatuses.map(status => status.id));
+        const missingStatusIds = packingItemStatusIds.filter(id => !foundStatusIds.has(id));
+
+        if (missingStatusIds.length > 0) {
+          throw new AppError(`Packing item statuses not found: ${missingStatusIds.join(', ')}`, 404);
+        }
+      }
+
       // Create packing with items
       return await prisma.packing.create({
         data: {
@@ -95,7 +117,11 @@ export class PackingService {
           },
         },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            }
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -116,7 +142,11 @@ export class PackingService {
         skip,
         take: parseInt(limit.toString()),
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            }
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -144,7 +174,11 @@ export class PackingService {
     return await prisma.packing.findUnique({
       where: { id },
       include: {
-        packingItems: true,
+        packingItems: {
+          include: {
+            status: true,
+          }
+        },
         purchaseOrder: true,
         status: true,
       },
@@ -168,8 +202,30 @@ export class PackingService {
           throw new AppError('Packing not found', 404);
         }
 
-        // If packingItems are provided, delete old ones and create new ones
+        // If packingItems are provided, validate statuses and handle them
         if (packingItems) {
+          // Check if all packing item statuses exist (if provided)
+          const packingItemStatusIds = packingItems
+            .map(item => item.statusId)
+            .filter(Boolean) as string[];
+          
+          if (packingItemStatusIds.length > 0) {
+            const packingItemStatuses = await tx.status.findMany({
+              where: {
+                id: {
+                  in: packingItemStatusIds,
+                },
+              },
+            });
+
+            const foundStatusIds = new Set(packingItemStatuses.map(status => status.id));
+            const missingStatusIds = packingItemStatusIds.filter(id => !foundStatusIds.has(id));
+
+            if (missingStatusIds.length > 0) {
+              throw new AppError(`Packing item statuses not found: ${missingStatusIds.join(', ')}`, 404);
+            }
+          }
+
           await tx.packingItem.deleteMany({
             where: { packingId: id },
           });
@@ -187,7 +243,11 @@ export class PackingService {
           where: { id },
           data: packingData,
           include: {
-            packingItems: true,
+            packingItems: {
+              include: {
+                status: true,
+              }
+            },
             purchaseOrder: true,
             status: true,
           },
@@ -209,7 +269,11 @@ export class PackingService {
       return await prisma.packing.delete({
         where: { id },
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            }
+          },
           purchaseOrder: true,
           status: true,
         },
@@ -272,7 +336,11 @@ export class PackingService {
         skip,
         take: parseInt(limit.toString()),
         include: {
-          packingItems: true,
+          packingItems: {
+            include: {
+              status: true,
+            }
+          },
           purchaseOrder: true,
           status: true,
         },

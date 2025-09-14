@@ -153,6 +153,8 @@ model Status {
   packings                Packing[]
   historyPengiriman       HistoryPengiriman[]
   invoiceStatusPembayaran Invoice[]           @relation("InvoiceStatusPembayaran")
+  suratJalanStatus        SuratJalan[]        @relation("SuratJalanStatus")
+  packingItemStatus       PackingItem[]       @relation("PackingItemStatus")
 
   @@map("statuses")
 }
@@ -254,10 +256,12 @@ model PackingItem {
   no_box         String
   packingId      String
   inventoryId    String
+  statusId       String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   packing        Packing   @relation(fields: [packingId], references: [id], onDelete: Cascade)
   inventory      Inventory @relation(fields: [inventoryId], references: [id])
+  status         Status?   @relation("PackingItemStatus", fields: [statusId], references: [id])
 
   @@map("packing_items")
 }
@@ -321,7 +325,9 @@ model SuratJalan {
   is_printed        Boolean             @default(false)
   print_counter     Int                 @default(0)
   invoiceId         String?
+  statusId          String?
   invoice           Invoice?            @relation(fields: [invoiceId], references: [id])
+  status            Status?             @relation("SuratJalanStatus", fields: [statusId], references: [id])
   suratJalanDetails SuratJalanDetail[]
   historyPengiriman HistoryPengiriman[]
 

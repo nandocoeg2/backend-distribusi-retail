@@ -7,6 +7,7 @@ export const createSuratJalanSchema = z.object({
     PIC: z.string().min(1, 'PIC is required'),
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required'),
     invoiceId: z.string().optional().nullable(),
+    statusId: z.string().optional().nullable(),
     suratJalanDetails: z.array(
       z.object({
         no_box: z.string().min(1, 'Nomor box is required'),
@@ -39,6 +40,7 @@ export const updateSuratJalanSchema = z.object({
     PIC: z.string().min(1, 'PIC is required').optional(),
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required').optional(),
     invoiceId: z.string().optional().nullable(),
+    statusId: z.string().optional().nullable(),
     is_printed: z.boolean().optional(),
     print_counter: z.number().int().min(0).optional(),
     suratJalanDetails: z.array(
@@ -81,6 +83,7 @@ export const searchSuratJalanSchema = z.object({
     deliver_to: z.string().optional(),
     PIC: z.string().optional(),
     invoiceId: z.string().optional(),
+    statusId: z.string().optional(),
     is_printed: z.string().transform(val => val === 'true').optional(),
     page: z.string().transform(val => parseInt(val)).default('1'),
     limit: z.string().transform(val => parseInt(val)).default('10'),

@@ -36,6 +36,16 @@ export class StatusService {
     });
   }
 
+  static async getStatusesByPackingItem(): Promise<Status[]> {
+    return prisma.status.findMany({
+      where: {
+        status_name: {
+          contains: 'Item'
+        }
+      }
+    });
+  }
+
   static async getStatusesByInvoice(): Promise<Status[]> {
     return prisma.status.findMany({
       where: {

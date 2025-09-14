@@ -34,6 +34,13 @@ export const statusRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
     StatusController.getStatusesByPacking
   );
 
+  // Get statuses by Packing Item
+  fastify.get(
+    '/packing_item',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByPackingItem
+  );
+
   // Get statuses by Invoice
   fastify.get(
     '/invoice',

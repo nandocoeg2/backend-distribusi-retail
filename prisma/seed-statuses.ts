@@ -151,6 +151,31 @@ const ALL_STATUSES: StatusData[] = [
     status_name: 'Returned Surat Jalan',
     status_description: 'Surat jalan has been returned',
     category: 'Surat Jalan'
+  },
+  // Packing Detail Item status
+  {
+    status_code: 'PENDING ITEM',
+    status_name: 'Pending Item',
+    status_description: 'Packing detail item is pending processing',
+    category: 'Packing Detail Item'
+  },
+  {
+    status_code: 'PROCESSING ITEM',
+    status_name: 'Processing Item',
+    status_description: 'Packing detail item is currently being processed.',
+    category: 'Packing Detail Item'
+  },
+  {
+    status_code: 'PROCESSED ITEM',
+    status_name: 'Processed Item',
+    status_description: 'Packing detail item has been processed.',
+    category: 'Packing Detail Item'
+  },
+  {
+    status_code: 'FAILED ITEM',
+    status_name: 'Failed Item',
+    status_description: 'Packing detail item has been failed.',
+    category: 'Packing Detail Item'
   }
 ];
 
