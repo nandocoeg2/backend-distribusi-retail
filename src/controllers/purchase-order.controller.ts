@@ -9,9 +9,9 @@ import {
 } from '@/schemas/purchase-order.schema';
 import { paginationSchema } from '@/schemas/pagination.schema';
 import { AppError } from '@/utils/app-error';
+import { generateFilenameWithPrefix } from '@/utils/random.utils';
 import * as fs from 'fs';
 import * as path from 'path';
-import { randomBytes } from 'crypto';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { MultipartFile } from '@fastify/multipart';
@@ -35,8 +35,7 @@ export class PurchaseOrderController {
           const uploadDir = path.join(process.cwd(), 'fileuploaded', today);
           await fs.promises.mkdir(uploadDir, { recursive: true });
 
-          const randomString = randomBytes(2).toString('hex');
-          const filename = `PO_${part.filename.split('.')[0]}_${randomString}.${part.filename.split('.').pop()}`;
+          const filename = generateFilenameWithPrefix('PO', part.filename);
           const filepath = path.join(uploadDir, filename);
           tempFilepaths.push(filepath);
 

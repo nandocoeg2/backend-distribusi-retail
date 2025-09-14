@@ -1,7 +1,7 @@
 import { prisma } from '@/config/database';
 import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/schemas/packing.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber } from '@/utils/packing.utils';
+import { generatePackingNumber } from '@/utils/random.utils';
 
 export interface PaginatedResult<T> {
   data: T[];

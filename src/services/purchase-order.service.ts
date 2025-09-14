@@ -6,7 +6,7 @@ import {
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber } from '@/utils/packing.utils';
+import { generatePackingNumber } from '@/utils/random.utils';
 
 export interface FileInfo {
   filename: string;
