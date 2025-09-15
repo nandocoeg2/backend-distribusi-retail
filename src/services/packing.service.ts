@@ -2,6 +2,7 @@ import { prisma } from '@/config/database';
 import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/schemas/packing.schema';
 import { AppError } from '@/utils/app-error';
 import { generateUniquePackingNumber } from '@/utils/random.utils';
+import { createAuditLog } from './audit.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -14,7 +15,7 @@ export interface PaginatedResult<T> {
 }
 
 export class PackingService {
-  static async createPacking(packingData: CreatePackingInput): Promise<any> {
+  static async createPacking(packingData: CreatePackingInput, userId: string): Promise<any> {
     try {
       // Check if purchase order exists
       const purchaseOrder = await prisma.purchaseOrder.findUnique({
@@ -91,15 +92,16 @@ export class PackingService {
       }
 
       // Create packing with items
-      return await prisma.packing.create({
+      const newPacking = await prisma.packing.create({
         data: {
           packing_number: packingNumber!,
           tanggal_packing: packingData.tanggal_packing,
           statusId: packingData.statusId,
           purchaseOrderId: packingData.purchaseOrderId,
-          updatedBy: packingData.updatedBy || 'system', // Default to 'system' if not provided
+          createdBy: userId,
+          updatedBy: userId,
           packingItems: {
-            create: packingData.packingItems,
+            create: packingData.packingItems.map(item => ({ ...item, createdBy: userId, updatedBy: userId })),
           },
         },
         include: {
@@ -112,6 +114,10 @@ export class PackingService {
           status: true,
         },
       });
+
+      await createAuditLog('Packing', newPacking.id, 'CREATE', userId, newPacking);
+
+      return newPacking;
     } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
@@ -173,7 +179,8 @@ export class PackingService {
 
   static async updatePacking(
     id: string,
-    data: UpdatePackingInput['body']
+    data: UpdatePackingInput['body'],
+    userId: string
   ): Promise<any | null> {
     try {
       const { packingItems, ...packingData } = data;
@@ -220,14 +227,16 @@ export class PackingService {
             data: packingItems.map((item) => ({
               ...item,
               packingId: id,
+              createdBy: userId,
+              updatedBy: userId,
             })),
           });
         }
 
         // Update the Packing itself
-        const packing = await tx.packing.update({
+        const updatedPacking = await tx.packing.update({
           where: { id },
-          data: packingData,
+          data: { ...packingData, updatedBy: userId },
           include: {
             packingItems: {
               include: {
@@ -239,7 +248,12 @@ export class PackingService {
           },
         });
 
-        return packing;
+        await createAuditLog('Packing', updatedPacking.id, 'UPDATE', userId, {
+          before: existingPacking,
+          after: updatedPacking,
+        });
+
+        return updatedPacking;
       });
     } catch (error) {
       // Re-throw AppError or handle other prisma errors
@@ -250,19 +264,20 @@ export class PackingService {
     }
   }
 
-  static async deletePacking(id: string): Promise<any | null> {
+  static async deletePacking(id: string, userId: string): Promise<any | null> {
     try {
+      const existingPacking = await prisma.packing.findUnique({
+        where: { id },
+      });
+
+      if (!existingPacking) {
+        return null;
+      }
+
+      await createAuditLog('Packing', id, 'DELETE', userId, existingPacking);
+
       return await prisma.packing.delete({
         where: { id },
-        include: {
-          packingItems: {
-            include: {
-              status: true,
-            }
-          },
-          purchaseOrder: true,
-          status: true,
-        },
       });
     } catch (error) {
       return null;

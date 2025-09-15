@@ -6,6 +6,7 @@ import {
   SearchInvoiceInput,
 } from '@/schemas/invoice.schema';
 import { AppError } from '@/utils/app-error';
+import { createAuditLog } from './audit.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -18,34 +19,35 @@ export interface PaginatedResult<T> {
 }
 
 export class InvoiceService {
-  static async createInvoice(invoiceData: CreateInvoiceInput): Promise<Invoice> {
+  static async createInvoice(invoiceData: CreateInvoiceInput, userId: string): Promise<Invoice> {
     try {
-      const { invoiceDetails, createdBy, updatedBy, ...invoiceInfo } = invoiceData;
-      
-      // Set default values
-      const dataForDb = {
-        ...invoiceInfo,
-        tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : new Date(),
-        expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
-        createdBy: createdBy || 'system',
-        updatedBy: updatedBy || 'system',
-        invoiceDetails: invoiceDetails ? {
-          create: invoiceDetails.map(detail => ({
-            ...detail,
-            createdBy: createdBy || 'system',
-            updatedBy: updatedBy || 'system',
-          }))
-        } : undefined,
-      };
+      const { invoiceDetails, ...invoiceInfo } = invoiceData;
 
-      return await prisma.invoice.create({
-        data: dataForDb,
+      const newInvoice = await prisma.invoice.create({
+        data: {
+          ...invoiceInfo,
+          tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : new Date(),
+          expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
+          createdBy: userId,
+          updatedBy: userId,
+          invoiceDetails: invoiceDetails ? {
+            create: invoiceDetails.map(detail => ({
+              ...detail,
+              createdBy: userId,
+              updatedBy: userId,
+            }))
+          } : undefined,
+        },
         include: {
           invoiceDetails: true,
           statusPembayaran: true,
           purchaseOrder: true,
         },
       });
+
+      await createAuditLog('Invoice', newInvoice.id, 'CREATE', userId, newInvoice);
+
+      return newInvoice;
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('no_invoice')) {
         throw new AppError('Invoice with this number already exists', 409);
@@ -87,7 +89,7 @@ export class InvoiceService {
   }
 
   static async getInvoiceById(id: string): Promise<Invoice | null> {
-    const invoice = await prisma.invoice.findUnique({
+    return await prisma.invoice.findUnique({
       where: { id },
       include: {
         invoiceDetails: true,
@@ -101,19 +103,17 @@ export class InvoiceService {
         suratJalan: true,
       },
     });
-
-    return invoice;
   }
 
   static async updateInvoice(
     id: string,
-    data: UpdateInvoiceInput['body']
+    data: UpdateInvoiceInput['body'],
+    userId: string
   ): Promise<Invoice | null> {
-    const { invoiceDetails, updatedBy, ...invoiceInfo } = data;
+    const { invoiceDetails, ...invoiceInfo } = data;
 
     try {
       const updatedInvoice = await prisma.$transaction(async (tx) => {
-        // Check if the invoice exists
         const existingInvoice = await tx.invoice.findUnique({
           where: { id },
         });
@@ -122,38 +122,39 @@ export class InvoiceService {
           throw new AppError('Invoice not found', 404);
         }
 
-        // If invoiceDetails are provided, handle them
         if (invoiceDetails) {
-          // Delete existing details
           await tx.invoiceDetail.deleteMany({
             where: { invoiceId: id },
           });
 
-          // Create new details
           await tx.invoiceDetail.createMany({
             data: invoiceDetails.map((detail) => ({
               ...detail,
               invoiceId: id,
-              createdBy: updatedBy || 'system',
-              updatedBy: updatedBy || 'system',
+              createdBy: userId,
+              updatedBy: userId,
             })),
           });
         }
 
-        // Update the invoice itself
         const invoice = await tx.invoice.update({
           where: { id },
           data: {
             ...invoiceInfo,
             tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : undefined,
             expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
-            updatedBy: updatedBy || 'system',
+            updatedBy: userId,
           },
           include: {
             invoiceDetails: true,
             statusPembayaran: true,
             purchaseOrder: true,
           },
+        });
+
+        await createAuditLog('Invoice', invoice.id, 'UPDATE', userId, {
+          before: existingInvoice,
+          after: invoice,
         });
 
         return invoice;
@@ -169,36 +170,25 @@ export class InvoiceService {
     }
   }
 
-  static async deleteInvoice(id: string): Promise<Invoice | null> {
+  static async deleteInvoice(id: string, userId: string): Promise<Invoice | null> {
     try {
       return await prisma.$transaction(async (tx) => {
-        // Check if the invoice exists
         const existingInvoice = await tx.invoice.findUnique({
           where: { id },
-          include: {
-            invoiceDetails: true,
-            statusPembayaran: true,
-            purchaseOrder: true,
-          },
         });
 
         if (!existingInvoice) {
           throw new AppError('Invoice not found', 404);
         }
 
-        // Delete invoice details first to avoid foreign key constraint
+        await createAuditLog('Invoice', id, 'DELETE', userId, existingInvoice);
+
         await tx.invoiceDetail.deleteMany({
           where: { invoiceId: id },
         });
 
-        // Then delete the invoice
         return await tx.invoice.delete({
           where: { id },
-          include: {
-            invoiceDetails: true,
-            statusPembayaran: true,
-            purchaseOrder: true,
-          },
         });
       });
     } catch (error) {
@@ -293,3 +283,4 @@ export class InvoiceService {
     };
   }
 }
+

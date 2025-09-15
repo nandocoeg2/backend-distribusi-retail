@@ -6,6 +6,7 @@ import {
   SearchSuratJalanInput,
 } from '@/schemas/surat-jalan.schema';
 import { AppError } from '@/utils/app-error';
+import { createAuditLog } from './audit.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -18,7 +19,7 @@ export interface PaginatedResult<T> {
 }
 
 export class SuratJalanService {
-  static async createSuratJalan(suratJalanData: CreateSuratJalanInput): Promise<SuratJalan> {
+  static async createSuratJalan(suratJalanData: CreateSuratJalanInput, userId: string): Promise<SuratJalan> {
     try {
       const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } = suratJalanData;
 
@@ -44,11 +45,11 @@ export class SuratJalanService {
         }
       }
 
-      return await prisma.suratJalan.create({
+      const newSuratJalan = await prisma.suratJalan.create({
         data: {
           ...suratJalanInfo,
-          createdBy: createdBy || 'system',
-          updatedBy: updatedBy || 'system',
+          createdBy: userId,
+          updatedBy: userId,
           suratJalanDetails: {
             create: suratJalanDetails.map(detail => ({
               no_box: detail.no_box,
@@ -58,14 +59,9 @@ export class SuratJalanService {
               total_box: detail.total_box,
               suratJalanDetailItems: {
                 create: detail.items.map(item => ({
-                  nama_barang: item.nama_barang,
-                  PLU: item.PLU,
-                  quantity: item.quantity,
-                  satuan: item.satuan,
-                  total_box: item.total_box,
-                  keterangan: item.keterangan,
-                  createdBy: createdBy || 'system',
-                  updatedBy: updatedBy || 'system',
+                  ...item,
+                  createdBy: userId,
+                  updatedBy: userId,
                 }))
               }
             }))
@@ -86,6 +82,10 @@ export class SuratJalanService {
           }
         }
       });
+
+      await createAuditLog('SuratJalan', newSuratJalan.id, 'CREATE', userId, newSuratJalan);
+
+      return newSuratJalan;
     } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
@@ -181,9 +181,10 @@ export class SuratJalanService {
 
   static async updateSuratJalan(
     id: string,
-    data: UpdateSuratJalanInput['body']
+    data: UpdateSuratJalanInput['body'],
+    userId: string
   ): Promise<SuratJalan | null> {
-    const { suratJalanDetails, updatedBy, ...suratJalanInfo } = data;
+    const { suratJalanDetails, ...suratJalanInfo } = data;
 
     try {
       const updatedSuratJalan = await prisma.$transaction(async (tx) => {
@@ -237,19 +238,19 @@ export class SuratJalanService {
                 satuan: item.satuan,
                 total_box: item.total_box,
                 keterangan: item.keterangan,
-                createdBy: updatedBy || 'system',
-                updatedBy: updatedBy || 'system',
+                createdBy: userId,
+                updatedBy: userId,
               }))
             });
           }
         }
 
         // Update the surat jalan itself
-        const suratJalan = await tx.suratJalan.update({
+        const updatedSuratJalanData = await tx.suratJalan.update({
           where: { id },
           data: {
             ...suratJalanInfo,
-            updatedBy: updatedBy || 'system',
+            updatedBy: userId,
           },
           include: {
             suratJalanDetails: {
@@ -262,7 +263,12 @@ export class SuratJalanService {
           },
         });
 
-        return suratJalan;
+        await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
+          before: existingSuratJalan,
+          after: updatedSuratJalanData,
+        });
+
+        return updatedSuratJalanData;
       });
 
       return updatedSuratJalan;
@@ -281,7 +287,7 @@ export class SuratJalanService {
     }
   }
 
-  static async deleteSuratJalan(id: string): Promise<SuratJalan | null> {
+  static async deleteSuratJalan(id: string, userId: string): Promise<SuratJalan | null> {
     try {
       // Ambil data surat jalan terlebih dahulu untuk return
       const suratJalan = await prisma.suratJalan.findUnique({
@@ -300,6 +306,8 @@ export class SuratJalanService {
       if (!suratJalan) {
         return null;
       }
+
+      await createAuditLog('SuratJalan', id, 'DELETE', userId, suratJalan);
 
       // Hapus data terkait terlebih dahulu menggunakan transaction
       await prisma.$transaction(async (tx) => {

@@ -1,6 +1,7 @@
 import { prisma } from '@/config/database';
 import { Inventory, Prisma } from '@prisma/client';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
+import { createAuditLog } from './audit.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -12,17 +13,18 @@ export interface PaginatedResult<T> {
   };
 }
 
-export const createInventory = async (input: CreateInventoryInput) => {
-  // Extract audit fields if present
-  const { createdBy, updatedBy, ...inventoryData } = input;
-  
-  return prisma.inventory.create({
+export const createInventory = async (input: CreateInventoryInput, userId: string) => {
+  const inventory = await prisma.inventory.create({
     data: {
-      ...inventoryData,
-      createdBy: createdBy || 'system',
-      updatedBy: updatedBy || 'system',
+      ...input,
+      createdBy: userId,
+      updatedBy: userId,
     },
   });
+
+  await createAuditLog('Inventory', inventory.id, 'CREATE', userId, inventory);
+
+  return inventory;
 };
 
 export const getAllInventories = async (page: number = 1, limit: number = 10): Promise<PaginatedResult<Inventory>> => {
@@ -111,38 +113,42 @@ export const getInventoryById = async (id: string) => {
   });
 };
 
-export const updateInventory = async (id: string, data: UpdateInventoryInput['body']) => {
-  // First check if the inventory exists
+export const updateInventory = async (id: string, data: UpdateInventoryInput['body'], userId: string) => {
   const existingInventory = await prisma.inventory.findUnique({
     where: { id },
   });
-  
+
   if (!existingInventory) {
-    return null; // Return null to indicate record not found
+    return null;
   }
-  
-  // Extract audit fields if present
-  const { updatedBy, ...inventoryData } = data;
-  
-  return prisma.inventory.update({
+
+  const updatedInventory = await prisma.inventory.update({
     where: { id },
     data: {
-      ...inventoryData,
-      updatedBy: updatedBy || 'system',
+      ...data,
+      updatedBy: userId,
     },
   });
+
+  await createAuditLog('Inventory', updatedInventory.id, 'UPDATE', userId, {
+    before: existingInventory,
+    after: updatedInventory,
+  });
+
+  return updatedInventory;
 };
 
-export const deleteInventory = async (id: string) => {
-  // First check if the inventory exists
+export const deleteInventory = async (id: string, userId: string) => {
   const existingInventory = await prisma.inventory.findUnique({
     where: { id },
   });
-  
+
   if (!existingInventory) {
-    return null; // Return null to indicate record not found
+    return null;
   }
-  
+
+  await createAuditLog('Inventory', id, 'DELETE', userId, existingInventory);
+
   return prisma.inventory.delete({
     where: { id },
   });
