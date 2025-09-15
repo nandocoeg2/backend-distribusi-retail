@@ -6,7 +6,8 @@ import {
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber, generateUniqueInvoiceNumber, generateUniqueSuratJalanWithCreate, generateRandomString, generateSuratJalanNumber } from '@/utils/random.utils';
+import { generatePackingNumber, generateUniqueInvoiceNumber, generateSuratJalanNumber } from '@/utils/random.utils';
+import { createAuditLog } from './audit.service';
 
 export interface FileInfo {
   filename: string;
@@ -28,7 +29,8 @@ export interface PaginatedResult<T> {
 export class PurchaseOrderService {
   static async createPurchaseOrder(
     poData: CreatePurchaseOrderInput,
-    fileInfos: FileInfo[]
+    fileInfos: FileInfo[],
+    userId: string
   ): Promise<PurchaseOrder> {
     try {
       const customer = await prisma.customer.findUnique({
@@ -45,11 +47,23 @@ export class PurchaseOrderService {
         files: {
           create: fileInfos,
         },
+        createdBy: userId,
+        updatedBy: userId,
       };
 
-      return await prisma.purchaseOrder.create({
+      const purchaseOrder = await prisma.purchaseOrder.create({
         data: dataForDb,
       });
+
+      await createAuditLog(
+        'PurchaseOrder',
+        purchaseOrder.id,
+        'CREATE',
+        userId,
+        purchaseOrder
+      );
+
+      return purchaseOrder;
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('po_number')) {
         throw new AppError(
@@ -64,7 +78,6 @@ export class PurchaseOrderService {
   static async getAllPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
     const skip = (page - 1) * limit;
 
-    // Get status IDs
     const statuses = await prisma.status.findMany({
       where: {
         status_code: {
@@ -152,13 +165,12 @@ export class PurchaseOrderService {
   static async updatePurchaseOrder(
     id: string,
     data: UpdatePurchaseOrderInput['body'],
-    userId: string = 'system'
+    userId: string
   ): Promise<PurchaseOrder | null> {
     const { purchaseOrderDetails, ...poData } = data;
 
     try {
       const updatedPurchaseOrder = await prisma.$transaction(async (tx) => {
-        // 1. Check if the purchase order exists
         const existingPO = await tx.purchaseOrder.findUnique({
           where: { id },
         });
@@ -167,80 +179,51 @@ export class PurchaseOrderService {
           throw new AppError('Purchase Order not found', 404);
         }
 
-        // 2. If purchaseOrderDetails are provided, process them
         if (purchaseOrderDetails) {
-          // Delete old purchase order details
           await tx.purchaseOrderDetail.deleteMany({
             where: { purchaseOrderId: id },
           });
 
-          // Process each detail to ensure inventory exists
-          const processedDetails: Array<{
-            kode_barang: string;
-            nama_barang: string;
-            quantity: number;
-            isi: number;
-            harga: number;
-            potongan_a?: number | null;
-            harga_after_potongan_a?: number | null;
-            harga_netto: number;
-            total_pembelian: number;
-            potongan_b?: number | null;
-            harga_after_potongan_b?: number | null;
-            inventoryId: string;
-            purchaseOrderId: string;
-          }> = [];
-          for (const detail of purchaseOrderDetails) {
-            let inventoryId = detail.inventoryId;
-            
-            // If inventoryId is not provided (new item), find or create inventory
-            if (!inventoryId) {
-              const inventoryItem = await tx.inventory.upsert({
-                where: { kode_barang: detail.kode_barang },
-                create: {
-                  kode_barang: detail.kode_barang,
-                  nama_barang: detail.nama_barang,
-                  stok_barang: detail.quantity || 0,
-                  harga_barang: detail.harga || 0,
-                  createdBy: userId,
-                  updatedBy: userId,
-                },
-                update: {
-                  // Optionally update name and price if they've changed
-                  nama_barang: detail.nama_barang,
-                  harga_barang: detail.harga || 0,
-                },
-              });
-              inventoryId = inventoryItem.id;
-            }
+          const processedDetails = await Promise.all(
+            purchaseOrderDetails.map(async (detail) => {
+              let inventoryId = detail.inventoryId;
+              if (!inventoryId) {
+                const inventoryItem = await tx.inventory.upsert({
+                  where: { kode_barang: detail.kode_barang },
+                  create: {
+                    kode_barang: detail.kode_barang,
+                    nama_barang: detail.nama_barang,
+                    stok_barang: detail.quantity || 0,
+                    harga_barang: detail.harga || 0,
+                    createdBy: userId,
+                    updatedBy: userId,
+                  },
+                  update: {
+                    nama_barang: detail.nama_barang,
+                    harga_barang: detail.harga || 0,
+                    updatedBy: userId,
+                  },
+                });
+                inventoryId = inventoryItem.id;
+              }
+              return {
+                ...detail,
+                inventoryId,
+                purchaseOrderId: id,
+                createdBy: userId,
+                updatedBy: userId,
+              };
+            })
+          );
 
-            processedDetails.push({
-              kode_barang: detail.kode_barang,
-              nama_barang: detail.nama_barang,
-              quantity: detail.quantity,
-              isi: detail.isi,
-              harga: detail.harga,
-              potongan_a: detail.potongan_a,
-              harga_after_potongan_a: detail.harga_after_potongan_a,
-              harga_netto: detail.harga_netto,
-              total_pembelian: detail.total_pembelian,
-              potongan_b: detail.potongan_b,
-              harga_after_potongan_b: detail.harga_after_potongan_b,
-              inventoryId,
-              purchaseOrderId: id,
-            });
-          }
-
-          // Create new purchase order details with proper inventoryId
           await tx.purchaseOrderDetail.createMany({
-            data: processedDetails,
+            data: processedDetails.map(({ id, ...rest }) => rest),
           });
         }
 
-        // 3. Update the PurchaseOrder itself
         const purchaseOrder = await tx.purchaseOrder.update({
           where: { id },
-          data: poData,
+          data: { ...poData, updatedBy: userId },
           include: {
             purchaseOrderDetails: true,
             customer: true,
@@ -250,35 +233,41 @@ export class PurchaseOrderService {
           },
         });
 
+        await createAuditLog(
+          'PurchaseOrder',
+          purchaseOrder.id,
+          'UPDATE',
+          userId,
+          {
+            before: existingPO,
+            after: purchaseOrder,
+          }
+        );
+
         return purchaseOrder;
       });
 
       return updatedPurchaseOrder;
     } catch (error) {
-      // Re-throw AppError or handle other prisma errors
       if (error instanceof AppError) {
         throw error;
       }
-      // Log the error for debugging
       console.error('Error updating purchase order:', error);
-      // You might want to throw a generic error or handle it as needed
       throw new AppError('Failed to update purchase order', 500);
     }
   }
 
-  static async deletePurchaseOrder(id: string): Promise<PurchaseOrder | null> {
+  static async deletePurchaseOrder(
+    id: string,
+    userId: string
+  ): Promise<PurchaseOrder | null> {
     try {
       return await prisma.$transaction(async (tx) => {
-        // First, check if the purchase order exists
         const existingPO = await tx.purchaseOrder.findUnique({
           where: { id },
           include: {
-            packings: {
-              include: {
-                packingItems: true,
-              },
-            },
-            invoices: true,
+            packings: { include: { packingItems: true } },
+            invoices: { include: { suratJalan: { include: { suratJalanDetails: { include: { suratJalanDetailItems: true } }, historyPengiriman: true } } } },
           },
         });
 
@@ -286,75 +275,18 @@ export class PurchaseOrderService {
           throw new AppError('Purchase Order not found', 404);
         }
 
-        // Delete related packing items first (they have cascade delete)
-        if (existingPO.packings && existingPO.packings.length > 0) {
-          for (const packing of existingPO.packings) {
-            // Delete packing items (they have onDelete: Cascade from packing)
-            await tx.packingItem.deleteMany({
-              where: { packingId: packing.id },
-            });
-          }
+        await createAuditLog('PurchaseOrder', id, 'DELETE', userId, existingPO);
 
-          // Delete packings
-          await tx.packing.deleteMany({
-            where: { purchaseOrderId: id },
-          });
-        }
+        await tx.purchaseOrderDetail.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.packingItem.deleteMany({ where: { packing: { purchaseOrderId: id } } });
+        await tx.packing.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.suratJalanDetailItem.deleteMany({ where: { suratJalanDetail: { suratJalan: { invoice: { purchaseOrderId: id } } } } });
+        await tx.suratJalanDetail.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
+        await tx.historyPengiriman.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
+        await tx.suratJalan.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
+        await tx.invoiceDetail.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
+        await tx.invoice.deleteMany({ where: { purchaseOrderId: id } });
 
-        // Delete related invoices and their dependencies
-        if (existingPO.invoices && existingPO.invoices.length > 0) {
-          for (const invoice of existingPO.invoices) {
-            // Find and delete related surat jalan and their dependencies
-            const suratJalans = await tx.suratJalan.findMany({
-              where: { invoiceId: invoice.id },
-              include: {
-                suratJalanDetails: {
-                  include: {
-                    suratJalanDetailItems: true,
-                  },
-                },
-                historyPengiriman: true,
-              },
-            });
-
-            for (const suratJalan of suratJalans) {
-              // Delete surat jalan detail items
-              for (const detail of suratJalan.suratJalanDetails) {
-                await tx.suratJalanDetailItem.deleteMany({
-                  where: { surat_jalan_detail_id: detail.id },
-                });
-              }
-
-              // Delete surat jalan details
-              await tx.suratJalanDetail.deleteMany({
-                where: { surat_jalan_id: suratJalan.id },
-              });
-
-              // Delete history pengiriman
-              await tx.historyPengiriman.deleteMany({
-                where: { surat_jalan_id: suratJalan.id },
-              });
-
-              // Delete surat jalan
-              await tx.suratJalan.delete({
-                where: { id: suratJalan.id },
-              });
-            }
-
-            // Delete invoice details
-            await tx.invoiceDetail.deleteMany({
-              where: { invoiceId: invoice.id },
-            });
-
-            // Delete invoice
-            await tx.invoice.delete({
-              where: { id: invoice.id },
-            });
-          }
-        }
-
-        // Files and purchase order details will be deleted automatically due to onDelete: Cascade
-        // Now we can safely delete the purchase order
         return await tx.purchaseOrder.delete({
           where: { id },
           include: {
@@ -378,7 +310,6 @@ export class PurchaseOrderService {
   static async getHistoryPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
     const skip = (page - 1) * limit;
 
-    // Get status IDs for "APPROVED PURCHASE ORDER" and "FAILED PURCHASE ORDER"
     const [approvedStatus, failedStatus] = await Promise.all([
       prisma.status.findUnique({ where: { status_code: 'APPROVED PURCHASE ORDER' } }),
       prisma.status.findUnique({ where: { status_code: 'FAILED PURCHASE ORDER' } }),
@@ -521,7 +452,7 @@ export class PurchaseOrderService {
   static async processPurchaseOrder(
     id: string,
     status_code: string,
-    userId: string = 'system'
+    userId: string
   ): Promise<PurchaseOrder> {
     const purchaseOrder = await prisma.purchaseOrder.findUnique({
       where: { id },
@@ -543,7 +474,6 @@ export class PurchaseOrderService {
       throw new AppError('Status not found', 404);
     }
 
-    // Check if PENDING PACKING status exists
     const pendingPackingStatus = await prisma.status.findUnique({
       where: { status_code: 'PENDING PACKING' },
     });
@@ -552,7 +482,6 @@ export class PurchaseOrderService {
       throw new AppError('PENDING PACKING status not found', 404);
     }
 
-    // Check if PENDING ITEM status exists for packing items
     const pendingItemStatus = await prisma.status.findUnique({
       where: { status_code: 'PENDING ITEM' },
     });
@@ -562,14 +491,12 @@ export class PurchaseOrderService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      // Initialize variables to track created documents
       let createdInvoiceId: string | null = null;
       let createdSuratJalanId: string | null = null;
     
-      // Update purchase order status
       let updatedPurchaseOrder = await tx.purchaseOrder.update({
         where: { id },
-        data: { statusId: status.id },
+        data: { statusId: status.id, updatedBy: userId },
         include: {
           purchaseOrderDetails: true,
           customer: true,
@@ -579,40 +506,38 @@ export class PurchaseOrderService {
         },
       });
 
-      // Create packing record, invoice, and surat jalan
       if (purchaseOrder.purchaseOrderDetails && purchaseOrder.purchaseOrderDetails.length > 0) {
-        // Check if packing already exists for this purchase order
         const existingPacking = await tx.packing.findUnique({
           where: { purchaseOrderId: id },
         });
 
         if (!existingPacking) {
-          // Create packing items from purchase order details with status
           const packingItems = purchaseOrder.purchaseOrderDetails.map(detail => ({
             nama_barang: detail.nama_barang,
             total_qty: detail.quantity,
-            jumlah_carton: Math.ceil(detail.quantity / detail.isi), // Calculate cartons
+            jumlah_carton: Math.ceil(detail.quantity / detail.isi),
             isi_per_carton: detail.isi,
-            no_box: '', // Will be filled later during actual packing
+            no_box: '',
             inventoryId: detail.inventoryId,
-            statusId: pendingItemStatus.id, // PENDING ITEM status for packing items
+            statusId: pendingItemStatus.id,
+            createdBy: userId,
+            updatedBy: userId,
           }));
 
-          // Create packing record
-          const createdPacking = await tx.packing.create({
+          await tx.packing.create({
             data: {
-              packing_number: generatePackingNumber(purchaseOrder.po_number), // Generate unique packing number
-              tanggal_packing: new Date(), // Current date/time
-              statusId: pendingPackingStatus.id, // PENDING PACKING status
+              packing_number: generatePackingNumber(purchaseOrder.po_number),
+              tanggal_packing: new Date(),
+              statusId: pendingPackingStatus.id,
               purchaseOrderId: id,
-              updatedBy: userId, // User who processed the purchase order
+              createdBy: userId,
+              updatedBy: userId,
               packingItems: {
                 create: packingItems,
               },
             },
           });
 
-          // Get status for invoice and surat jalan
           const pendingInvoiceStatus = await tx.status.findUnique({
             where: { status_code: 'PENDING INVOICE' },
           });
@@ -629,13 +554,11 @@ export class PurchaseOrderService {
             throw new AppError('PENDING SURAT JALAN status not found', 404);
           }
 
-          // Check if invoice already exists for this purchase order
           let createdInvoice = await tx.invoice.findFirst({
             where: { purchaseOrderId: id },
           });
 
           if (!createdInvoice) {
-            // Create invoice with details from purchase order
             const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(detail => {
               const unitPrice = detail.harga || 0;
               const quantity = detail.quantity;
@@ -645,7 +568,7 @@ export class PurchaseOrderService {
                 nama_barang: detail.nama_barang,
                 PLU: detail.kode_barang || '',
                 quantity: quantity,
-                satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
+                satuan: 'pcs',
                 harga: unitPrice,
                 total: total,
                 discount_percentage: 0,
@@ -658,16 +581,15 @@ export class PurchaseOrderService {
             });
 
             const subTotal = invoiceDetails.reduce((sum, detail) => sum + Number(detail.total), 0);
-            const grandTotal = subTotal; // No discount or tax for now
+            const grandTotal = subTotal;
 
-            // Generate unique invoice number using utility function
             const invoiceNumber = await generateUniqueInvoiceNumber(
               purchaseOrder.po_number,
               async (number: string) => {
                 const existingInvoice = await tx.invoice.findUnique({
                   where: { no_invoice: number },
                 });
-                return !existingInvoice; // Return true if unique (no existing invoice)
+                return !existingInvoice;
               }
             );
 
@@ -682,8 +604,8 @@ export class PurchaseOrderService {
                 ppn_percentage: 0,
                 ppn_rupiah: 0,
                 grand_total: grandTotal,
-                expired_date: null, // Can be set based on business logic
-                TOP: '30', // Default 30 days
+                expired_date: null,
+                TOP: '30',
                 type: 'PEMBAYARAN',
                 statusPembayaranId: pendingInvoiceStatus.id,
                 purchaseOrderId: id,
@@ -695,44 +617,41 @@ export class PurchaseOrderService {
               },
             });
             
-            // Store the created invoice ID for later update
             createdInvoiceId = createdInvoice.id;
           } else {
-            // If invoice already exists, still store its ID for the relationship update
             createdInvoiceId = createdInvoice.id;
           }
 
-          // Create surat jalan details from packing items
-          const suratJalanDetails = packingItems.map((item, index) => ({
+          const suratJalanDetails = purchaseOrder.purchaseOrderDetails.map((detail, index) => ({
             no_box: `BOX-${String(index + 1).padStart(3, '0')}`,
-            total_quantity_in_box: item.total_qty,
-            isi_box: item.jumlah_carton,
-            sisa: 0, // Initially no remaining items
-            total_box: item.jumlah_carton,
-            items: [
-              {
-                nama_barang: item.nama_barang,
-                PLU: purchaseOrder.purchaseOrderDetails?.find(pd => pd.nama_barang === item.nama_barang)?.kode_barang || '',
-                quantity: item.total_qty,
-                satuan: 'pcs', // Default unit since satuan is not in PurchaseOrderDetail
-                total_box: item.jumlah_carton,
-                keterangan: `From Purchase Order: ${purchaseOrder.po_number}`,
-                createdBy: userId,
-                updatedBy: userId,
-              },
-            ],
+            total_quantity_in_box: detail.quantity,
+            isi_box: Math.ceil(detail.quantity / detail.isi),
+            sisa: 0,
+            total_box: Math.ceil(detail.quantity / detail.isi),
+            suratJalanDetailItems: {
+              create: [
+                {
+                  nama_barang: detail.nama_barang,
+                  PLU: detail.kode_barang || '',
+                  quantity: detail.quantity,
+                  satuan: 'pcs',
+                  total_box: Math.ceil(detail.quantity / detail.isi),
+                  keterangan: `From PO: ${purchaseOrder.po_number}`,
+                  createdBy: userId,
+                  updatedBy: userId,
+                },
+              ],
+            },
           }));
 
-          // Check if surat jalan already exists for this invoice
           let existingSuratJalan = await tx.suratJalan.findFirst({
             where: { invoiceId: createdInvoice.id },
           });
 
           if (!existingSuratJalan) {
-            // Generate unique surat jalan number using a simpler approach that works within transactions
             const suratJalanNumber = generateSuratJalanNumber(purchaseOrder.po_number);
             
-            const createdSuratJalan = await tx.suratJalan.create({
+            const newSuratJalan = await tx.suratJalan.create({
               data: {
                 no_surat_jalan: suratJalanNumber,
                 deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
@@ -741,41 +660,30 @@ export class PurchaseOrderService {
                 is_printed: false,
                 print_counter: 0,
                 invoiceId: createdInvoice.id,
-                statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
+                statusId: pendingSuratJalanStatus.id,
                 createdBy: userId,
                 updatedBy: userId,
                 suratJalanDetails: {
-                  create: suratJalanDetails.map(detail => ({
-                    no_box: detail.no_box,
-                    total_quantity_in_box: detail.total_quantity_in_box,
-                    isi_box: detail.isi_box,
-                    sisa: detail.sisa,
-                    total_box: detail.total_box,
-                    suratJalanDetailItems: {
-                      create: detail.items,
-                    },
-                  })),
+                  create: suratJalanDetails,
                 },
               },
             });
             
-            // Store the created surat jalan ID for later update
-            if (createdSuratJalan) {
-              createdSuratJalanId = createdSuratJalan.id;
+            if (newSuratJalan) {
+              createdSuratJalanId = newSuratJalan.id;
             }
           } else {
-            // If surat jalan already exists, still store its ID for the relationship update
             createdSuratJalanId = existingSuratJalan.id;
           }
         }
         
-        // Update purchase order with created document IDs/references
         if (createdInvoiceId || createdSuratJalanId) {
           updatedPurchaseOrder = await tx.purchaseOrder.update({
             where: { id },
             data: {
               ...(createdInvoiceId && { invoicePengiriman: createdInvoiceId }),
               ...(createdSuratJalanId && { suratJalan: createdSuratJalanId }),
+              updatedBy: userId,
             },
             include: {
               purchaseOrderDetails: true,
@@ -788,7 +696,20 @@ export class PurchaseOrderService {
         }
       }
 
+      await createAuditLog(
+        'PurchaseOrder',
+        updatedPurchaseOrder.id,
+        'UPDATE',
+        userId,
+        {
+          action: 'ProcessPurchaseOrder',
+          status: status_code,
+          result: updatedPurchaseOrder,
+        }
+      );
+
       return updatedPurchaseOrder;
     });
   }
 }
+

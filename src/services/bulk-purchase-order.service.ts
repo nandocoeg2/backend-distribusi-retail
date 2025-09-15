@@ -5,6 +5,7 @@ import logger from '@/config/logger';
 import fs from 'fs/promises';
 import { POType, Supplier, Prisma } from '@prisma/client';
 import { NotificationService } from './notification.service';
+import { createAuditLog } from './audit.service';
 
 export class BulkPurchaseOrderService {
   static async processPendingFiles() {
@@ -27,19 +28,30 @@ export class BulkPurchaseOrderService {
     const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
 
     if (!poPendingStatus || !fileProcessingStatus || !fileProcessedStatus || !fileFailedStatus) {
-      logger.error('Core statuses (PENDING PURCHASE ORDER, PROCESSING BULK FILE, PROCESSED BULK FILE, FAILED BULK FILE) not found. Aborting.');
+      logger.error('Core statuses not found. Aborting.');
       return;
     }
 
     for (const file of pendingFiles) {
+      // Use type assertion as a workaround for potential stale client types
+      const userId = (file as any).createdBy;
+
+      if (!userId) {
+        logger.warn(`File ${file.id} has no creator. Marking as failed.`);
+        await prisma.fileUploaded.update({
+          where: { id: file.id },
+          data: { statusId: fileFailedStatus.id },
+        });
+        continue; // Skip to the next file
+      }
+
       try {
-        // --- Lock the file by setting status to PROCESSING ---
         await prisma.fileUploaded.update({
           where: { id: file.id },
           data: { statusId: fileProcessingStatus.id },
         });
         logger.info(`Locked file ${file.id} for processing.`);
-        // --- Perform heavy operations outside the transaction ---
+
         const fileBuffer = await fs.readFile(file.path);
         const jsonResult: any = await convertFileToJson(
           fileBuffer,
@@ -47,14 +59,8 @@ export class BulkPurchaseOrderService {
           'extract purchase order details as json'
         );
 
-        // --- Start transaction for database operations only ---
         let newPurchaseOrder: any;
-        let poDetails: Array<{
-          kode_barang: string;
-          nama_barang: string;
-          harga: number;
-          harga_netto: number;
-        }> = [];
+        let poDetails: Array<{ kode_barang: string; nama_barang: string; harga: number; harga_netto: number; }> = [];
 
         await prisma.$transaction(async (tx) => {
           const poNumber = jsonResult.order?.id;
@@ -65,7 +71,7 @@ export class BulkPurchaseOrderService {
 
           let customer = await tx.customer.findFirst({ where: { name: { contains: customerName, mode: 'insensitive' } } });
           if (!customer) {
-            customer = await tx.customer.create({ data: { name: customerName, phoneNumber: 'N/A', createdBy: 'bulk-system', updatedBy: 'bulk-system' } });
+            customer = await tx.customer.create({ data: { name: customerName, phoneNumber: 'N/A', createdBy: userId, updatedBy: userId } });
           }
 
           let supplier: Supplier | null = null;
@@ -93,6 +99,8 @@ export class BulkPurchaseOrderService {
               tanggal_order: parsedOrderDate,
               po_type: POType.BULK,
               statusId: poPendingStatus.id,
+              createdBy: userId,
+              updatedBy: userId,
             },
           });
 
@@ -108,11 +116,12 @@ export class BulkPurchaseOrderService {
                 nama_barang: item.productName,
                 stok_barang: item.qtyOrdered_carton || 0,
                 harga_barang: item.price_perCarton || item.netPrice_perPcs || 0,
-                createdBy: 'bulk-system',
-                updatedBy: 'bulk-system',
+                createdBy: userId,
+                updatedBy: userId,
               },
               update: {
                 stok_barang: { increment: item.qtyOrdered_carton || 0 },
+                updatedBy: userId,
               },
             });
 
@@ -123,14 +132,15 @@ export class BulkPurchaseOrderService {
                 kode_barang: item.plu,
                 nama_barang: item.productName,
                 quantity: item.qtyOrdered_carton || 0,
-                isi: 1, // Defaulting to 1 as it's not in the source file
+                isi: 1,
                 harga: item.price_perCarton || 0,
                 harga_netto: item.netPrice_perPcs || 0,
                 total_pembelian: item.totalLine_net || 0,
+                createdBy: userId,
+                updatedBy: userId,
               },
             });
 
-            // Simpan detail untuk pengecekan harga
             poDetails.push({
               kode_barang: poDetail.kode_barang,
               nama_barang: poDetail.nama_barang,
@@ -147,10 +157,17 @@ export class BulkPurchaseOrderService {
             },
           });
 
+          await createAuditLog(
+            'PurchaseOrder',
+            newPurchaseOrder.id,
+            'CREATE',
+            userId,
+            newPurchaseOrder
+          );
+
           logger.info(`Successfully processed file ${file.id} and created PO ${newPurchaseOrder.id} with details.`);
         });
 
-        // Periksa perbedaan harga setelah transaksi selesai
         try {
           const priceDifferenceNotifications = await NotificationService.checkPriceDifferenceAlerts(
             newPurchaseOrder.id,
@@ -162,7 +179,6 @@ export class BulkPurchaseOrderService {
           }
         } catch (notificationError) {
           logger.error(`Failed to create price difference notifications for PO ${newPurchaseOrder.id}:`, { error: notificationError });
-          // Jangan throw error di sini karena PO sudah berhasil dibuat
         }
       } catch (error) {
         logger.error(`Failed to process file ${file.id}:`, { error });
@@ -211,3 +227,4 @@ export class BulkPurchaseOrderService {
     });
   }
 }
+

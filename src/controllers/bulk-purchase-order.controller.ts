@@ -7,7 +7,7 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { prisma } from '@/config/database';
 import { BulkPurchaseOrderService } from '@/services/bulk-purchase-order.service';
-import { FileUploaded } from '@prisma/client';
+import { FileUploaded, Prisma } from '@prisma/client';
 
 const pump = promisify(pipeline);
 
@@ -15,6 +15,10 @@ export class BulkPurchaseOrderController {
   static async bulkCreatePurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
     if (!request.isMultipart()) {
       return reply.code(400).send(new AppError('Request is not multipart', 400));
+    }
+
+    if (!request.user) {
+      throw new AppError('User not authenticated', 401);
     }
 
     const createdFiles: FileUploaded[] = [];
@@ -43,17 +47,20 @@ export class BulkPurchaseOrderController {
 
           const stats = await fs.promises.stat(filepath);
 
-          const createdFile = await prisma.fileUploaded.create({
-            data: {
-              filename: part.filename,
-              path: filepath,
-              mimetype: part.mimetype,
-              size: stats.size,
-              status: {
-                connect: { id: pendingStatus.id },
-              },
+          const data: Prisma.FileUploadedCreateInput = {
+            filename: part.filename,
+            path: filepath,
+            mimetype: part.mimetype,
+            size: stats.size,
+            status: {
+              connect: { id: pendingStatus.id },
             },
-          });
+            user: {
+              connect: { id: request.user.id },
+            },
+          };
+
+          const createdFile = await prisma.fileUploaded.create({ data: data as any });
           createdFiles.push(createdFile);
         }
       }
