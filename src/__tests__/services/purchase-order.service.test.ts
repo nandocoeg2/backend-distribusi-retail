@@ -1,4 +1,3 @@
-import { prisma } from '@/config/database';
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 import { AppError } from '@/utils/app-error';
 
@@ -13,6 +12,7 @@ jest.mock('@/config/database', () => ({
     },
     status: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     purchaseOrderDetail: {
       deleteMany: jest.fn(),
@@ -21,9 +21,35 @@ jest.mock('@/config/database', () => ({
     inventory: {
       upsert: jest.fn(),
     },
+    packing: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    invoice: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    suratJalan: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }));
+
+// Mock utility functions
+jest.mock('@/utils/random.utils', () => ({
+  generatePackingNumber: jest.fn().mockReturnValue('PN-20250915-PO-001'),
+  generateUniqueInvoiceNumber: jest.fn().mockResolvedValue('INV-2025-09-PO-001'),
+  generateUniqueSuratJalanWithCreate: jest.fn().mockImplementation(async (poNumber, createFn) => {
+    return await createFn('SJ-20250915-PO-001');
+  }),
+  generateSuratJalanNumber: jest.fn().mockReturnValue('SJ-20250915-PO-001'),
+}));
+
+// Import prisma after mocking
+const { prisma } = require('@/config/database');
 
 describe('PurchaseOrderService', () => {
   const mockPaginatedResult = {
@@ -213,4 +239,168 @@ describe('PurchaseOrderService', () => {
   // create packing, invoice, and surat jalan when processing a purchase order.
   // This ensures that all downstream documents are generated with details
   // matching the purchase order details.
+
+  // Test for processPurchaseOrder method to verify suratJalan and invoicePengiriman relationships
+  describe('processPurchaseOrder', () => {
+    const mockPurchaseOrder = {
+      id: 'po1',
+      po_number: 'PO-001',
+      customer: {
+        name: 'Test Customer',
+        address: 'Test Address'
+      },
+      purchaseOrderDetails: [
+        {
+          id: 'detail1',
+          kode_barang: 'ITM001',
+          nama_barang: 'Test Item',
+          quantity: 10,
+          isi: 5,
+          harga: 1000,
+          inventoryId: 'inv1'
+        }
+      ]
+    };
+
+    const mockStatus = {
+      id: 'status1',
+      status_code: 'PROCESSED PURCHASE ORDER'
+    };
+
+    const mockStatuses = {
+      pendingPacking: { id: 'pending-packing', status_code: 'PENDING PACKING' },
+      pendingItem: { id: 'pending-item', status_code: 'PENDING ITEM' },
+      pendingInvoice: { id: 'pending-invoice', status_code: 'PENDING INVOICE' },
+      pendingSuratJalan: { id: 'pending-surat-jalan', status_code: 'PENDING SURAT JALAN' }
+    };
+
+    const mockCreatedInvoice = {
+      id: 'invoice1',
+      no_invoice: 'INV-2025-09-PO-001'
+    };
+
+    const mockCreatedSuratJalan = {
+      id: 'sj1',
+      no_surat_jalan: 'SJ-20250915-PO-001'
+    };
+
+    it('should update purchase order with suratJalan and invoicePengiriman IDs when creating new documents', async () => {
+      // Mock findUnique calls for purchase order and statuses
+      (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(mockPurchaseOrder);
+      (prisma.status.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStatus) // First call for the main status
+        .mockResolvedValueOnce(mockStatuses.pendingPacking) // PENDING PACKING
+        .mockResolvedValueOnce(mockStatuses.pendingItem) // PENDING ITEM
+        .mockResolvedValueOnce(mockStatuses.pendingInvoice) // PENDING INVOICE
+        .mockResolvedValueOnce(mockStatuses.pendingSuratJalan); // PENDING SURAT JALAN
+
+      // Mock the transaction
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          purchaseOrder: {
+            update: jest.fn()
+              .mockResolvedValueOnce({ // First update - status only
+                ...mockPurchaseOrder,
+                statusId: mockStatus.id
+              })
+              .mockResolvedValueOnce({ // Second update - with document IDs
+                ...mockPurchaseOrder,
+                statusId: mockStatus.id,
+                invoicePengiriman: mockCreatedInvoice.id,
+                suratJalan: mockCreatedSuratJalan.id
+              })
+          },
+          packing: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue({
+              id: 'packing1',
+              packing_number: 'PN-20250915-PO-001'
+            })
+          },
+          status: {
+            findUnique: jest.fn()
+              .mockResolvedValueOnce(mockStatuses.pendingPacking)
+              .mockResolvedValueOnce(mockStatuses.pendingItem)
+              .mockResolvedValueOnce(mockStatuses.pendingInvoice)
+              .mockResolvedValueOnce(mockStatuses.pendingSuratJalan)
+          },
+          invoice: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            findUnique: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue(mockCreatedInvoice)
+          },
+          suratJalan: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue(mockCreatedSuratJalan)
+          }
+        };
+        return callback(mockTx);
+      });
+
+      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER');
+
+      expect(result.invoicePengiriman).toBe(mockCreatedInvoice.id);
+      expect(result.suratJalan).toBe(mockCreatedSuratJalan.id);
+    });
+
+    it('should update purchase order with existing document IDs when documents already exist', async () => {
+      const existingInvoice = { id: 'existing-invoice1' };
+      const existingSuratJalan = { id: 'existing-sj1' };
+
+      // Mock findUnique calls for purchase order and statuses
+      (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(mockPurchaseOrder);
+      (prisma.status.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStatus)
+        .mockResolvedValueOnce(mockStatuses.pendingPacking)
+        .mockResolvedValueOnce(mockStatuses.pendingItem)
+        .mockResolvedValueOnce(mockStatuses.pendingInvoice)
+        .mockResolvedValueOnce(mockStatuses.pendingSuratJalan);
+
+      // Mock the transaction
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          purchaseOrder: {
+            update: jest.fn()
+              .mockResolvedValueOnce({ // First update - status only
+                ...mockPurchaseOrder,
+                statusId: mockStatus.id
+              })
+              .mockResolvedValueOnce({ // Second update - with existing document IDs
+                ...mockPurchaseOrder,
+                statusId: mockStatus.id,
+                invoicePengiriman: existingInvoice.id,
+                suratJalan: existingSuratJalan.id
+              })
+          },
+          packing: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockResolvedValue({
+              id: 'packing1',
+              packing_number: 'PN-20250915-PO-001'
+            })
+          },
+          status: {
+            findUnique: jest.fn()
+              .mockResolvedValueOnce(mockStatuses.pendingPacking)
+              .mockResolvedValueOnce(mockStatuses.pendingItem)
+              .mockResolvedValueOnce(mockStatuses.pendingInvoice)
+              .mockResolvedValueOnce(mockStatuses.pendingSuratJalan)
+          },
+          invoice: {
+            findFirst: jest.fn().mockResolvedValue(existingInvoice), // Existing invoice found
+            findUnique: jest.fn().mockResolvedValue(null)
+          },
+          suratJalan: {
+            findFirst: jest.fn().mockResolvedValue(existingSuratJalan) // Existing surat jalan found
+          }
+        };
+        return callback(mockTx);
+      });
+
+      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER');
+
+      expect(result.invoicePengiriman).toBe(existingInvoice.id);
+      expect(result.suratJalan).toBe(existingSuratJalan.id);
+    });
+  });
 });

@@ -463,8 +463,12 @@ export class PurchaseOrderService {
     }
 
     return await prisma.$transaction(async (tx) => {
+      // Initialize variables to track created documents
+      let createdInvoiceId: string | null = null;
+      let createdSuratJalanId: string | null = null;
+    
       // Update purchase order status
-      const updatedPurchaseOrder = await tx.purchaseOrder.update({
+      let updatedPurchaseOrder = await tx.purchaseOrder.update({
         where: { id },
         data: { statusId: status.id },
         include: {
@@ -591,6 +595,12 @@ export class PurchaseOrderService {
                 },
               },
             });
+            
+            // Store the created invoice ID for later update
+            createdInvoiceId = createdInvoice.id;
+          } else {
+            // If invoice already exists, still store its ID for the relationship update
+            createdInvoiceId = createdInvoice.id;
           }
 
           // Create surat jalan details from packing items
@@ -615,44 +625,67 @@ export class PurchaseOrderService {
           }));
 
           // Check if surat jalan already exists for this invoice
-          const existingSuratJalan = await tx.suratJalan.findFirst({
+          let existingSuratJalan = await tx.suratJalan.findFirst({
             where: { invoiceId: createdInvoice.id },
           });
 
           if (!existingSuratJalan) {
-            // Generate surat jalan using utility function with database constraint handling
-            await generateUniqueSuratJalanWithCreate(
-              purchaseOrder.po_number,
-              async (suratJalanNumber: string) => {
-                return await tx.suratJalan.create({
-                  data: {
-                    no_surat_jalan: suratJalanNumber,
-                    deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
-                    PIC: purchaseOrder.customer?.name || 'Unknown PIC',
-                    alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
-                    is_printed: false,
-                    print_counter: 0,
-                    invoiceId: createdInvoice.id,
-                    statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
-                    createdBy: userId,
-                    updatedBy: userId,
-                    suratJalanDetails: {
-                      create: suratJalanDetails.map(detail => ({
-                        no_box: detail.no_box,
-                        total_quantity_in_box: detail.total_quantity_in_box,
-                        isi_box: detail.isi_box,
-                        sisa: detail.sisa,
-                        total_box: detail.total_box,
-                        suratJalanDetailItems: {
-                          create: detail.items,
-                        },
-                      })),
+            // Generate unique surat jalan number using a simpler approach that works within transactions
+            const suratJalanNumber = generateSuratJalanNumber(purchaseOrder.po_number);
+            
+            const createdSuratJalan = await tx.suratJalan.create({
+              data: {
+                no_surat_jalan: suratJalanNumber,
+                deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+                PIC: purchaseOrder.customer?.name || 'Unknown PIC',
+                alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
+                is_printed: false,
+                print_counter: 0,
+                invoiceId: createdInvoice.id,
+                statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
+                createdBy: userId,
+                updatedBy: userId,
+                suratJalanDetails: {
+                  create: suratJalanDetails.map(detail => ({
+                    no_box: detail.no_box,
+                    total_quantity_in_box: detail.total_quantity_in_box,
+                    isi_box: detail.isi_box,
+                    sisa: detail.sisa,
+                    total_box: detail.total_box,
+                    suratJalanDetailItems: {
+                      create: detail.items,
                     },
-                  },
-                });
-              }
-            );
+                  })),
+                },
+              },
+            });
+            
+            // Store the created surat jalan ID for later update
+            if (createdSuratJalan) {
+              createdSuratJalanId = createdSuratJalan.id;
+            }
+          } else {
+            // If surat jalan already exists, still store its ID for the relationship update
+            createdSuratJalanId = existingSuratJalan.id;
           }
+        }
+        
+        // Update purchase order with created document IDs/references
+        if (createdInvoiceId || createdSuratJalanId) {
+          updatedPurchaseOrder = await tx.purchaseOrder.update({
+            where: { id },
+            data: {
+              ...(createdInvoiceId && { invoicePengiriman: createdInvoiceId }),
+              ...(createdSuratJalanId && { suratJalan: createdSuratJalanId }),
+            },
+            include: {
+              purchaseOrderDetails: true,
+              customer: true,
+              supplier: true,
+              status: true,
+              files: true,
+            },
+          });
         }
       }
 
