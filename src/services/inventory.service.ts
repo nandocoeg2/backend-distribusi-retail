@@ -108,9 +108,39 @@ export const searchInventories = async (query?: string, page: number = 1, limit:
 };
 
 export const getInventoryById = async (id: string) => {
-  return prisma.inventory.findUnique({
+  const inventory = await prisma.inventory.findUnique({
     where: { id },
   });
+
+  if (!inventory) {
+    return null;
+  }
+
+  // Get audit trail for this inventory
+  const auditTrails = await prisma.auditTrail.findMany({
+    where: {
+      tableName: 'Inventory',
+      recordId: id,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: {
+      timestamp: 'desc',
+    },
+  });
+
+  return {
+    ...inventory,
+    auditTrails,
+  };
 };
 
 export const updateInventory = async (id: string, data: UpdateInventoryInput['body'], userId: string) => {

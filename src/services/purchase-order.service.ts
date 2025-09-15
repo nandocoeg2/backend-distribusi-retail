@@ -159,7 +159,31 @@ export class PurchaseOrderService {
       throw new AppError('Data integrity violation: BULK purchase order must have at least one file.', 500);
     }
 
-    return purchaseOrder;
+    // Get audit trail for this purchase order
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'PurchaseOrder',
+        recordId: id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...purchaseOrder,
+      auditTrails,
+    } as any;
   }
 
   static async updatePurchaseOrder(
@@ -712,4 +736,3 @@ export class PurchaseOrderService {
     });
   }
 }
-

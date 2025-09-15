@@ -163,7 +163,7 @@ export class PackingService {
   }
 
   static async getPackingById(id: string): Promise<any | null> {
-    return await prisma.packing.findUnique({
+    const packing = await prisma.packing.findUnique({
       where: { id },
       include: {
         packingItems: {
@@ -175,6 +175,36 @@ export class PackingService {
         status: true,
       },
     });
+
+    if (!packing) {
+      return null;
+    }
+
+    // Get audit trail for this packing
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'Packing',
+        recordId: id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...packing,
+      auditTrails,
+    };
   }
 
   static async updatePacking(

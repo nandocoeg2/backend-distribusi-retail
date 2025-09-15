@@ -176,7 +176,35 @@ export class SuratJalanService {
       },
     });
 
-    return suratJalan;
+    if (!suratJalan) {
+      return null;
+    }
+
+    // Get audit trail for this surat jalan
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'SuratJalan',
+        recordId: id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...suratJalan,
+      auditTrails,
+    } as any;
   }
 
   static async updateSuratJalan(

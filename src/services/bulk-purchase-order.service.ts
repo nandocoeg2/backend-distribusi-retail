@@ -200,7 +200,31 @@ export class BulkPurchaseOrderService {
       throw new AppError('File not found', 404);
     }
 
-    return file;
+    // Get audit trail for this file upload
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'FileUploaded',
+        recordId: fileId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...file,
+      auditTrails,
+    };
   }
 
   static async getAllBulkFiles(status?: string) {
@@ -227,4 +251,3 @@ export class BulkPurchaseOrderService {
     });
   }
 }
-

@@ -89,7 +89,7 @@ export class InvoiceService {
   }
 
   static async getInvoiceById(id: string): Promise<Invoice | null> {
-    return await prisma.invoice.findUnique({
+    const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: {
         invoiceDetails: true,
@@ -103,6 +103,36 @@ export class InvoiceService {
         suratJalan: true,
       },
     });
+
+    if (!invoice) {
+      return null;
+    }
+
+    // Get audit trail for this invoice
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'Invoice',
+        recordId: id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...invoice,
+      auditTrails,
+    } as any;
   }
 
   static async updateInvoice(
@@ -283,4 +313,3 @@ export class InvoiceService {
     };
   }
 }
-
