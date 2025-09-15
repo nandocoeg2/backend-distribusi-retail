@@ -41,11 +41,16 @@ describe('SupplierController', () => {
       };
       const supplier = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
       request.body = createInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SupplierService.createSupplier as jest.Mock).mockResolvedValue(supplier);
 
       await SupplierController.createSupplier(request as FastifyRequest<{ Body: CreateSupplierInput }>, reply as FastifyReply);
 
-      expect(SupplierService.createSupplier).toHaveBeenCalledWith(createInput);
+      expect(SupplierService.createSupplier).toHaveBeenCalledWith({
+        ...createInput,
+        createdBy: 'user123',
+        updatedBy: 'user123',
+      });
       expect(reply.code).toHaveBeenCalledWith(201);
       expect(reply.send).toHaveBeenCalledWith(supplier);
     });
@@ -102,11 +107,15 @@ describe('SupplierController', () => {
       const supplier = { id: '1', name: 'Updated Name', code: 'SUP001', address: '123 Test St', phoneNumber: '1234567890', email: 'test@supplier.com', createdAt: new Date(), updatedAt: new Date() };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SupplierService.updateSupplier as jest.Mock).mockResolvedValue(supplier);
 
       await SupplierController.updateSupplier(request as FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>, reply as FastifyReply);
 
-      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', updateInput);
+      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', {
+        ...updateInput,
+        updatedBy: 'user123',
+      });
       expect(reply.send).toHaveBeenCalledWith(supplier);
     });
 
@@ -114,11 +123,15 @@ describe('SupplierController', () => {
       const updateInput: UpdateSupplierInput['body'] = { name: 'Updated Name' };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SupplierService.updateSupplier as jest.Mock).mockResolvedValue(null);
 
       await SupplierController.updateSupplier(request as FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>, reply as FastifyReply);
 
-      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', updateInput);
+      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', {
+        ...updateInput,
+        updatedBy: 'user123',
+      });
       expect(reply.code).toHaveBeenCalledWith(404);
       expect(reply.send).toHaveBeenCalledWith({ message: 'Supplier not found' });
     });

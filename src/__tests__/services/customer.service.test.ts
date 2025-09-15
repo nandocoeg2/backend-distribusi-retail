@@ -35,7 +35,13 @@ describe('CustomerService', () => {
 
       const result = await CustomerService.createCustomer(input);
 
-      expect(prisma.customer.create).toHaveBeenCalledWith({ data: input });
+      expect(prisma.customer.create).toHaveBeenCalledWith({ 
+        data: {
+          ...input,
+          createdBy: 'system',
+          updatedBy: 'system',
+        }
+      });
       expect(result).toEqual(expectedCustomer);
     });
   });
@@ -108,7 +114,13 @@ describe('CustomerService', () => {
 
       const result = await CustomerService.updateCustomer(customerId, input);
 
-      expect(prisma.customer.update).toHaveBeenCalledWith({ where: { id: customerId }, data: input });
+      expect(prisma.customer.update).toHaveBeenCalledWith({ 
+        where: { id: customerId }, 
+        data: {
+          ...input,
+          updatedBy: 'system',
+        }
+      });
       expect(result).toEqual(expectedCustomer);
     });
 

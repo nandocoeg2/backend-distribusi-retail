@@ -30,11 +30,16 @@ describe('CustomerController', () => {
       const createInput: CreateCustomerInput = { name: 'Test Customer', address: '123 Test St', phoneNumber: '1234567890', email: 'test@customer.com' };
       const customer = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
       request.body = createInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (CustomerService.createCustomer as jest.Mock).mockResolvedValue(customer);
 
       await CustomerController.createCustomer(request as FastifyRequest<{ Body: CreateCustomerInput }>, reply as FastifyReply);
 
-      expect(CustomerService.createCustomer).toHaveBeenCalledWith(createInput);
+      expect(CustomerService.createCustomer).toHaveBeenCalledWith({
+        ...createInput,
+        createdBy: 'user123',
+        updatedBy: 'user123',
+      });
       expect(reply.code).toHaveBeenCalledWith(201);
       expect(reply.send).toHaveBeenCalledWith(customer);
     });
@@ -91,11 +96,15 @@ describe('CustomerController', () => {
       const customer = { id: '1', name: 'Updated Name', address: '123 Test St', phoneNumber: '1234567890', email: 'test@customer.com', createdAt: new Date(), updatedAt: new Date() };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (CustomerService.updateCustomer as jest.Mock).mockResolvedValue(customer);
 
       await CustomerController.updateCustomer(request as FastifyRequest<{ Params: { id: string }; Body: UpdateCustomerInput['body'] }>, reply as FastifyReply);
 
-      expect(CustomerService.updateCustomer).toHaveBeenCalledWith('1', updateInput);
+      expect(CustomerService.updateCustomer).toHaveBeenCalledWith('1', {
+        ...updateInput,
+        updatedBy: 'user123',
+      });
       expect(reply.send).toHaveBeenCalledWith(customer);
     });
 
@@ -103,11 +112,15 @@ describe('CustomerController', () => {
       const updateInput: UpdateCustomerInput['body'] = { name: 'Updated Name' };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (CustomerService.updateCustomer as jest.Mock).mockResolvedValue(null);
 
       await CustomerController.updateCustomer(request as FastifyRequest<{ Params: { id: string }; Body: UpdateCustomerInput['body'] }>, reply as FastifyReply);
 
-      expect(CustomerService.updateCustomer).toHaveBeenCalledWith('1', updateInput);
+      expect(CustomerService.updateCustomer).toHaveBeenCalledWith('1', {
+        ...updateInput,
+        updatedBy: 'user123',
+      });
       expect(reply.code).toHaveBeenCalledWith(404);
       expect(reply.send).toHaveBeenCalledWith({ message: 'Customer not found' });
     });

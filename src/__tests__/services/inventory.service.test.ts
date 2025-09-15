@@ -44,7 +44,13 @@ describe('Inventory Service', () => {
 
       const result = await createInventory(input);
       expect(result).toEqual(mockInventory);
-      expect(prisma.inventory.create).toHaveBeenCalledWith({ data: input });
+      expect(prisma.inventory.create).toHaveBeenCalledWith({ 
+        data: {
+          ...input,
+          createdBy: 'system',
+          updatedBy: 'system',
+        }
+      });
     });
   });
 
@@ -230,7 +236,13 @@ describe('Inventory Service', () => {
       const result = await updateInventory('1', data);
       expect(result).toEqual(updatedInventory);
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
-      expect(prisma.inventory.update).toHaveBeenCalledWith({ where: { id: '1' }, data });
+      expect(prisma.inventory.update).toHaveBeenCalledWith({ 
+        where: { id: '1' }, 
+        data: {
+          ...data,
+          updatedBy: 'system',
+        }
+      });
     });
 
     it('should return null when inventory does not exist', async () => {

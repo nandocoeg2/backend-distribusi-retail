@@ -28,7 +28,7 @@ describe('PackingController', () => {
 
       const request: any = {
         body: mockPackingData,
-        user: { sub: 'user1' },
+        user: { id: 'user1', iat: 0, exp: 0 },
       };
       const reply: any = {
         code: jest.fn().mockReturnThis(),
@@ -74,7 +74,7 @@ describe('PackingController', () => {
 
       expect(PackingService.createPacking).toHaveBeenCalledWith({
         ...mockPackingData,
-        updatedBy: 'test-user-id',
+        updatedBy: 'system',
       });
     });
 
@@ -91,7 +91,7 @@ describe('PackingController', () => {
 
       const request: any = {
         body: mockPackingData,
-        user: { sub: 'user1' },
+        user: { id: 'user1', iat: 0, exp: 0 },
       };
       const reply: any = {
         code: jest.fn().mockReturnThis(),
@@ -185,7 +185,7 @@ describe('PackingController', () => {
       const request: any = {
         params: { id: 'packing1' },
         body: mockUpdateData,
-        user: { sub: 'user1' },
+        user: { id: 'user1', iat: 0, exp: 0 },
       };
       const reply: any = {
         send: jest.fn().mockReturnThis(),
@@ -211,7 +211,7 @@ describe('PackingController', () => {
       const request: any = {
         params: { id: 'packing1' },
         body: mockUpdateData,
-        user: { sub: 'user1' },
+        user: { id: 'user1', iat: 0, exp: 0 },
       };
       const reply: any = {
         code: jest.fn().mockReturnThis(),
@@ -236,7 +236,7 @@ describe('PackingController', () => {
       const request: any = {
         params: { id: 'packing1' },
         body: mockUpdateData,
-        user: { sub: 'user1' },
+        user: { id: 'user1', iat: 0, exp: 0 },
       };
       const reply: any = {
         code: jest.fn().mockReturnThis(),

@@ -45,6 +45,8 @@ describe('SuratJalanService', () => {
         PIC: 'John Doe',
         alamat_tujuan: 'Jl. Example No. 123, Jakarta',
         invoiceId: 'inv123',
+        createdBy: 'user123',
+        updatedBy: 'user123',
         suratJalanDetails: [
           {
             no_box: 'BOX-001',
@@ -82,7 +84,13 @@ describe('SuratJalanService', () => {
 
       expect(prisma.suratJalan.create).toHaveBeenCalledWith({
         data: {
-          ...createInput,
+          no_surat_jalan: 'SJ-2024-001',
+          deliver_to: 'Customer ABC',
+          PIC: 'John Doe',
+          alamat_tujuan: 'Jl. Example No. 123, Jakarta',
+          invoiceId: 'inv123',
+          createdBy: 'user123',
+          updatedBy: 'user123',
           suratJalanDetails: {
             create: expect.any(Array),
           },

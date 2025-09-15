@@ -100,11 +100,12 @@ describe('PurchaseOrderController', () => {
       const po = { id: '1', customerId: 'cust1', po_number: 'PO456' };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (PurchaseOrderService.updatePurchaseOrder as jest.Mock).mockResolvedValue(po);
 
       await PurchaseOrderController.updatePurchaseOrder(request as FastifyRequest<{ Params: { id: string }; Body: UpdatePurchaseOrderInput['body'] }>, reply as FastifyReply);
 
-      expect(PurchaseOrderService.updatePurchaseOrder).toHaveBeenCalledWith('1', updateInput);
+      expect(PurchaseOrderService.updatePurchaseOrder).toHaveBeenCalledWith('1', updateInput, 'user123');
       expect(reply.send).toHaveBeenCalledWith(po);
     });
 
@@ -112,11 +113,12 @@ describe('PurchaseOrderController', () => {
       const updateInput: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
       request.params = { id: '1' };
       request.body = updateInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (PurchaseOrderService.updatePurchaseOrder as jest.Mock).mockResolvedValue(null);
 
       await PurchaseOrderController.updatePurchaseOrder(request as FastifyRequest<{ Params: { id: string }; Body: UpdatePurchaseOrderInput['body'] }>, reply as FastifyReply);
 
-      expect(PurchaseOrderService.updatePurchaseOrder).toHaveBeenCalledWith('1', updateInput);
+      expect(PurchaseOrderService.updatePurchaseOrder).toHaveBeenCalledWith('1', updateInput, 'user123');
       expect(reply.code).toHaveBeenCalledWith(404);
       expect(reply.send).toHaveBeenCalledWith({ message: 'Purchase Order not found' });
     });

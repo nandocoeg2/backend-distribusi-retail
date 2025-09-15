@@ -92,8 +92,8 @@ describe('InvoiceController', () => {
 
       expect(InvoiceService.createInvoice).toHaveBeenCalledWith({
         ...createInput,
-        createdBy: 'test-user-id',
-        updatedBy: 'test-user-id',
+        createdBy: 'system',
+        updatedBy: 'system',
       });
     });
   });

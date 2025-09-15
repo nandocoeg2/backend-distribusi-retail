@@ -84,7 +84,9 @@ describe('BulkPurchaseOrderService', () => {
       expect(prisma.fileUploaded.findMany).toHaveBeenCalledWith({
         where: {
           status: {
-            status_code: 'PENDING BULK FILE',
+            status_code: {
+              in: ['PENDING BULK FILE', 'FAILED BULK FILE'],
+            },
           },
           purchaseOrderId: null,
         },
@@ -160,7 +162,14 @@ describe('BulkPurchaseOrderService', () => {
       await BulkPurchaseOrderService.processPendingFiles();
 
       expect(txMock.customer.findFirst).toHaveBeenCalledWith({ where: { name: { contains: 'New Customer', mode: 'insensitive' } } });
-      expect(txMock.customer.create).toHaveBeenCalledWith({ data: { name: 'New Customer', phoneNumber: 'N/A' } });
+      expect(txMock.customer.create).toHaveBeenCalledWith({ 
+        data: { 
+          name: 'New Customer', 
+          phoneNumber: 'N/A',
+          createdBy: 'bulk-system',
+          updatedBy: 'bulk-system',
+        }
+      });
       expect(txMock.inventory.upsert).toHaveBeenCalledTimes(1);
       expect(txMock.purchaseOrderDetail.create).toHaveBeenCalledTimes(1);
       expect(txMock.fileUploaded.update).toHaveBeenCalledWith({ where: { id: pendingFile.id }, data: { statusId: statuses.processed.id, purchaseOrderId: 'po1' } });

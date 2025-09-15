@@ -58,6 +58,8 @@ describe('SuratJalanController', () => {
       const suratJalan = {
         id: '1',
         ...createInput,
+        createdBy: 'user123',
+        updatedBy: 'user123',
         is_printed: false,
         print_counter: 0,
         createdAt: new Date(),
@@ -65,11 +67,16 @@ describe('SuratJalanController', () => {
       };
       
       request.body = createInput;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SuratJalanService.createSuratJalan as jest.Mock).mockResolvedValue(suratJalan);
 
       await SuratJalanController.createSuratJalan(request as any, reply as any);
 
-      expect(SuratJalanService.createSuratJalan).toHaveBeenCalledWith(createInput);
+      expect(SuratJalanService.createSuratJalan).toHaveBeenCalledWith({
+        ...createInput,
+        createdBy: 'user123',
+        updatedBy: 'user123',
+      });
       expect(reply.code).toHaveBeenCalledWith(201);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
@@ -185,11 +192,15 @@ describe('SuratJalanController', () => {
       
       request.params = { id: '1' };
       request.body = updateData;
+      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SuratJalanService.updateSuratJalan as jest.Mock).mockResolvedValue(updatedSuratJalan);
 
       await SuratJalanController.updateSuratJalan(request as any, reply as any);
 
-      expect(SuratJalanService.updateSuratJalan).toHaveBeenCalledWith('1', updateData);
+      expect(SuratJalanService.updateSuratJalan).toHaveBeenCalledWith('1', {
+        ...updateData,
+        updatedBy: 'user123',
+      });
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
         data: updatedSuratJalan,

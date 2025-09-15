@@ -41,7 +41,13 @@ describe('SupplierService', () => {
 
       const result = await SupplierService.createSupplier(input);
 
-      expect(prisma.supplier.create).toHaveBeenCalledWith({ data: input });
+      expect(prisma.supplier.create).toHaveBeenCalledWith({ 
+        data: {
+          ...input,
+          createdBy: 'system',
+          updatedBy: 'system',
+        }
+      });
       expect(result).toEqual(expectedSupplier);
     });
   });
@@ -123,7 +129,13 @@ describe('SupplierService', () => {
 
       const result = await SupplierService.updateSupplier(supplierId, input);
 
-      expect(prisma.supplier.update).toHaveBeenCalledWith({ where: { id: supplierId }, data: input });
+      expect(prisma.supplier.update).toHaveBeenCalledWith({ 
+        where: { id: supplierId }, 
+        data: {
+          ...input,
+          updatedBy: 'system',
+        }
+      });
       expect(result).toEqual(expectedSupplier);
     });
 
