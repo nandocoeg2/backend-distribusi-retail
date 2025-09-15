@@ -25,6 +25,8 @@ const mockInventory = {
   min_stok: 10,
   createdAt: new Date(),
   updatedAt: new Date(),
+  createdBy: 'test-user-id',
+  updatedBy: 'test-user-id',
 };
 
 describe('Inventory Controller', () => {

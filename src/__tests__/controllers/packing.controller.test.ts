@@ -56,7 +56,7 @@ describe('PackingController', () => {
       const mockCreatedPacking = {
         id: 'packing1',
         ...mockPackingData,
-        updatedBy: 'system',
+        updatedBy: 'test-user-id',
       };
 
       (PackingService.createPacking as jest.Mock).mockResolvedValue(mockCreatedPacking);
@@ -74,7 +74,7 @@ describe('PackingController', () => {
 
       expect(PackingService.createPacking).toHaveBeenCalledWith({
         ...mockPackingData,
-        updatedBy: 'system',
+        updatedBy: 'test-user-id',
       });
     });
 

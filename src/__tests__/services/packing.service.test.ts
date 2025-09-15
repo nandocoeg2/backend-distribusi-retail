@@ -201,7 +201,7 @@ describe('PackingService', () => {
       const mockPackingResult = {
         id: 'packing1',
         ...mockPackingData,
-        updatedBy: 'system',
+        updatedBy: 'test-user-id',
       };
 
       (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue(mockPurchaseOrder);
@@ -218,7 +218,7 @@ describe('PackingService', () => {
           tanggal_packing: mockPackingData.tanggal_packing,
           statusId: 'status1',
           purchaseOrderId: 'po1',
-          updatedBy: 'system',
+          updatedBy: 'test-user-id',
           packingItems: {
             create: mockPackingData.packingItems,
           },

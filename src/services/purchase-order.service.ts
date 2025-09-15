@@ -151,7 +151,8 @@ export class PurchaseOrderService {
 
   static async updatePurchaseOrder(
     id: string,
-    data: UpdatePurchaseOrderInput['body']
+    data: UpdatePurchaseOrderInput['body'],
+    userId: string = 'system'
   ): Promise<PurchaseOrder | null> {
     const { purchaseOrderDetails, ...poData } = data;
 
@@ -201,6 +202,8 @@ export class PurchaseOrderService {
                   nama_barang: detail.nama_barang,
                   stok_barang: detail.quantity || 0,
                   harga_barang: detail.harga || 0,
+                  createdBy: userId,
+                  updatedBy: userId,
                 },
                 update: {
                   // Optionally update name and price if they've changed
@@ -631,6 +634,8 @@ export class PurchaseOrderService {
                     print_counter: 0,
                     invoiceId: createdInvoice.id,
                     statusId: pendingSuratJalanStatus.id, // PENDING SURAT JALAN status
+                    createdBy: userId,
+                    updatedBy: userId,
                     suratJalanDetails: {
                       create: suratJalanDetails.map(detail => ({
                         no_box: detail.no_box,

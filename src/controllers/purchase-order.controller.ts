@@ -107,9 +107,13 @@ export class PurchaseOrderController {
     }>,
     reply: FastifyReply
   ) {
+    // Extract user ID from token for audit fields
+    const userId = request.user?.id || 'system';
+    
     const purchaseOrder = await PurchaseOrderService.updatePurchaseOrder(
       request.params.id,
-      request.body
+      request.body,
+      userId
     );
     if (!purchaseOrder) {
       return reply.code(404).send({ message: 'Purchase Order not found' });

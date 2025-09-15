@@ -65,7 +65,7 @@ export class BulkPurchaseOrderService {
 
           let customer = await tx.customer.findFirst({ where: { name: { contains: customerName, mode: 'insensitive' } } });
           if (!customer) {
-            customer = await tx.customer.create({ data: { name: customerName, phoneNumber: 'N/A' } });
+            customer = await tx.customer.create({ data: { name: customerName, phoneNumber: 'N/A', createdBy: 'bulk-system', updatedBy: 'bulk-system' } });
           }
 
           let supplier: Supplier | null = null;
@@ -108,6 +108,8 @@ export class BulkPurchaseOrderService {
                 nama_barang: item.productName,
                 stok_barang: item.qtyOrdered_carton || 0,
                 harga_barang: item.price_perCarton || item.netPrice_perPcs || 0,
+                createdBy: 'bulk-system',
+                updatedBy: 'bulk-system',
               },
               update: {
                 stok_barang: { increment: item.qtyOrdered_carton || 0 },

@@ -44,8 +44,8 @@ describe('InvoiceService', () => {
         ...createInput,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: 'test-user-id',
+        updatedBy: 'test-user-id',
       };
 
       (prisma.invoice.create as jest.Mock).mockResolvedValue(expectedInvoice);
@@ -121,8 +121,8 @@ describe('InvoiceService', () => {
         ...createInput,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: 'test-user-id',
+        updatedBy: 'test-user-id',
       };
 
       (prisma.invoice.create as jest.Mock).mockResolvedValue(expectedInvoice);

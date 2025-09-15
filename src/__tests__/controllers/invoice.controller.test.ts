@@ -78,8 +78,8 @@ describe('InvoiceController', () => {
       const invoice = {
         id: '1',
         ...createInput,
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: 'test-user-id',
+        updatedBy: 'test-user-id',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -92,8 +92,8 @@ describe('InvoiceController', () => {
 
       expect(InvoiceService.createInvoice).toHaveBeenCalledWith({
         ...createInput,
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: 'test-user-id',
+        updatedBy: 'test-user-id',
       });
     });
   });
