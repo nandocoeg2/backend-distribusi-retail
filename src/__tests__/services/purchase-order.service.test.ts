@@ -403,4 +403,145 @@ describe('PurchaseOrderService', () => {
       expect(result.suratJalan).toBe(existingSuratJalan.id);
     });
   });
+
+  describe('deletePurchaseOrder', () => {
+    it('should delete purchase order with all related documents and dependencies', async () => {
+      const mockPurchaseOrderWithDependencies = {
+        id: 'po1',
+        po_number: 'PO-001',
+        packings: [
+          {
+            id: 'packing1',
+            packingItems: [
+              { id: 'item1' },
+              { id: 'item2' }
+            ]
+          }
+        ],
+        invoices: [
+          {
+            id: 'invoice1',
+          }
+        ]
+      };
+
+      const mockSuratJalans = [
+        {
+          id: 'sj1',
+          suratJalanDetails: [
+            {
+              id: 'detail1',
+              suratJalanDetailItems: [{ id: 'detailItem1' }]
+            }
+          ],
+          historyPengiriman: [{ id: 'history1' }]
+        }
+      ];
+
+      const mockDeletedPO = {
+        id: 'po1',
+        po_number: 'PO-001',
+        customer: { name: 'Test Customer' },
+        supplier: null,
+        files: [],
+        status: { name: 'DELETED' },
+        purchaseOrderDetails: []
+      };
+
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          purchaseOrder: {
+            findUnique: jest.fn().mockResolvedValue(mockPurchaseOrderWithDependencies),
+            delete: jest.fn().mockResolvedValue(mockDeletedPO)
+          },
+          packingItem: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 2 })
+          },
+          packing: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          suratJalan: {
+            findMany: jest.fn().mockResolvedValue(mockSuratJalans),
+            delete: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          suratJalanDetailItem: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          suratJalanDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          historyPengiriman: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          invoiceDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 5 })
+          },
+          invoice: {
+            delete: jest.fn().mockResolvedValue({ count: 1 })
+          }
+        };
+        return callback(mockTx);
+      });
+
+      const result = await PurchaseOrderService.deletePurchaseOrder('po1');
+
+      expect(result).toEqual(mockDeletedPO);
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should throw AppError when purchase order is not found', async () => {
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          purchaseOrder: {
+            findUnique: jest.fn().mockResolvedValue(null)
+          }
+        };
+        return callback(mockTx);
+      });
+
+      await expect(PurchaseOrderService.deletePurchaseOrder('non-existent-po'))
+        .rejects.toThrow(new AppError('Purchase Order not found', 404));
+    });
+
+    it('should handle deletion of purchase order without related documents', async () => {
+      const mockPurchaseOrderNoRelations = {
+        id: 'po1',
+        po_number: 'PO-001',
+        packings: [],
+        invoices: []
+      };
+
+      const mockDeletedPO = {
+        id: 'po1',
+        po_number: 'PO-001',
+        customer: { name: 'Test Customer' },
+        supplier: null,
+        files: [],
+        status: { name: 'DELETED' },
+        purchaseOrderDetails: []
+      };
+
+      (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
+        const mockTx = {
+          purchaseOrder: {
+            findUnique: jest.fn().mockResolvedValue(mockPurchaseOrderNoRelations),
+            delete: jest.fn().mockResolvedValue(mockDeletedPO)
+          }
+        };
+        return callback(mockTx);
+      });
+
+      const result = await PurchaseOrderService.deletePurchaseOrder('po1');
+
+      expect(result).toEqual(mockDeletedPO);
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should handle errors during deletion and throw AppError', async () => {
+      (prisma.$transaction as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(PurchaseOrderService.deletePurchaseOrder('po1'))
+        .rejects.toThrow(new AppError('Failed to delete purchase order', 500));
+    });
+  });
 });

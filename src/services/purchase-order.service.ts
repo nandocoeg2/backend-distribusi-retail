@@ -268,11 +268,110 @@ export class PurchaseOrderService {
 
   static async deletePurchaseOrder(id: string): Promise<PurchaseOrder | null> {
     try {
-      return await prisma.purchaseOrder.delete({
-        where: { id },
+      return await prisma.$transaction(async (tx) => {
+        // First, check if the purchase order exists
+        const existingPO = await tx.purchaseOrder.findUnique({
+          where: { id },
+          include: {
+            packings: {
+              include: {
+                packingItems: true,
+              },
+            },
+            invoices: true,
+          },
+        });
+
+        if (!existingPO) {
+          throw new AppError('Purchase Order not found', 404);
+        }
+
+        // Delete related packing items first (they have cascade delete)
+        if (existingPO.packings && existingPO.packings.length > 0) {
+          for (const packing of existingPO.packings) {
+            // Delete packing items (they have onDelete: Cascade from packing)
+            await tx.packingItem.deleteMany({
+              where: { packingId: packing.id },
+            });
+          }
+
+          // Delete packings
+          await tx.packing.deleteMany({
+            where: { purchaseOrderId: id },
+          });
+        }
+
+        // Delete related invoices and their dependencies
+        if (existingPO.invoices && existingPO.invoices.length > 0) {
+          for (const invoice of existingPO.invoices) {
+            // Find and delete related surat jalan and their dependencies
+            const suratJalans = await tx.suratJalan.findMany({
+              where: { invoiceId: invoice.id },
+              include: {
+                suratJalanDetails: {
+                  include: {
+                    suratJalanDetailItems: true,
+                  },
+                },
+                historyPengiriman: true,
+              },
+            });
+
+            for (const suratJalan of suratJalans) {
+              // Delete surat jalan detail items
+              for (const detail of suratJalan.suratJalanDetails) {
+                await tx.suratJalanDetailItem.deleteMany({
+                  where: { surat_jalan_detail_id: detail.id },
+                });
+              }
+
+              // Delete surat jalan details
+              await tx.suratJalanDetail.deleteMany({
+                where: { surat_jalan_id: suratJalan.id },
+              });
+
+              // Delete history pengiriman
+              await tx.historyPengiriman.deleteMany({
+                where: { surat_jalan_id: suratJalan.id },
+              });
+
+              // Delete surat jalan
+              await tx.suratJalan.delete({
+                where: { id: suratJalan.id },
+              });
+            }
+
+            // Delete invoice details
+            await tx.invoiceDetail.deleteMany({
+              where: { invoiceId: invoice.id },
+            });
+
+            // Delete invoice
+            await tx.invoice.delete({
+              where: { id: invoice.id },
+            });
+          }
+        }
+
+        // Files and purchase order details will be deleted automatically due to onDelete: Cascade
+        // Now we can safely delete the purchase order
+        return await tx.purchaseOrder.delete({
+          where: { id },
+          include: {
+            customer: true,
+            supplier: true,
+            files: true,
+            status: true,
+            purchaseOrderDetails: true,
+          },
+        });
       });
     } catch (error) {
-      return null;
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error('Error deleting purchase order:', error);
+      throw new AppError('Failed to delete purchase order', 500);
     }
   }
 
