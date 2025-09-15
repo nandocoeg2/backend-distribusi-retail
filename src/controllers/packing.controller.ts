@@ -11,8 +11,8 @@ export class PackingController {
   static async createPacking(request: FastifyRequest, reply: FastifyReply) {
     try {
       const packingData: CreatePackingInput = request.body as CreatePackingInput;
-      // Add updatedBy from authenticated user (extract sub from token)
-      const userId = (request.user as any)?.sub || (request.user as any)?.id || 'system';
+      // Add updatedBy from authenticated user (extract user ID from token)
+      const userId = request.user?.id || 'system';
       
       const packingDataWithUser = {
         ...packingData,
@@ -51,8 +51,8 @@ export class PackingController {
     reply: FastifyReply
   ) {
     try {
-      // Add updatedBy from authenticated user (extract sub from token)
-      const userId = (request.user as any)?.sub || (request.user as any)?.id || 'system';
+      // Add updatedBy from authenticated user (extract user ID from token)
+      const userId = request.user?.id || 'system';
       
       const updateData = {
         ...request.body,

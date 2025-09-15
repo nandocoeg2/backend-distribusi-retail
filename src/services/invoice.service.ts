@@ -20,20 +20,20 @@ export interface PaginatedResult<T> {
 export class InvoiceService {
   static async createInvoice(invoiceData: CreateInvoiceInput): Promise<Invoice> {
     try {
-      const { invoiceDetails, ...invoiceInfo } = invoiceData;
+      const { invoiceDetails, createdBy, updatedBy, ...invoiceInfo } = invoiceData;
       
       // Set default values
       const dataForDb = {
         ...invoiceInfo,
         tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : new Date(),
         expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
-        createdBy: 'system', // Should be replaced with actual user ID from auth
-        updatedBy: 'system', // Should be replaced with actual user ID from auth
+        createdBy: createdBy || 'system',
+        updatedBy: updatedBy || 'system',
         invoiceDetails: invoiceDetails ? {
           create: invoiceDetails.map(detail => ({
             ...detail,
-            createdBy: 'system',
-            updatedBy: 'system',
+            createdBy: createdBy || 'system',
+            updatedBy: updatedBy || 'system',
           }))
         } : undefined,
       };
@@ -109,7 +109,7 @@ export class InvoiceService {
     id: string,
     data: UpdateInvoiceInput['body']
   ): Promise<Invoice | null> {
-    const { invoiceDetails, ...invoiceInfo } = data;
+    const { invoiceDetails, updatedBy, ...invoiceInfo } = data;
 
     try {
       const updatedInvoice = await prisma.$transaction(async (tx) => {
@@ -134,8 +134,8 @@ export class InvoiceService {
             data: invoiceDetails.map((detail) => ({
               ...detail,
               invoiceId: id,
-              createdBy: 'system',
-              updatedBy: 'system',
+              createdBy: updatedBy || 'system',
+              updatedBy: updatedBy || 'system',
             })),
           });
         }
@@ -147,7 +147,7 @@ export class InvoiceService {
             ...invoiceInfo,
             tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : undefined,
             expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
-            updatedBy: 'system', // Should be replaced with actual user ID from auth
+            updatedBy: updatedBy || 'system',
           },
           include: {
             invoiceDetails: true,

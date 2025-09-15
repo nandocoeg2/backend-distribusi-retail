@@ -8,6 +8,8 @@ export const createSuratJalanSchema = z.object({
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required'),
     invoiceId: z.string().optional().nullable(),
     statusId: z.string().optional().nullable(),
+    createdBy: z.string().optional(),
+    updatedBy: z.string().optional(),
     suratJalanDetails: z.array(
       z.object({
         no_box: z.string().min(1, 'Nomor box is required'),
@@ -41,6 +43,7 @@ export const updateSuratJalanSchema = z.object({
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required').optional(),
     invoiceId: z.string().optional().nullable(),
     statusId: z.string().optional().nullable(),
+    updatedBy: z.string().optional(),
     is_printed: z.boolean().optional(),
     print_counter: z.number().int().min(0).optional(),
     suratJalanDetails: z.array(

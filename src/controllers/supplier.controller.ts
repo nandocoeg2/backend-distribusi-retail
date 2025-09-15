@@ -4,7 +4,16 @@ import { CreateSupplierInput, UpdateSupplierInput, SearchSupplierInput, GetAllSu
 
 export class SupplierController {
   static async createSupplier(request: FastifyRequest<{ Body: CreateSupplierInput }>, reply: FastifyReply) {
-    const supplier = await SupplierService.createSupplier(request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const supplierData = {
+      ...request.body,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    
+    const supplier = await SupplierService.createSupplier(supplierData);
     return reply.code(201).send(supplier);
   }
 
@@ -26,7 +35,15 @@ export class SupplierController {
     request: FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>,
     reply: FastifyReply
   ) {
-    const supplier = await SupplierService.updateSupplier(request.params.id, request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const updateData = {
+      ...request.body,
+      updatedBy: userId,
+    };
+    
+    const supplier = await SupplierService.updateSupplier(request.params.id, updateData);
     if (!supplier) {
       return reply.code(404).send({ message: 'Supplier not found' });
     }

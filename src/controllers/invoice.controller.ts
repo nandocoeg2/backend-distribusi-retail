@@ -13,7 +13,7 @@ export class InvoiceController {
     reply: FastifyReply
   ) {
     // Extract user ID from token for audit trail
-    const userId = (request.user as any)?.sub || (request.user as any)?.id || 'system';
+    const userId = request.user?.id || 'system';
     
     const invoiceData = {
       ...request.body,
@@ -53,7 +53,7 @@ export class InvoiceController {
     reply: FastifyReply
   ) {
     // Extract user ID from token for audit trail
-    const userId = (request.user as any)?.sub || (request.user as any)?.id || 'system';
+    const userId = request.user?.id || 'system';
     
     const updateData = {
       ...request.body,

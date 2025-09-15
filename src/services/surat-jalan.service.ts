@@ -20,7 +20,7 @@ export interface PaginatedResult<T> {
 export class SuratJalanService {
   static async createSuratJalan(suratJalanData: CreateSuratJalanInput): Promise<SuratJalan> {
     try {
-      const { suratJalanDetails, ...suratJalanInfo } = suratJalanData;
+      const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } = suratJalanData;
 
       // Validate invoiceId if provided and not null
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
@@ -47,6 +47,8 @@ export class SuratJalanService {
       return await prisma.suratJalan.create({
         data: {
           ...suratJalanInfo,
+          createdBy: createdBy || 'system',
+          updatedBy: updatedBy || 'system',
           suratJalanDetails: {
             create: suratJalanDetails.map(detail => ({
               no_box: detail.no_box,
@@ -62,8 +64,8 @@ export class SuratJalanService {
                   satuan: item.satuan,
                   total_box: item.total_box,
                   keterangan: item.keterangan,
-                  createdBy: 'system',
-                  updatedBy: 'system',
+                  createdBy: createdBy || 'system',
+                  updatedBy: updatedBy || 'system',
                 }))
               }
             }))
@@ -181,7 +183,7 @@ export class SuratJalanService {
     id: string,
     data: UpdateSuratJalanInput['body']
   ): Promise<SuratJalan | null> {
-    const { suratJalanDetails, ...suratJalanInfo } = data;
+    const { suratJalanDetails, updatedBy, ...suratJalanInfo } = data;
 
     try {
       const updatedSuratJalan = await prisma.$transaction(async (tx) => {
@@ -235,8 +237,8 @@ export class SuratJalanService {
                 satuan: item.satuan,
                 total_box: item.total_box,
                 keterangan: item.keterangan,
-                createdBy: 'system',
-                updatedBy: 'system',
+                createdBy: updatedBy || 'system',
+                updatedBy: updatedBy || 'system',
               }))
             });
           }
@@ -245,7 +247,10 @@ export class SuratJalanService {
         // Update the surat jalan itself
         const suratJalan = await tx.suratJalan.update({
           where: { id },
-          data: suratJalanInfo,
+          data: {
+            ...suratJalanInfo,
+            updatedBy: updatedBy || 'system',
+          },
           include: {
             suratJalanDetails: {
               include: {

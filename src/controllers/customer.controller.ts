@@ -4,7 +4,16 @@ import { CreateCustomerInput, UpdateCustomerInput, SearchCustomerInput, GetAllCu
 
 export class CustomerController {
   static async createCustomer(request: FastifyRequest<{ Body: CreateCustomerInput }>, reply: FastifyReply) {
-    const customer = await CustomerService.createCustomer(request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const customerData = {
+      ...request.body,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    
+    const customer = await CustomerService.createCustomer(customerData);
     return reply.code(201).send(customer);
   }
 
@@ -26,7 +35,15 @@ export class CustomerController {
     request: FastifyRequest<{ Params: { id: string }; Body: UpdateCustomerInput['body'] }>,
     reply: FastifyReply
   ) {
-    const customer = await CustomerService.updateCustomer(request.params.id, request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const updateData = {
+      ...request.body,
+      updatedBy: userId,
+    };
+    
+    const customer = await CustomerService.updateCustomer(request.params.id, updateData);
     if (!customer) {
       return reply.code(404).send({ message: 'Customer not found' });
     }

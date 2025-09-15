@@ -8,6 +8,8 @@ export const createSupplierSchema = z.object({
     address: z.string({ required_error: 'Address is required' }),
     phoneNumber: z.string({ required_error: 'Phone number is required' }),
     email: z.string().email('Not a valid email').optional(),
+    createdBy: z.string().optional(),
+    updatedBy: z.string().optional(),
     bank: z.object({
       name: z.string({ required_error: 'Bank name is required' }),
       account: z.string({ required_error: 'Bank account is required' }),
@@ -32,6 +34,7 @@ export const updateSupplierSchema = z.object({
     address: z.string().optional(),
     phoneNumber: z.string().optional(),
     email: z.string().email('Not a valid email').optional(),
+    updatedBy: z.string().optional(),
     bank: z
       .object({
         name: z.string().optional(),

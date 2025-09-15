@@ -7,8 +7,15 @@ import { PaginatedResult } from './purchase-order.service';
 export class SupplierService {
   static async createSupplier(data: CreateSupplierInput): Promise<Supplier> {
     try {
+      // Extract audit fields if present
+      const { createdBy, updatedBy, ...supplierData } = data;
+      
       return await prisma.supplier.create({
-        data,
+        data: {
+          ...supplierData,
+          createdBy: createdBy || 'system',
+          updatedBy: updatedBy || 'system',
+        },
       });
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
@@ -60,9 +67,15 @@ export class SupplierService {
 
   static async updateSupplier(id: string, data: UpdateSupplierInput['body']): Promise<Supplier | null> {
     try {
+      // Extract audit fields if present
+      const { updatedBy, ...supplierData } = data;
+      
       return await prisma.supplier.update({
         where: { id },
-        data,
+        data: {
+          ...supplierData,
+          updatedBy: updatedBy || 'system',
+        },
       });
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('code')) {

@@ -7,8 +7,15 @@ import { PaginatedResult } from './purchase-order.service';
 export class CustomerService {
   static async createCustomer(data: CreateCustomerInput): Promise<Customer> {
     try {
+      // Extract audit fields if present
+      const { createdBy, updatedBy, ...customerData } = data;
+      
       return await prisma.customer.create({
-        data,
+        data: {
+          ...customerData,
+          createdBy: createdBy || 'system',
+          updatedBy: updatedBy || 'system',
+        },
       });
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
@@ -56,9 +63,15 @@ export class CustomerService {
 
   static async updateCustomer(id: string, data: UpdateCustomerInput['body']): Promise<Customer | null> {
     try {
+      // Extract audit fields if present
+      const { updatedBy, ...customerData } = data;
+      
       return await prisma.customer.update({
         where: { id },
-        data,
+        data: {
+          ...customerData,
+          updatedBy: updatedBy || 'system',
+        },
       });
     } catch (error) {
       // Prisma throws an error if the record is not found on update

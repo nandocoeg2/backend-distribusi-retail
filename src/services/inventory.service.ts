@@ -13,8 +13,15 @@ export interface PaginatedResult<T> {
 }
 
 export const createInventory = async (input: CreateInventoryInput) => {
+  // Extract audit fields if present
+  const { createdBy, updatedBy, ...inventoryData } = input;
+  
   return prisma.inventory.create({
-    data: input,
+    data: {
+      ...inventoryData,
+      createdBy: createdBy || 'system',
+      updatedBy: updatedBy || 'system',
+    },
   });
 };
 
@@ -114,9 +121,15 @@ export const updateInventory = async (id: string, data: UpdateInventoryInput['bo
     return null; // Return null to indicate record not found
   }
   
+  // Extract audit fields if present
+  const { updatedBy, ...inventoryData } = data;
+  
   return prisma.inventory.update({
     where: { id },
-    data,
+    data: {
+      ...inventoryData,
+      updatedBy: updatedBy || 'system',
+    },
   });
 };
 

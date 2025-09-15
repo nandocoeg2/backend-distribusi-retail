@@ -17,6 +17,8 @@ export const createInvoiceSchema = z.object({
     type: z.enum(['PEMBAYARAN', 'PENGIRIMAN']).optional(),
     statusPembayaranId: z.string().optional(),
     purchaseOrderId: z.string().optional(),
+    createdBy: z.string().optional(),
+    updatedBy: z.string().optional(),
     invoiceDetails: z.array(z.object({
       nama_barang: z.string(),
       PLU: z.string(),
@@ -57,6 +59,7 @@ export const updateInvoiceSchema = z.object({
     type: z.enum(['PEMBAYARAN', 'PENGIRIMAN']).optional(),
     statusPembayaranId: z.string().optional(),
     purchaseOrderId: z.string().optional(),
+    updatedBy: z.string().optional(),
     invoiceDetails: z.array(z.object({
       id: z.string().optional(),
       nama_barang: z.string(),

@@ -15,7 +15,16 @@ export class SuratJalanController {
     reply: FastifyReply
   ) {
     try {
-      const suratJalan = await SuratJalanService.createSuratJalan(request.body);
+      // Extract user ID from token for audit trail
+      const userId = request.user?.id || 'system';
+      
+      const suratJalanData = {
+        ...request.body,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+      
+      const suratJalan = await SuratJalanService.createSuratJalan(suratJalanData);
       
       reply.code(201).send({
         success: true,
@@ -81,9 +90,17 @@ export class SuratJalanController {
     reply: FastifyReply
   ) {
     try {
+      // Extract user ID from token for audit trail
+      const userId = request.user?.id || 'system';
+      
+      const updateData = {
+        ...request.body,
+        updatedBy: userId,
+      };
+      
       const suratJalan = await SuratJalanService.updateSuratJalan(
         request.params.id,
-        request.body
+        updateData
       );
 
       if (!suratJalan) {

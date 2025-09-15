@@ -20,7 +20,16 @@ export const createInventoryHandler = async (
   reply: FastifyReply
 ) => {
   try {
-    const inventory = await createInventory(request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const inventoryData = {
+      ...request.body,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    
+    const inventory = await createInventory(inventoryData);
     return reply.status(201).send(inventory);
   } catch (e) {
     throw new AppError('Error creating inventory', 500);
@@ -74,7 +83,15 @@ export const updateInventoryHandler = async (
   reply: FastifyReply
 ) => {
   try {
-    const inventory = await updateInventory(request.params.id, request.body);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const updateData = {
+      ...request.body,
+      updatedBy: userId,
+    };
+    
+    const inventory = await updateInventory(request.params.id, updateData);
     
     if (!inventory) {
       throw new AppError('Inventory not found', 404);

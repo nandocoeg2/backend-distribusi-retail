@@ -76,6 +76,8 @@ model Customer {
   address        String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  createdBy      String
+  updatedBy      String
   email          String?         @unique
   phoneNumber    String
   purchaseOrders PurchaseOrder[]
@@ -92,6 +94,8 @@ model Supplier {
   email          String?         @unique
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  createdBy      String
+  updatedBy      String
   bank           Json?
   code           String?         @unique
   purchaseOrders PurchaseOrder[]
@@ -167,6 +171,8 @@ model Inventory {
   harga_barang         Float
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  createdBy            String
+  updatedBy            String
   min_stok             Int                   @default(10)
   notifications        Notification[]
   purchaseOrderDetails PurchaseOrderDetail[]
@@ -326,6 +332,10 @@ model SuratJalan {
   print_counter     Int                 @default(0)
   invoiceId         String?
   statusId          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  createdBy         String
+  updatedBy         String
   invoice           Invoice?            @relation(fields: [invoiceId], references: [id])
   status            Status?             @relation("SuratJalanStatus", fields: [statusId], references: [id])
   suratJalanDetails SuratJalanDetail[]
