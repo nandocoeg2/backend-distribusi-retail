@@ -548,7 +548,7 @@ export class PurchaseOrderService {
             updatedBy: userId,
           }));
 
-          await tx.packing.create({
+          const createdPacking = await tx.packing.create({
             data: {
               packing_number: generatePackingNumber(purchaseOrder.po_number),
               tanggal_packing: new Date(),
@@ -560,6 +560,14 @@ export class PurchaseOrderService {
                 create: packingItems,
               },
             },
+          });
+
+          // Create audit log for packing
+          await createAuditLog('Packing', createdPacking.id, 'CREATE', userId, {
+            action: 'AutoCreatedFromProcessPO',
+            purchaseOrderId: id,
+            poNumber: purchaseOrder.po_number,
+            packingNumber: createdPacking.packing_number,
           });
 
           const pendingInvoiceStatus = await tx.status.findUnique({
@@ -642,6 +650,15 @@ export class PurchaseOrderService {
             });
             
             createdInvoiceId = createdInvoice.id;
+
+            // Create audit log for invoice
+            await createAuditLog('Invoice', createdInvoice.id, 'CREATE', userId, {
+              action: 'AutoCreatedFromProcessPO',
+              purchaseOrderId: id,
+              poNumber: purchaseOrder.po_number,
+              invoiceNumber: createdInvoice.no_invoice,
+              grandTotal: grandTotal,
+            });
           } else {
             createdInvoiceId = createdInvoice.id;
           }
@@ -695,6 +712,15 @@ export class PurchaseOrderService {
             
             if (newSuratJalan) {
               createdSuratJalanId = newSuratJalan.id;
+
+              // Create audit log for surat jalan
+              await createAuditLog('SuratJalan', newSuratJalan.id, 'CREATE', userId, {
+                action: 'AutoCreatedFromProcessPO',
+                purchaseOrderId: id,
+                poNumber: purchaseOrder.po_number,
+                suratJalanNumber: newSuratJalan.no_surat_jalan,
+                invoiceId: createdInvoice.id,
+              });
             }
           } else {
             createdSuratJalanId = existingSuratJalan.id;
