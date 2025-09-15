@@ -68,7 +68,8 @@ export class PurchaseOrderController {
 
       const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
         poData,
-        fileInfos
+        fileInfos,
+        request.user?.id || ''
       );
       return reply.code(201).send(purchaseOrder);
     } catch (error) {
@@ -126,7 +127,8 @@ export class PurchaseOrderController {
     reply: FastifyReply
   ) {
     const purchaseOrder = await PurchaseOrderService.deletePurchaseOrder(
-      request.params.id
+      request.params.id,
+      request.user?.id || ''
     );
     if (!purchaseOrder) {
       return reply.code(404).send({ message: 'Purchase Order not found' });
