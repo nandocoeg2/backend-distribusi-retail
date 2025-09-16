@@ -1,17 +1,12 @@
 meta {
-  name: customers
+  name: create
   type: http
-  seq: 5
+  seq: 1
 }
 
 post {
-  url: http://localhost:5050/api/v1/customers/
+  url: http://localhost:5050/api/v1/customers
   body: json
-  auth: inherit
-}
-
-headers {
-  accept: application/json
   auth: bearer
 }
 
@@ -19,12 +14,17 @@ auth:bearer {
   token: {{access_token}}
 }
 
-
 body:json {
   {
-    "name": "Customer Baru",
-    "address": "Jalan Baru No. 123",
+    "namaCustomer": "PT. Sejahtera Abadi",
+    "kodeCustomer": "CUST-001",
+    "groupCustomerId": "cmfmughol0000150k0uj8xy77",
+    "NPWP": "99.888.777.6-555.000",
+    "alamatNPWP": "Jl. Pajak No. 1, Jakarta",
+    "regionId": "cmfmuh9ew0005150khebb706u",
+    "alamatPengiriman": "Jl. Kirim No. 2, Jakarta",
+    "description": "Pelanggan VIP",
     "phoneNumber": "081234567890",
-    "email": "customer.baru@example.com"
+    "email": "contact@sejahteraabadi.com"
   }
 }

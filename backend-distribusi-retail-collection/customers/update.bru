@@ -1,11 +1,11 @@
 meta {
   name: update
   type: http
-  seq: 3
+  seq: 2
 }
 
 put {
-  url: http://localhost:5050/api/v1/customers/clvow2l3d000008l4g64k3h4j
+  url: http://localhost:5050/api/v1/customers/{{customerId}}
   body: json
   auth: bearer
 }
@@ -16,7 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "name": "Updated Customer Name",
-    "address": "Updated Address"
+    "namaCustomer": "PT. Sejahtera Abadi Jaya",
+    "phoneNumber": "089876543210"
   }
 }

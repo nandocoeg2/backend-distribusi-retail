@@ -1,13 +1,12 @@
 import { Customer, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
-import { CreateCustomerInput, UpdateCustomerInput, GetAllCustomersInput } from '@/schemas/customer.schema';
+import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
 import { AppError } from '@/utils/app-error';
 import { PaginatedResult } from './purchase-order.service';
 
 export class CustomerService {
   static async createCustomer(data: CreateCustomerInput): Promise<Customer> {
     try {
-      // Extract audit fields if present
       const { createdBy, updatedBy, ...customerData } = data;
       
       return await prisma.customer.create({
@@ -18,8 +17,17 @@ export class CustomerService {
         },
       });
     } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('kodeCustomer')) {
         throw new AppError('Customer with this code already exists', 409);
+      }
+      if (error.code === 'P2003') {
+        const field = error.meta?.field_name as string;
+        if (field.includes('groupCustomerId')) {
+          throw new AppError('Group Customer not found', 404);
+        }
+        if (field.includes('regionId')) {
+          throw new AppError('Region not found', 404);
+        }
       }
       throw error;
     }
@@ -34,6 +42,10 @@ export class CustomerService {
         take: parseInt(limit.toString()),
         orderBy: {
           createdAt: 'desc',
+        },
+        include: {
+          groupCustomer: true,
+          region: true,
         },
       }),
       prisma.customer.count(),
@@ -57,13 +69,14 @@ export class CustomerService {
       where: { id },
       include: {
         purchaseOrders: true,
+        groupCustomer: true,
+        region: true,
       },
     });
   }
 
   static async updateCustomer(id: string, data: UpdateCustomerInput['body']): Promise<Customer | null> {
     try {
-      // Extract audit fields if present
       const { updatedBy, ...customerData } = data;
       
       return await prisma.customer.update({
@@ -73,9 +86,21 @@ export class CustomerService {
           updatedBy: updatedBy || 'system',
         },
       });
-    } catch (error) {
-      // Prisma throws an error if the record is not found on update
-      return null;
+    } catch (error: any) {
+      if (error.code === 'P2003') {
+        const field = error.meta?.field_name as string;
+        if (field.includes('groupCustomerId')) {
+          throw new AppError('Group Customer not found', 404);
+        }
+        if (field.includes('regionId')) {
+          throw new AppError('Region not found', 404);
+        }
+      }
+      // Prisma throws P2025 if the record is not found on update
+      if (error.code === 'P2025') {
+        return null;
+      }
+      throw error;
     }
   }
 
@@ -85,7 +110,6 @@ export class CustomerService {
         where: { id },
       });
     } catch (error) {
-      // Prisma throws an error if the record is not found on delete
       return null;
     }
   }
@@ -100,6 +124,10 @@ export class CustomerService {
           take: parseInt(limit.toString()),
           orderBy: {
             createdAt: 'desc',
+          },
+          include: {
+            groupCustomer: true,
+            region: true,
           },
         }),
         prisma.customer.count(),
@@ -120,7 +148,13 @@ export class CustomerService {
 
     const filters: Prisma.CustomerWhereInput[] = [
       {
-        name: {
+        namaCustomer: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      },
+      {
+        kodeCustomer: {
           contains: query,
           mode: 'insensitive',
         },
@@ -132,7 +166,7 @@ export class CustomerService {
         },
       },
       {
-        address: {
+        alamatPengiriman: {
           contains: query,
           mode: 'insensitive',
         },
@@ -154,6 +188,10 @@ export class CustomerService {
         take: parseInt(limit.toString()),
         orderBy: {
           createdAt: 'desc',
+        },
+        include: {
+          groupCustomer: true,
+          region: true,
         },
       }),
       prisma.customer.count({

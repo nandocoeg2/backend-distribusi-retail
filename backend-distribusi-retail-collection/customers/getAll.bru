@@ -7,7 +7,7 @@ meta {
 get {
   url: http://localhost:5050/api/v1/customers
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:query {
@@ -15,6 +15,6 @@ params:query {
   limit: 10
 }
 
-headers {
-  Authorization: Bearer {{access_token}}
+auth:bearer {
+  token: {{access_token}}
 }

@@ -5,13 +5,13 @@ meta {
 }
 
 post {
-  url: {{base_url}}/group-customers
+  url: http://localhost:5050/api/v1/group-customers
   body: json
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
 
 body:json {
@@ -22,4 +22,3 @@ body:json {
     "npwp": "1234567890123456"
   }
 }
-
