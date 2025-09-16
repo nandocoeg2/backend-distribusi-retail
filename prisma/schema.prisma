@@ -468,3 +468,17 @@ model Company {
   @@map("companies")
 }
 
+model GroupCustomer {
+  id          String   @id @default(cuid())
+  kode_group  String   @unique
+  nama_group  String
+  alamat      String?
+  npwp        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  updatedBy   String
+
+  @@map("group_customer")
+}
+

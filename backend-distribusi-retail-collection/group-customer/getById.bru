@@ -1,0 +1,16 @@
+meta {
+  name: getById
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/group-customers/{{group_customer_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

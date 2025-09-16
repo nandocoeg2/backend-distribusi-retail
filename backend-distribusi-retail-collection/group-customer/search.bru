@@ -1,0 +1,16 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/group-customers/search/GC001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
