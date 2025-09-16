@@ -1,0 +1,23 @@
+meta {
+  name: Update Company
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/companies/{{companyId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nama_perusahaan": "PT. Contoh Jaya Updated",
+    "alamat": "Jl. Contoh No. 456"
+  }
+}
+

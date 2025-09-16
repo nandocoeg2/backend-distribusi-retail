@@ -1,0 +1,33 @@
+meta {
+  name: Create Company
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/companies
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "kode_company": "COMP001",
+    "nama_perusahaan": "PT. Contoh Jaya",
+    "alamat": "Jl. Contoh No. 123",
+    "no_rekening": "1234567890",
+    "bank": "BCA",
+    "bank_account_name": "PT. Contoh Jaya",
+    "bank_cabang": "Jakarta Pusat",
+    "telp": "0211234567",
+    "fax": "0211234568",
+    "email": "info@contohjaya.com",
+    "direktur_utama": "Budi Santoso",
+    "npwp": "01.234.567.8-901.000"
+  }
+}
+

@@ -1,0 +1,16 @@
+meta {
+  name: Get Company By Id
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/companies/{{companyId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

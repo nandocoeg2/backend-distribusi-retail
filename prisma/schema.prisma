@@ -445,3 +445,26 @@ model TermOfPayment {
 
   @@map("term_of_payment")
 }
+
+model Company {
+  id                String   @id @default(cuid())
+  kode_company      String   @unique
+  nama_perusahaan   String
+  alamat            String?
+  no_rekening       String?
+  bank              String?
+  bank_account_name String?
+  bank_cabang       String?
+  telp              String?
+  fax               String?
+  email             String?  @unique
+  direktur_utama    String?
+  npwp              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String
+  updatedBy         String
+
+  @@map("companies")
+}
+
