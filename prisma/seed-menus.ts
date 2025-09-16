@@ -60,6 +60,46 @@ async function main() {
     },
   });
 
+  await prisma.menu.upsert({
+    where: { name: 'Term Of Payment' },
+    update: {},
+    create: {
+      name: 'Term Of Payment',
+      url: '/master/term-of-payment',
+      parentId: masterDataMenu.id,
+    },
+  });
+
+  await prisma.menu.upsert({
+    where: { name: 'Group Customer' },
+    update: {},
+    create: {
+      name: 'Group Customer',
+      url: '/master/group-customer',
+      parentId: masterDataMenu.id,
+    },
+  });
+
+  await prisma.menu.upsert({
+    where: { name: 'Regions' },
+    update: {},
+    create: {
+      name: 'Regions',
+      url: '/master/regions',
+      parentId: masterDataMenu.id,
+    },
+  });
+
+  await prisma.menu.upsert({
+    where: { name: 'Company' },
+    update: {},
+    create: {
+      name: 'Company',
+      url: '/master/company',
+      parentId: masterDataMenu.id,
+    },
+  });
+
   const purchaseOrderMenu = await prisma.menu.upsert({
     where: { name: 'Purchase Order Management' },
     update: {},
@@ -143,5 +183,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
 
