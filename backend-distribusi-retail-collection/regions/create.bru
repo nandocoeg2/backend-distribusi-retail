@@ -1,0 +1,27 @@
+meta {
+  name: Create Region
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5050/api/v1/regions/
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "kode_region": "REG001",
+    "nama_region": "Region Name"
+  }
+}

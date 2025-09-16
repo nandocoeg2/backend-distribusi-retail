@@ -1,0 +1,20 @@
+meta {
+  name: Search Regions
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:5050/api/v1/regions/search/REG00?page=1&limit=10
+  body: none
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

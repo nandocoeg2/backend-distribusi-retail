@@ -1,0 +1,20 @@
+meta {
+  name: Delete Region
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://localhost:5050/api/v1/regions/{{region_id}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

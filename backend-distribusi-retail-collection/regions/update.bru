@@ -1,0 +1,26 @@
+meta {
+  name: Update Region
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:5050/api/v1/regions/{{region_id}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "nama_region": "Updated Region Name"
+  }
+}
