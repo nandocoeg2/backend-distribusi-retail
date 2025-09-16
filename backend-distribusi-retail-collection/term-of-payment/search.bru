@@ -1,0 +1,21 @@
+meta {
+  name: Search Term of Payments
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:5050/api/v1/term-of-payments/search/TOP00?page=1&limit=10
+  body: none
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+

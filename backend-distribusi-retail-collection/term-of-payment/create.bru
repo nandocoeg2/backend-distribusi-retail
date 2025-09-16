@@ -1,0 +1,28 @@
+meta {
+  name: Create Term of Payment
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5050/api/v1/term-of-payments/
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "kode_top": "TOP001",
+    "batas_hari": 30
+  }
+}
+

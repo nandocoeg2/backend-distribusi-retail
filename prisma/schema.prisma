@@ -433,3 +433,15 @@ model Region {
 
   @@map("regions")
 }
+
+model TermOfPayment {
+  id         String   @id @default(cuid())
+  kode_top   String   @unique
+  batas_hari Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdBy  String
+  updatedBy  String
+
+  @@map("term_of_payment")
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get All Term of Payments
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:5050/api/v1/term-of-payments/?page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+

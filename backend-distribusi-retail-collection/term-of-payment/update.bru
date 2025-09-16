@@ -1,0 +1,27 @@
+meta {
+  name: Update Term of Payment
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:5050/api/v1/term-of-payments/{{term_of_payment_id}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  accept: application/json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "batas_hari": 45
+  }
+}
+

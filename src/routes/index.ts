@@ -17,6 +17,7 @@ import { fileRoutes } from './file.routes';
 import { suratJalanRoutes } from './surat-jalan.routes';
 import historyPengirimanRoutes from './history-pengiriman.routes';
 import { regionRoutes } from './region.routes';
+import { termOfPaymentRoutes } from './term-of-payment.routes';
 
 
 
@@ -39,6 +40,7 @@ export default async (fastify: App) => {
   fastify.register(invoiceRoutes, { prefix: '/invoices' });
   fastify.register(suratJalanRoutes, { prefix: '/surat-jalan' });
   fastify.register(regionRoutes, { prefix: '/regions' });
+  fastify.register(termOfPaymentRoutes, { prefix: '/term-of-payments' });
 
   fastify.register(historyPengirimanRoutes, { prefix: '/history-pengiriman' });
 };
