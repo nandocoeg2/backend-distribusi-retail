@@ -10,6 +10,14 @@ put {
   auth: bearer
 }
 
+headers {
+  accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
 body:json {
   {
     "tanggal_packing": "2025-09-06T00:00:00.000Z",
@@ -27,10 +35,6 @@ body:json {
   }
 }
 
-headers {
-  accept: application/json
-}
-
-auth:bearer {
-  token: {{access_token}}
+vars:pre-request {
+  packingId: cmflcopye0002tf56tiup172d
 }
