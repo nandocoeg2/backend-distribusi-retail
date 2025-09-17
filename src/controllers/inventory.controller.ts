@@ -23,13 +23,7 @@ export const createInventoryHandler = async (
     // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
     
-    const inventoryData = {
-      ...request.body,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    
-    const inventory = await createInventory(inventoryData);
+    const inventory = await createInventory(request.body, userId);
     return reply.status(201).send(inventory);
   } catch (e) {
     throw new AppError('Error creating inventory', 500);
@@ -86,12 +80,7 @@ export const updateInventoryHandler = async (
     // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
     
-    const updateData = {
-      ...request.body,
-      updatedBy: userId,
-    };
-    
-    const inventory = await updateInventory(request.params.id, updateData);
+    const inventory = await updateInventory(request.params.id, request.body, userId);
     
     if (!inventory) {
       throw new AppError('Inventory not found', 404);
@@ -109,7 +98,10 @@ export const deleteInventoryHandler = async (
   reply: FastifyReply
 ) => {
   try {
-    const deletedInventory = await deleteInventory(request.params.id);
+    // Extract user ID from token for audit trail
+    const userId = request.user?.id || 'system';
+    
+    const deletedInventory = await deleteInventory(request.params.id, userId);
     
     if (!deletedInventory) {
       throw new AppError('Inventory not found', 404);
