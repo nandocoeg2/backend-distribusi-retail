@@ -3,14 +3,17 @@ import { paginationSchema } from './pagination.schema';
 
 export const createInventorySchema = z.object({
   body: z.object({
-    kode_barang: z.string({
-      required_error: 'Kode barang is required',
+    plu: z.string({
+      required_error: 'PLU is required',
     }),
     nama_barang: z.string({
       required_error: 'Nama barang is required',
     }),
-    stok_barang: z.number({
-      required_error: 'Stok barang is required',
+    stok_c: z.number({
+      required_error: 'Stok karton is required',
+    }),
+    stok_q: z.number({
+      required_error: 'Stok pcs is required',
     }),
     harga_barang: z.number({
       required_error: 'Harga barang is required',
@@ -23,9 +26,10 @@ export const createInventorySchema = z.object({
 
 export const updateInventorySchema = z.object({
   body: z.object({
-    kode_barang: z.string().optional(),
+    plu: z.string().optional(),
     nama_barang: z.string().optional(),
-    stok_barang: z.number().optional(),
+    stok_c: z.number().optional(),
+    stok_q: z.number().optional(),
     harga_barang: z.number().optional(),
     min_stok: z.number().optional(),
     updatedBy: z.string().optional(),

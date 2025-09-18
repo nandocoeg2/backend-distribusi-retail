@@ -217,11 +217,12 @@ export class PurchaseOrderService {
               let inventoryId = detail.inventoryId;
               if (!inventoryId) {
                 const inventoryItem = await tx.inventory.upsert({
-                  where: { kode_barang: detail.kode_barang },
+                  where: { plu: detail.plu },
                   create: {
-                    kode_barang: detail.kode_barang,
+                    plu: detail.plu,
                     nama_barang: detail.nama_barang,
-                    stok_barang: detail.quantity || 0,
+                    stok_c: detail.quantity || 0, // Assuming quantity is in cartons
+                    stok_q: 0, // Assuming 0 for pcs stock
                     harga_barang: detail.harga || 0,
                     createdBy: userId,
                     updatedBy: userId,
@@ -602,7 +603,7 @@ export class PurchaseOrderService {
               
               return {
                 nama_barang: detail.nama_barang,
-                PLU: detail.kode_barang || '',
+                PLU: detail.plu || '',
                 quantity: quantity,
                 satuan: 'pcs',
                 harga: unitPrice,
@@ -677,7 +678,7 @@ export class PurchaseOrderService {
               create: [
                 {
                   nama_barang: detail.nama_barang,
-                  PLU: detail.kode_barang || '',
+                  PLU: detail.plu || '',
                   quantity: detail.quantity,
                   satuan: 'pcs',
                   total_box: Math.ceil(detail.quantity / detail.isi),

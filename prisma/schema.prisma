@@ -179,9 +179,10 @@ model Status {
 
 model Inventory {
   id                   String                @id @default(cuid())
-  kode_barang          String                @unique
+  plu                  String                @unique
   nama_barang          String
-  stok_barang          Int
+  stok_c               Int                   @default(0)
+  stok_q               Int                   @default(0)
   harga_barang         Float
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -212,7 +213,7 @@ model Notification {
 
 model PurchaseOrderDetail {
   id                     String        @id @default(cuid())
-  kode_barang            String
+  plu                    String
   nama_barang            String
   quantity               Int
   isi                    Int
