@@ -1,10 +1,5 @@
-import { FastifyInstance } from 'fastify';
-import {
-  getAllHistoryPengirimanHandler,
-  getHistoryPengirimanByStatusCodeHandler,
-  getHistoryPengirimanBySuratJalanIdHandler,
-  getHistoryPengirimanByTanggalKirimHandler,
-} from '../controllers/history-pengiriman.controller';
+import { FastifyInstance, FastifyPluginCallback, FastifyPluginOptions } from 'fastify';
+import { HistoryPengirimanController } from '../controllers/history-pengiriman.controller';
 import { validateRequest } from '../middleware/validate-request';
 import {
   getHistoryPengirimanByStatusCodeSchema,
@@ -15,8 +10,8 @@ import {
   GetHistoryPengirimanByStatusCodeInput,
 } from '../schemas/history-pengiriman.schema';
 
-const historyPengirimanRoutes = async (fastify: FastifyInstance) => {
-  fastify.get('/', { preHandler: [fastify.authenticate] }, getAllHistoryPengirimanHandler);
+export const historyPengirimanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
+  fastify.get('/', { preHandler: [fastify.authenticate] }, HistoryPengirimanController.getAll);
 
   fastify.get<{ Params: GetHistoryPengirimanBySuratJalanIdInput['params'] }>(
     '/surat-jalan/:suratJalanId',
@@ -26,7 +21,7 @@ const historyPengirimanRoutes = async (fastify: FastifyInstance) => {
         validateRequest(getHistoryPengirimanBySuratJalanIdSchema),
       ],
     },
-    getHistoryPengirimanBySuratJalanIdHandler
+    HistoryPengirimanController.getBySuratJalanId
   );
 
   fastify.get<{ Params: GetHistoryPengirimanByTanggalKirimInput['params'] }>(
@@ -37,7 +32,7 @@ const historyPengirimanRoutes = async (fastify: FastifyInstance) => {
         validateRequest(getHistoryPengirimanByTanggalKirimSchema),
       ],
     },
-    getHistoryPengirimanByTanggalKirimHandler
+    HistoryPengirimanController.getByTanggalKirim
   );
 
   fastify.get<{ Params: GetHistoryPengirimanByStatusCodeInput['params'] }>(
@@ -48,9 +43,8 @@ const historyPengirimanRoutes = async (fastify: FastifyInstance) => {
         validateRequest(getHistoryPengirimanByStatusCodeSchema),
       ],
     },
-    getHistoryPengirimanByStatusCodeHandler
+    HistoryPengirimanController.getByStatusCode
   );
+
+  done();
 };
-
-export default historyPengirimanRoutes;
-

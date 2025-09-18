@@ -155,7 +155,11 @@ export class PurchaseOrderService {
       },
     });
 
-    if (purchaseOrder && purchaseOrder.po_type === 'BULK' && (!purchaseOrder.files || purchaseOrder.files.length === 0)) {
+    if (!purchaseOrder) {
+      throw new AppError('Purchase Order not found', 404);
+    }
+
+    if (purchaseOrder.po_type === 'BULK' && (!purchaseOrder.files || purchaseOrder.files.length === 0)) {
       throw new AppError('Data integrity violation: BULK purchase order must have at least one file.', 500);
     }
 

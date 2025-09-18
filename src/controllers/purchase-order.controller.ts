@@ -7,21 +7,20 @@ import {
   HistoryPurchaseOrderInput,
   ProcessPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
-import { paginationSchema } from '@/schemas/pagination.schema';
 import { AppError } from '@/utils/app-error';
 import { generateFilenameWithPrefix } from '@/utils/random.utils';
 import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
-import { MultipartFile } from '@fastify/multipart';
+import { ResponseUtil } from '@/utils/response.util';
 
 const pump = promisify(pipeline);
 
 export class PurchaseOrderController {
   static async createPurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
     if (!request.isMultipart()) {
-      return reply.code(400).send(new AppError('Request is not multipart', 400));
+      throw new AppError('Request is not multipart', 400);
     }
 
     const fields: { [key: string]: any } = {};
@@ -71,7 +70,7 @@ export class PurchaseOrderController {
         fileInfos,
         request.user?.id || 'system'
       );
-      return reply.code(201).send(purchaseOrder);
+      return reply.code(201).send(ResponseUtil.success(purchaseOrder));
     } catch (error) {
       if (tempFilepaths.length > 0) {
         for (const path of tempFilepaths) {
@@ -85,7 +84,7 @@ export class PurchaseOrderController {
   static async getPurchaseOrders(request: FastifyRequest, reply: FastifyReply) {
     const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
     const result = await PurchaseOrderService.getAllPurchaseOrders(page, limit);
-    return reply.send(result);
+    return reply.send(ResponseUtil.success(result));
   }
 
   static async getPurchaseOrder(
@@ -95,10 +94,7 @@ export class PurchaseOrderController {
     const purchaseOrder = await PurchaseOrderService.getPurchaseOrderById(
       request.params.id
     );
-    if (!purchaseOrder) {
-      return reply.code(404).send({ message: 'Purchase Order not found' });
-    }
-    return reply.send(purchaseOrder);
+    return reply.send(ResponseUtil.success(purchaseOrder));
   }
 
   static async updatePurchaseOrder(
@@ -108,31 +104,23 @@ export class PurchaseOrderController {
     }>,
     reply: FastifyReply
   ) {
-    // Extract user ID from token for audit fields
     const userId = request.user?.id || 'system';
-    
     const purchaseOrder = await PurchaseOrderService.updatePurchaseOrder(
       request.params.id,
       request.body,
       userId
     );
-    if (!purchaseOrder) {
-      return reply.code(404).send({ message: 'Purchase Order not found' });
-    }
-    return reply.send(purchaseOrder);
+    return reply.send(ResponseUtil.success(purchaseOrder));
   }
 
   static async deletePurchaseOrder(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    const purchaseOrder = await PurchaseOrderService.deletePurchaseOrder(
+    await PurchaseOrderService.deletePurchaseOrder(
       request.params.id,
       request.user?.id || 'system'
     );
-    if (!purchaseOrder) {
-      return reply.code(404).send({ message: 'Purchase Order not found' });
-    }
     return reply.code(204).send();
   }
 
@@ -143,7 +131,7 @@ export class PurchaseOrderController {
     const result = await PurchaseOrderService.searchPurchaseOrders(
       request.query
     );
-    return reply.send(result);
+    return reply.send(ResponseUtil.success(result));
   }
 
   static async getHistoryPurchaseOrders(
@@ -152,7 +140,7 @@ export class PurchaseOrderController {
   ) {
     const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
     const result = await PurchaseOrderService.getHistoryPurchaseOrders(page, limit);
-    return reply.send(result);
+    return reply.send(ResponseUtil.success(result));
   }
 
   static async processPurchaseOrder(
@@ -162,14 +150,12 @@ export class PurchaseOrderController {
     }>,
     reply: FastifyReply
   ) {
-    // Extract user ID from token for packing record
     const userId = request.user?.id || 'system';
-    
     const purchaseOrder = await PurchaseOrderService.processPurchaseOrder(
       request.params.id,
       request.body.status_code,
       userId
     );
-    return reply.send(purchaseOrder);
+    return reply.send(ResponseUtil.success(purchaseOrder));
   }
 }

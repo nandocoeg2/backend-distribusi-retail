@@ -64,8 +64,8 @@ export class CustomerService {
     };
   }
 
-  static async getCustomerById(id: string): Promise<Customer | null> {
-    return prisma.customer.findUnique({
+  static async getCustomerById(id: string): Promise<Customer> {
+    const customer = await prisma.customer.findUnique({
       where: { id },
       include: {
         purchaseOrders: true,
@@ -73,9 +73,14 @@ export class CustomerService {
         region: true,
       },
     });
+
+    if (!customer) {
+      throw new AppError('Customer not found', 404);
+    }
+    return customer;
   }
 
-  static async updateCustomer(id: string, data: UpdateCustomerInput['body']): Promise<Customer | null> {
+  static async updateCustomer(id: string, data: UpdateCustomerInput['body']): Promise<Customer> {
     try {
       const { updatedBy, ...customerData } = data;
       
@@ -96,21 +101,23 @@ export class CustomerService {
           throw new AppError('Region not found', 404);
         }
       }
-      // Prisma throws P2025 if the record is not found on update
       if (error.code === 'P2025') {
-        return null;
+        throw new AppError('Customer not found', 404);
       }
       throw error;
     }
   }
 
-  static async deleteCustomer(id: string): Promise<Customer | null> {
+  static async deleteCustomer(id: string): Promise<Customer> {
     try {
       return await prisma.customer.delete({
         where: { id },
       });
-    } catch (error) {
-      return null;
+    } catch (error: any) {
+      if (error.code === 'P2025') {
+        throw new AppError('Customer not found', 404);
+      }
+      throw error;
     }
   }
 
@@ -118,32 +125,7 @@ export class CustomerService {
     const skip = (page - 1) * limit;
     
     if (!query) {
-      const [data, totalItems] = await Promise.all([
-        prisma.customer.findMany({
-          skip,
-          take: parseInt(limit.toString()),
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            groupCustomer: true,
-            region: true,
-          },
-        }),
-        prisma.customer.count(),
-      ]);
-      
-      const totalPages = Math.ceil(totalItems / limit);
-      
-      return {
-        data,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          itemsPerPage: limit,
-        },
-      };
+      return this.getAllCustomers(page, limit);
     }
 
     const filters: Prisma.CustomerWhereInput[] = [

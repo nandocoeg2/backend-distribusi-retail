@@ -105,7 +105,7 @@ export class InvoiceService {
     });
 
     if (!invoice) {
-      return null;
+      throw new AppError('Invoice not found', 404);
     }
 
     // Get audit trail for this invoice

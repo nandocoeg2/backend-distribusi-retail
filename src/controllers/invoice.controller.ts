@@ -5,24 +5,16 @@ import {
   UpdateInvoiceInput,
   SearchInvoiceInput,
 } from '@/schemas/invoice.schema';
-import { paginationSchema } from '@/schemas/pagination.schema';
+import { ResponseUtil } from '@/utils/response.util';
 
 export class InvoiceController {
   static async createInvoice(
     request: FastifyRequest<{ Body: CreateInvoiceInput }>,
     reply: FastifyReply
   ) {
-    // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
-    
-    const invoiceData = {
-      ...request.body,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-
-    const invoice = await InvoiceService.createInvoice(invoiceData);
-    return reply.code(201).send(invoice);
+    const invoice = await InvoiceService.createInvoice(request.body, userId);
+    return reply.code(201).send(ResponseUtil.success(invoice));
   }
 
   static async getInvoices(
@@ -31,7 +23,7 @@ export class InvoiceController {
   ) {
     const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
     const result = await InvoiceService.getAllInvoices(page, limit);
-    return reply.send(result);
+    return reply.send(ResponseUtil.success(result));
   }
 
   static async getInvoice(
@@ -39,10 +31,7 @@ export class InvoiceController {
     reply: FastifyReply
   ) {
     const invoice = await InvoiceService.getInvoiceById(request.params.id);
-    if (!invoice) {
-      return reply.code(404).send({ message: 'Invoice not found' });
-    }
-    return reply.send(invoice);
+    return reply.send(ResponseUtil.success(invoice));
   }
 
   static async updateInvoice(
@@ -52,23 +41,13 @@ export class InvoiceController {
     }>,
     reply: FastifyReply
   ) {
-    // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
-    
-    const updateData = {
-      ...request.body,
-      updatedBy: userId,
-    };
-
     const invoice = await InvoiceService.updateInvoice(
       request.params.id,
-      updateData,
+      request.body,
       userId
     );
-    if (!invoice) {
-      return reply.code(404).send({ message: 'Invoice not found' });
-    }
-    return reply.send(invoice);
+    return reply.send(ResponseUtil.success(invoice));
   }
 
   static async deleteInvoice(
@@ -76,10 +55,7 @@ export class InvoiceController {
     reply: FastifyReply
   ) {
     const userId = request.user?.id || 'system';
-    const invoice = await InvoiceService.deleteInvoice(request.params.id, userId);
-    if (!invoice) {
-      return reply.code(404).send({ message: 'Invoice not found' });
-    }
+    await InvoiceService.deleteInvoice(request.params.id, userId);
     return reply.code(204).send();
   }
 
@@ -88,6 +64,6 @@ export class InvoiceController {
     reply: FastifyReply
   ) {
     const result = await InvoiceService.searchInvoices(request.query);
-    return reply.send(result);
+    return reply.send(ResponseUtil.success(result));
   }
 }

@@ -23,7 +23,6 @@ export class SuratJalanService {
     try {
       const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } = suratJalanData;
 
-      // Validate invoiceId if provided and not null
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
         const invoice = await prisma.invoice.findUnique({
           where: { id: suratJalanInfo.invoiceId },
@@ -34,7 +33,6 @@ export class SuratJalanService {
         }
       }
 
-      // Validate statusId if provided and not null
       if (suratJalanInfo.statusId && suratJalanInfo.statusId !== null) {
         const status = await prisma.status.findUnique({
           where: { id: suratJalanInfo.statusId },
@@ -87,24 +85,15 @@ export class SuratJalanService {
 
       return newSuratJalan;
     } catch (error: any) {
-      if (error instanceof AppError) {
-        throw error;
+      if (error instanceof AppError) throw error;
+      
+      if (error.code === 'P2002' && error.meta?.target?.includes('no_surat_jalan')) {
+        throw new AppError('Surat jalan with this number already exists', 409);
+      }
+      if (error.code === 'P2003') {
+        throw new AppError('Foreign key constraint violation. Please check if the referenced invoice or status exists.', 400);
       }
       
-      if (error instanceof Error && 'code' in error) {
-        if (error.code === 'P2002' && 
-            'meta' in error && error.meta && typeof error.meta === 'object' && 
-            'target' in error.meta && Array.isArray(error.meta.target) && 
-            error.meta.target.includes('no_surat_jalan')) {
-          throw new AppError('Surat jalan with this number already exists', 409);
-        }
-        
-        if (error.code === 'P2003') {
-          throw new AppError('Foreign key constraint violation. Please check if the referenced invoice or status exists.', 400);
-        }
-      }
-      
-      console.error('Error creating surat jalan:', error);
       throw new AppError('Failed to create surat jalan', 500);
     }
   }
@@ -117,17 +106,11 @@ export class SuratJalanService {
         skip,
         take: parseInt(limit.toString()),
         include: {
-          suratJalanDetails: {
-            include: {
-              suratJalanDetailItems: true
-            }
-          },
+          suratJalanDetails: { include: { suratJalanDetailItems: true } },
           invoice: true,
           status: true,
         },
-        orderBy: {
-          id: 'desc',
-        }
+        orderBy: { id: 'desc' }
       }),
       prisma.suratJalan.count(),
     ]);
@@ -145,316 +128,129 @@ export class SuratJalanService {
     };
   }
 
-  static async getSuratJalanById(id: string): Promise<SuratJalan | null> {
+  static async getSuratJalanById(id: string) {
     const suratJalan = await prisma.suratJalan.findUnique({
       where: { id },
       include: {
-        suratJalanDetails: {
-          include: {
-            suratJalanDetailItems: true
-          }
-        },
-        invoice: {
-          include: {
-            purchaseOrder: {
-              include: {
-                customer: true,
-                supplier: true,
-              },
-            },
-          },
-        },
+        suratJalanDetails: { include: { suratJalanDetailItems: true } },
+        invoice: { include: { purchaseOrder: { include: { customer: true, supplier: true } } } },
         status: true,
-        historyPengiriman: {
-          include: {
-            status: true
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        }
+        historyPengiriman: { include: { status: true }, orderBy: { createdAt: 'desc' } }
       },
     });
 
     if (!suratJalan) {
-      return null;
+      throw new AppError('Surat Jalan not found', 404);
     }
 
-    // Get audit trail for this surat jalan
     const auditTrails = await prisma.auditTrail.findMany({
-      where: {
-        tableName: 'SuratJalan',
-        recordId: id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        timestamp: 'desc',
-      },
+      where: { tableName: 'SuratJalan', recordId: id },
+      include: { user: { select: { id: true, username: true, firstName: true, lastName: true } } },
+      orderBy: { timestamp: 'desc' },
     });
 
-    return {
-      ...suratJalan,
-      auditTrails,
-    } as any;
+    return { ...suratJalan, auditTrails };
   }
 
-  static async updateSuratJalan(
-    id: string,
-    data: UpdateSuratJalanInput['body'],
-    userId: string
-  ): Promise<SuratJalan | null> {
+  static async updateSuratJalan(id: string, data: UpdateSuratJalanInput['body'], userId: string): Promise<SuratJalan> {
     const { suratJalanDetails, ...suratJalanInfo } = data;
 
-    try {
-      const updatedSuratJalan = await prisma.$transaction(async (tx) => {
-        // Check if the surat jalan exists
-        const existingSuratJalan = await tx.suratJalan.findUnique({
-          where: { id },
-        });
+    return prisma.$transaction(async (tx) => {
+      const existingSuratJalan = await tx.suratJalan.findUnique({ where: { id } });
+      if (!existingSuratJalan) {
+        throw new AppError('Surat jalan not found', 404);
+      }
 
-        if (!existingSuratJalan) {
-          throw new AppError('Surat jalan not found', 404);
+      if (suratJalanDetails) {
+        const detailIds = existingSuratJalan.suratJalanDetails?.map(d => d.id) || [];
+        if (detailIds.length > 0) {
+          await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
+          await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
         }
 
-        // If suratJalanDetails are provided, handle them
-        if (suratJalanDetails) {
-          // Delete existing details and items
-          const existingDetails = await tx.suratJalanDetail.findMany({
-            where: { surat_jalan_id: id },
-            select: { id: true }
-          });
-
-          for (const detail of existingDetails) {
-            await tx.suratJalanDetailItem.deleteMany({
-              where: { surat_jalan_detail_id: detail.id }
-            });
-          }
-
-          await tx.suratJalanDetail.deleteMany({
-            where: { surat_jalan_id: id },
-          });
-
-          // Create new details
-          for (const detail of suratJalanDetails) {
-            const newDetail = await tx.suratJalanDetail.create({
-              data: {
-                surat_jalan_id: id,
-                no_box: detail.no_box,
-                total_quantity_in_box: detail.total_quantity_in_box,
-                isi_box: detail.isi_box,
-                sisa: detail.sisa,
-                total_box: detail.total_box,
-              }
-            });
-
-            // Create detail items
-            await tx.suratJalanDetailItem.createMany({
-              data: detail.items.map(item => ({
-                surat_jalan_detail_id: newDetail.id,
-                nama_barang: item.nama_barang,
-                PLU: item.PLU,
-                quantity: item.quantity,
-                satuan: item.satuan,
-                total_box: item.total_box,
-                keterangan: item.keterangan,
-                createdBy: userId,
-                updatedBy: userId,
-              }))
-            });
-          }
-        }
-
-        // Update the surat jalan itself
-        const updatedSuratJalanData = await tx.suratJalan.update({
-          where: { id },
-          data: {
-            ...suratJalanInfo,
-            updatedBy: userId,
-          },
-          include: {
-            suratJalanDetails: {
-              include: {
-                suratJalanDetailItems: true
-              }
-            },
-            invoice: true,
-            status: true,
-          },
-        });
-
-        await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
-          before: existingSuratJalan,
-          after: updatedSuratJalanData,
-        });
-
-        return updatedSuratJalanData;
-      });
-
-      return updatedSuratJalan;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      if (error instanceof Error && 'code' in error && error.code === 'P2002' && 
-          'meta' in error && error.meta && typeof error.meta === 'object' && 
-          'target' in error.meta && Array.isArray(error.meta.target) && 
-          error.meta.target.includes('no_surat_jalan')) {
-        throw new AppError('Surat jalan with this number already exists', 409);
-      }
-      console.error('Error updating surat jalan:', error);
-      throw new AppError('Failed to update surat jalan', 500);
-    }
-  }
-
-  static async deleteSuratJalan(id: string, userId: string): Promise<SuratJalan | null> {
-    try {
-      // Ambil data surat jalan terlebih dahulu untuk return
-      const suratJalan = await prisma.suratJalan.findUnique({
-        where: { id },
-        include: {
-          suratJalanDetails: {
-            include: {
-              suratJalanDetailItems: true
+        for (const detail of suratJalanDetails) {
+          await tx.suratJalanDetail.create({
+            data: {
+              surat_jalan_id: id,
+              no_box: detail.no_box,
+              total_quantity_in_box: detail.total_quantity_in_box,
+              isi_box: detail.isi_box,
+              sisa: detail.sisa,
+              total_box: detail.total_box,
+              suratJalanDetailItems: { create: detail.items.map(item => ({ ...item, createdBy: userId, updatedBy: userId })) }
             }
-          },
+          });
+        }
+      }
+
+      const updatedSuratJalanData = await tx.suratJalan.update({
+        where: { id },
+        data: { ...suratJalanInfo, updatedBy: userId },
+        include: {
+          suratJalanDetails: { include: { suratJalanDetailItems: true } },
           invoice: true,
           status: true,
         },
       });
 
-      if (!suratJalan) {
-        return null;
-      }
-
-      await createAuditLog('SuratJalan', id, 'DELETE', userId, suratJalan);
-
-      // Hapus data terkait terlebih dahulu menggunakan transaction
-      await prisma.$transaction(async (tx) => {
-        // Hapus surat jalan detail items terlebih dahulu
-        await tx.suratJalanDetailItem.deleteMany({
-          where: {
-            suratJalanDetail: {
-              surat_jalan_id: id
-            }
-          }
-        });
-
-        // Hapus surat jalan details
-        await tx.suratJalanDetail.deleteMany({
-          where: {
-            surat_jalan_id: id
-          }
-        });
-
-        // Hapus history pengiriman
-        await tx.historyPengiriman.deleteMany({
-          where: {
-            surat_jalan_id: id
-          }
-        });
-
-        // Hapus surat jalan
-        await tx.suratJalan.delete({
-          where: { id }
-        });
+      await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
+        before: existingSuratJalan,
+        after: updatedSuratJalanData,
       });
 
-      return suratJalan;
-    } catch (error) {
-      console.error('Error deleting surat jalan:', error);
-      return null;
+      return updatedSuratJalanData;
+    });
+  }
+
+  static async deleteSuratJalan(id: string, userId: string): Promise<SuratJalan> {
+    const suratJalan = await prisma.suratJalan.findUnique({ where: { id } });
+    if (!suratJalan) {
+      throw new AppError('Surat Jalan not found', 404);
     }
+
+    await createAuditLog('SuratJalan', id, 'DELETE', userId, suratJalan);
+
+    await prisma.$transaction(async (tx) => {
+      const detailIds = (await tx.suratJalanDetail.findMany({ where: { surat_jalan_id: id }, select: { id: true } })).map(d => d.id);
+      if (detailIds.length > 0) {
+        await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
+      }
+      await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
+      await tx.historyPengiriman.deleteMany({ where: { surat_jalan_id: id } });
+      await tx.suratJalan.delete({ where: { id } });
+    });
+
+    return suratJalan;
   }
 
   static async searchSuratJalan(query: SearchSuratJalanInput['query']): Promise<PaginatedResult<SuratJalan>> {
-    const { 
-      no_surat_jalan, 
-      deliver_to, 
-      PIC,
-      invoiceId,
-      statusId,
-      is_printed,
-      page = 1,
-      limit = 10
-    } = query;
-
+    const { no_surat_jalan, deliver_to, PIC, invoiceId, statusId, is_printed, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
-
     const filters: Prisma.SuratJalanWhereInput[] = [];
     
-    if (no_surat_jalan) {
-      filters.push({ no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' } });
-    }
-    if (deliver_to) {
-      filters.push({ deliver_to: { contains: deliver_to, mode: 'insensitive' } });
-    }
-    if (PIC) {
-      filters.push({ PIC: { contains: PIC, mode: 'insensitive' } });
-    }
-    if (invoiceId) {
-      filters.push({ invoiceId });
-    }
-    if (statusId) {
-      filters.push({ statusId });
-    }
-    if (is_printed !== undefined) {
-      filters.push({ is_printed });
-    }
+    if (no_surat_jalan) filters.push({ no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' } });
+    if (deliver_to) filters.push({ deliver_to: { contains: deliver_to, mode: 'insensitive' } });
+    if (PIC) filters.push({ PIC: { contains: PIC, mode: 'insensitive' } });
+    if (invoiceId) filters.push({ invoiceId });
+    if (statusId) filters.push({ statusId });
+    if (is_printed !== undefined) filters.push({ is_printed });
 
     const [data, totalItems] = await Promise.all([
       prisma.suratJalan.findMany({
-        where: {
-          AND: filters.length > 0 ? filters : undefined,
-        },
+        where: { AND: filters.length > 0 ? filters : undefined },
         skip,
         take: parseInt(limit.toString()),
         include: {
-          suratJalanDetails: {
-            include: {
-              suratJalanDetailItems: true
-            }
-          },
-          invoice: {
-            include: {
-              purchaseOrder: {
-                include: {
-                  customer: true,
-                },
-              },
-            },
-          },
+          suratJalanDetails: { include: { suratJalanDetailItems: true } },
+          invoice: { include: { purchaseOrder: { include: { customer: true } } } },
           status: true,
         },
-        orderBy: {
-          id: 'desc',
-        }
+        orderBy: { id: 'desc' }
       }),
-      prisma.suratJalan.count({
-        where: {
-          AND: filters.length > 0 ? filters : undefined,
-        },
-      }),
+      prisma.suratJalan.count({ where: { AND: filters.length > 0 ? filters : undefined } }),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
-    };
+    return { data, pagination: { currentPage: page, totalPages, totalItems, itemsPerPage: limit } };
   }
 }

@@ -1,31 +1,27 @@
 import { type App } from '@/app';
 import { authRoutes } from '@/routes/auth.routes';
 import { userRoutes } from '@/routes/user.routes';
-import roleRoutes from '@/routes/role.routes';
-import menuRoutes from '@/routes/menu.routes';
+import { roleRoutes } from '@/routes/role.routes';
+import { menuRoutes } from '@/routes/menu.routes';
 import { customerRoutes } from './customer.routes';
 import { purchaseOrderRoutes } from './purchase-order.routes';
 import { supplierRoutes } from './supplier.routes';
 import { conversionRoutes } from './conversion.routes';
 import { inventoryRoutes } from './inventory.routes';
-import notificationRoutes from './notification.routes';
+import { notificationRoutes } from './notification.routes';
 import { statusRoutes } from './status.routes';
 import { bulkPurchaseOrderRoutes } from './bulk-purchase-order.routes';
 import { packingRoutes } from './packing.routes';
 import { invoiceRoutes } from './invoice.routes';
 import { fileRoutes } from './file.routes';
 import { suratJalanRoutes } from './surat-jalan.routes';
-import historyPengirimanRoutes from './history-pengiriman.routes';
+import { historyPengirimanRoutes } from './history-pengiriman.routes';
 import { regionRoutes } from './region.routes';
 import { termOfPaymentRoutes } from './term-of-payment.routes';
 import { companyRoutes } from './company.routes';
 import { groupCustomerRoutes } from './group-customer.routes';
 
-
-
-
 export default async (fastify: App) => {
-
   fastify.register(authRoutes, { prefix: '/auth' });
   fastify.register(userRoutes, { prefix: '/users' });
   fastify.register(roleRoutes, { prefix: '/roles' });
@@ -46,7 +42,5 @@ export default async (fastify: App) => {
   fastify.register(termOfPaymentRoutes, { prefix: '/term-of-payments' });
   fastify.register(companyRoutes, { prefix: '/companies' });
   fastify.register(groupCustomerRoutes, { prefix: '/group-customers' });
-
-
   fastify.register(historyPengirimanRoutes, { prefix: '/history-pengiriman' });
 };

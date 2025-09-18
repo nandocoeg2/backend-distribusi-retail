@@ -177,7 +177,7 @@ export class PackingService {
     });
 
     if (!packing) {
-      return null;
+      throw new AppError('Packing not found', 404);
     }
 
     // Get audit trail for this packing

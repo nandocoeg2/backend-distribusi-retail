@@ -8,7 +8,6 @@ import { createAuditLog } from './audit.service';
 export class RegionService {
   static async createRegion(data: CreateRegionInput, userId: string): Promise<Region> {
     try {
-      // Extract audit fields if present
       const { createdBy, updatedBy, ...regionData } = data;
       
       const region = await prisma.region.create({
@@ -19,7 +18,6 @@ export class RegionService {
         },
       });
 
-      // Create audit log
       await createAuditLog('Region', region.id, 'CREATE', userId, region);
       
       return region;
@@ -64,10 +62,9 @@ export class RegionService {
     });
 
     if (!region) {
-      return null;
+      throw new AppError('Region not found', 404);
     }
 
-    // Get audit trail for this region
     const auditTrails = await prisma.auditTrail.findMany({
       where: {
         tableName: 'Region',
@@ -94,88 +91,54 @@ export class RegionService {
     };
   }
 
-  static async updateRegion(id: string, data: UpdateRegionInput['body'], userId: string): Promise<Region | null> {
-    try {
-      const existingRegion = await prisma.region.findUnique({
-        where: { id },
-      });
+  static async updateRegion(id: string, data: UpdateRegionInput['body'], userId: string): Promise<Region> {
+    const existingRegion = await prisma.region.findUnique({
+      where: { id },
+    });
 
-      if (!existingRegion) {
-        return null;
-      }
-
-      // Extract audit fields if present
-      const { updatedBy, ...regionData } = data;
-      
-      const updatedRegion = await prisma.region.update({
-        where: { id },
-        data: {
-          ...regionData,
-          updatedBy: userId,
-        },
-      });
-
-      // Create audit log
-      await createAuditLog('Region', updatedRegion.id, 'UPDATE', userId, {
-        before: existingRegion,
-        after: updatedRegion,
-      });
-      
-      return updatedRegion;
-    } catch (error) {
-      // Prisma throws an error if the record is not found on update
-      return null;
+    if (!existingRegion) {
+      throw new AppError('Region not found', 404);
     }
+
+    const { updatedBy, ...regionData } = data;
+
+    const updatedRegion = await prisma.region.update({
+      where: { id },
+      data: {
+        ...regionData,
+        updatedBy: userId,
+      },
+    });
+
+    await createAuditLog('Region', updatedRegion.id, 'UPDATE', userId, {
+      before: existingRegion,
+      after: updatedRegion,
+    });
+
+    return updatedRegion;
   }
 
-  static async deleteRegion(id: string, userId: string): Promise<Region | null> {
-    try {
-      const existingRegion = await prisma.region.findUnique({
-        where: { id },
-      });
+  static async deleteRegion(id: string, userId: string): Promise<Region> {
+    const existingRegion = await prisma.region.findUnique({
+      where: { id },
+    });
 
-      if (!existingRegion) {
-        return null;
-      }
-
-      // Create audit log before deletion
-      await createAuditLog('Region', id, 'DELETE', userId, existingRegion);
-      
-      return await prisma.region.delete({
-        where: { id },
-      });
-    } catch (error) {
-      // Prisma throws an error if the record is not found on delete
-      return null;
+    if (!existingRegion) {
+      throw new AppError('Region not found', 404);
     }
+
+    await createAuditLog('Region', id, 'DELETE', userId, existingRegion);
+
+    return await prisma.region.delete({
+      where: { id },
+    });
   }
 
   static async searchRegions(query?: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<Region>> {
     const skip = (page - 1) * limit;
     
     if (!query) {
-      const [data, totalItems] = await Promise.all([
-        prisma.region.findMany({
-          skip,
-          take: parseInt(limit.toString()),
-          orderBy: {
-            createdAt: 'desc',
-          },
-        }),
-        prisma.region.count(),
-      ]);
-      
-      const totalPages = Math.ceil(totalItems / limit);
-      
-      return {
-        data,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          itemsPerPage: limit,
-        },
-      };
+      return this.getAllRegions(page, limit);
     }
 
     const filters: Prisma.RegionWhereInput[] = [
