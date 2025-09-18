@@ -7,7 +7,7 @@ meta {
 put {
   url: http://localhost:5050/api/v1/term-of-payments/{{term_of_payment_id}}
   body: json
-  auth: inherit
+  auth: bearer
 }
 
 headers {
@@ -24,4 +24,3 @@ body:json {
     "batas_hari": 45
   }
 }
-

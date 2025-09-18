@@ -5,12 +5,15 @@ meta {
 }
 
 get {
-  url: {{base_url}}/companies/search?q=COMP
+  url: http://localhost:5050/api/v1/companies/search?q=COMP
   body: none
   auth: bearer
 }
 
-auth:bearer {
-  token: {{token}}
+params:query {
+  q: COMP
 }
 
+auth:bearer {
+  token: {{access_token}}
+}

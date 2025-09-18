@@ -7,7 +7,7 @@ meta {
 get {
   url: http://localhost:5050/api/v1/term-of-payments/{{term_of_payment_id}}
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 headers {
@@ -18,4 +18,3 @@ headers {
 auth:bearer {
   token: {{access_token}}
 }
-

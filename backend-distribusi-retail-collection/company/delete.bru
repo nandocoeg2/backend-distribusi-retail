@@ -5,12 +5,15 @@ meta {
 }
 
 delete {
-  url: {{base_url}}/companies/{{companyId}}
+  url: http://localhost:5050/api/v1/companies/{{companyId}}
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
 
+vars:pre-request {
+  companyId: 
+}

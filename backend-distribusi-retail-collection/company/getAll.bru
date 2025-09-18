@@ -5,12 +5,11 @@ meta {
 }
 
 get {
-  url: {{base_url}}/companies
+  url: http://localhost:5050/api/v1/companies
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
-

@@ -5,12 +5,15 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/history-pengiriman/tanggal/:tanggalKirim
+  url: http://localhost:5050/api/v1/history-pengiriman/tanggal/:tanggalKirim
   body: none
-  auth: none
+  auth: bearer
 }
 
-params:query {
+params:path {
   tanggalKirim: 
 }
 
+auth:bearer {
+  token: {{access_token}}
+}
