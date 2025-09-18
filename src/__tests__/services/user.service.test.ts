@@ -74,13 +74,11 @@ describe('UserService', () => {
       expect(result).toEqual(user);
     });
 
-    it('should return null if user not found', async () => {
+    it('should throw an error if user not found', async () => {
       (CacheService.get as jest.Mock).mockResolvedValue(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await UserService.getUserById('1');
-
-      expect(result).toBeNull();
+      await expect(UserService.getUserById('1')).rejects.toThrow('User not found');
       expect(CacheService.set).not.toHaveBeenCalled();
     });
   });

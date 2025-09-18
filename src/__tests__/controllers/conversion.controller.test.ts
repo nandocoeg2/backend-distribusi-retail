@@ -1,19 +1,23 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { convertFileHandler } from '@/controllers/conversion.controller';
-import * as conversionService from '@/services/conversion.service';
+import { ConversionController } from '@/controllers/conversion.controller';
+import { ConversionService } from '@/services/conversion.service';
+import { ResponseUtil } from '@/utils/response.util';
 import { AppError } from '@/utils/app-error';
-import stream from 'stream';
 
-describe('Conversion Controller', () => {
+jest.mock('@/services/conversion.service');
+
+describe('ConversionController', () => {
   let request: Partial<FastifyRequest>;
   let reply: Partial<FastifyReply>;
 
   beforeEach(() => {
     request = {
-      parts: jest.fn(),
+        parts: jest.fn().mockImplementation(async function* () {
+            yield { type: 'file', fieldname: 'file', toBuffer: () => Buffer.from('test'), mimetype: 'application/pdf', filename: 'test.pdf' };
+            yield { type: 'field', fieldname: 'prompt', value: 'test prompt' };
+        }),
     };
     reply = {
-      status: jest.fn().mockReturnThis(),
       send: jest.fn(),
     };
   });
@@ -22,77 +26,35 @@ describe('Conversion Controller', () => {
     jest.clearAllMocks();
   });
 
-  it('should convert a file to JSON and return the result', async () => {
-    const fileBuffer = Buffer.from('test file content');
-    const prompt = 'test prompt';
-    const mimetype = 'application/pdf';
-    const jsonResult = { key: 'value' };
+  describe('convertFile', () => {
+    it('should convert a file and return the result', async () => {
+      const jsonResult = { key: 'value' };
+      (ConversionService.convertFileToJson as jest.Mock).mockResolvedValue(jsonResult);
 
-    const parts = async function* () {
-      yield {
-        type: 'file',
-        fieldname: 'file',
-        filename: 'test.pdf',
-        encoding: '7bit',
-        mimetype,
-        toBuffer: jest.fn().mockResolvedValue(fileBuffer),
-        file: new stream.Readable(),
-      };
-      yield {
-        type: 'field',
-        fieldname: 'prompt',
-        value: prompt,
-        fieldnameTruncated: false,
-        valueTruncated: false,
-        encoding: '7bit',
-        mimetype: 'text/plain',
-      };
-    };
+      await ConversionController.convertFile(request as FastifyRequest, reply as FastifyReply);
 
-    (request.parts as jest.Mock).mockReturnValue(parts());
-    jest.spyOn(conversionService, 'convertFileToJson').mockResolvedValue(jsonResult);
+      expect(ConversionService.convertFileToJson).toHaveBeenCalledWith(Buffer.from('test'), 'application/pdf', 'test prompt');
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(jsonResult));
+    });
 
-    await convertFileHandler(request as FastifyRequest, reply as FastifyReply);
+    it('should throw an error if no file is uploaded', async () => {
+        request.parts = jest.fn().mockImplementation(async function* () {
+            yield { type: 'field', fieldname: 'prompt', value: 'test prompt' };
+        });
 
-    expect(conversionService.convertFileToJson).toHaveBeenCalledWith(fileBuffer, mimetype, prompt);
-    expect(reply.send).toHaveBeenCalledWith(jsonResult);
-  });
+        await expect(ConversionController.convertFile(request as FastifyRequest, reply as FastifyReply)).rejects.toThrow(
+            new AppError('No file uploaded.', 400)
+        );
+    });
 
-  it('should throw an error if no file is uploaded', async () => {
-    const parts = async function* () {
-      yield {
-        type: 'field',
-        fieldname: 'prompt',
-        value: 'test prompt',
-      };
-    };
+    it('should throw an error if no prompt is provided', async () => {
+        request.parts = jest.fn().mockImplementation(async function* () {
+            yield { type: 'file', fieldname: 'file', toBuffer: () => Buffer.from('test'), mimetype: 'application/pdf', filename: 'test.pdf' };
+        });
 
-    (request.parts as jest.Mock).mockReturnValue(parts());
-
-    await expect(convertFileHandler(request as FastifyRequest, reply as FastifyReply)).rejects.toThrow(
-      new AppError('No file uploaded.', 400)
-    );
-  });
-
-  it('should throw an error if the prompt field is missing', async () => {
-    const fileBuffer = Buffer.from('test file content');
-    const mimetype = 'application/pdf';
-
-    const parts = async function* () {
-      yield {
-        type: 'file',
-        fieldname: 'file',
-        filename: 'test.pdf',
-        toBuffer: jest.fn().mockResolvedValue(fileBuffer),
-        mimetype,
-      };
-    };
-
-    (request.parts as jest.Mock).mockReturnValue(parts());
-
-    await expect(convertFileHandler(request as FastifyRequest, reply as FastifyReply)).rejects.toThrow(
-      new AppError('The \'prompt\' field is required.', 400)
-    );
+        await expect(ConversionController.convertFile(request as FastifyRequest, reply as FastifyReply)).rejects.toThrow(
+            new AppError('The \'prompt\' field is required.', 400)
+        );
+    });
   });
 });
-

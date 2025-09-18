@@ -2,30 +2,12 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { InventoryController } from '@/controllers/inventory.controller';
 import { InventoryService } from '@/services/inventory.service';
-import { 
-  CreateInventoryInput, 
-  UpdateInventoryInput, 
-  GetAllInventoriesInput, 
-  SearchInventoryInput
-} from '@/schemas/inventory.schema';
+import { ResponseUtil } from '@/utils/response.util';
+import { CreateInventoryInput } from '@/schemas/inventory.schema';
 
 jest.mock('@/services/inventory.service');
 
-const mockInventory = {
-  id: '1',
-  plu: 'PLU001',
-  nama_barang: 'Test Item',
-  stok_c: 10,
-  stok_q: 100,
-  harga_barang: 10000,
-  min_stok: 10,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  createdBy: 'test-user-id',
-  updatedBy: 'test-user-id',
-};
-
-describe('Inventory Controller', () => {
+describe('InventoryController', () => {
   let request: Partial<FastifyRequest>;
   let reply: Partial<FastifyReply>;
 
@@ -34,7 +16,7 @@ describe('Inventory Controller', () => {
       body: {},
       params: {},
       query: {},
-      user: { id: 'test-user-id' }
+      user: { id: 'user123', iat: 0, exp: 0 }
     };
     reply = {
       status: jest.fn().mockReturnThis(),
@@ -47,132 +29,107 @@ describe('Inventory Controller', () => {
   });
 
   describe('create', () => {
-    it('should create an inventory and return 201', async () => {
-      const createInventoryInput: CreateInventoryInput = {
-        plu: 'PLU001',
+    it('should create an inventory item and return it', async () => {
+      const createInput: CreateInventoryInput = {
+        kode_barang: 'TEST01',
         nama_barang: 'Test Item',
-        stok_c: 10,
-        stok_q: 100,
-        harga_barang: 10000,
+        stok_barang: 100,
+        harga_barang: 1000,
         min_stok: 10,
       };
-      request.body = createInventoryInput;
+      const mockInventory = { id: '1', ...createInput };
+      request.body = createInput;
       (InventoryService.create as jest.Mock).mockResolvedValue(mockInventory);
 
-      await InventoryController.create(
-        request as FastifyRequest<{ Body: CreateInventoryInput }>,
-        reply as FastifyReply
-      );
+      await InventoryController.create(request as FastifyRequest<{ Body: CreateInventoryInput }>, reply as FastifyReply);
 
+      expect(InventoryService.create).toHaveBeenCalledWith(createInput, 'user123');
       expect(reply.status).toHaveBeenCalledWith(201);
-      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: mockInventory
-      }));
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventory));
+    });
+
+    it('should create an inventory item with system user if no user is authenticated', async () => {
+      const createInput: CreateInventoryInput = {
+        kode_barang: 'TEST01',
+        nama_barang: 'Test Item',
+        stok_barang: 100,
+        harga_barang: 1000,
+        min_stok: 10,
+      };
+      const mockInventory = { id: '1', ...createInput };
+      request.body = createInput;
+      request.user = undefined; // No user on request
+      (InventoryService.create as jest.Mock).mockResolvedValue(mockInventory);
+
+      await InventoryController.create(request as FastifyRequest<{ Body: CreateInventoryInput }>, reply as FastifyReply);
+
+      expect(InventoryService.create).toHaveBeenCalledWith(createInput, 'system');
+      expect(reply.status).toHaveBeenCalledWith(201);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventory));
     });
   });
 
   describe('getAll', () => {
-    it('should get all inventories with pagination and return 200', async () => {
-      const mockPaginatedInventories = {
-        data: [mockInventory],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 1,
-          itemsPerPage: 10,
-        },
-      };
-      request.query = { page: 1, limit: 10 };
-      (InventoryService.getAll as jest.Mock).mockResolvedValue(mockPaginatedInventories);
+    it('should get all inventory items with pagination', async () => {
+      const mockInventories = { data: [{ id: '1', name: 'Test Item' }], pagination: {} };
+      request.query = { page: '1', limit: '10' };
+      (InventoryService.getAll as jest.Mock).mockResolvedValue(mockInventories);
 
-      await InventoryController.getAll(
-        request as FastifyRequest<{ Querystring: GetAllInventoriesInput['query'] }>,
-        reply as FastifyReply
-      );
+      await InventoryController.getAll(request as any, reply as FastifyReply);
 
-      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: mockPaginatedInventories
-      }));
       expect(InventoryService.getAll).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventories));
     });
   });
 
   describe('search', () => {
-    it('should search inventories with pagination and return 200', async () => {
-      const mockPaginatedInventories = {
-        data: [mockInventory],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 1,
-          itemsPerPage: 10,
-        },
-      };
-      request.query = { q: 'Test', page: 1, limit: 10 };
-      (InventoryService.search as jest.Mock).mockResolvedValue(mockPaginatedInventories);
+    it('should search for inventory items', async () => {
+      const mockInventories = { data: [{ id: '1', name: 'Test Item' }], pagination: {} };
+      request.query = { q: 'Test', page: '1', limit: '10' };
+      (InventoryService.search as jest.Mock).mockResolvedValue(mockInventories);
 
-      await InventoryController.search(
-        request as FastifyRequest<{ Querystring: SearchInventoryInput['query'] }>,
-        reply as FastifyReply
-      );
+      await InventoryController.search(request as any, reply as FastifyReply);
 
-      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: mockPaginatedInventories
-      }));
       expect(InventoryService.search).toHaveBeenCalledWith('Test', 1, 10);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventories));
     });
   });
 
   describe('getById', () => {
-    it('should get an inventory by id and return 200', async () => {
+    it('should get an inventory item by id', async () => {
+      const mockInventory = { id: '1', name: 'Test Item' };
       request.params = { id: '1' };
       (InventoryService.getById as jest.Mock).mockResolvedValue(mockInventory);
 
-      await InventoryController.getById(
-        request as FastifyRequest<{ Params: { id: string } }>,
-        reply as FastifyReply
-      );
+      await InventoryController.getById(request as any, reply as FastifyReply);
 
-      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: mockInventory
-      }));
+      expect(InventoryService.getById).toHaveBeenCalledWith('1');
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventory));
     });
   });
 
   describe('update', () => {
-    it('should update an inventory and return 200', async () => {
-      const updateInventoryInput: UpdateInventoryInput['body'] = { stok_c: 150 };
-      request.body = updateInventoryInput;
+    it('should update an inventory item and return it', async () => {
+      const mockInventory = { id: '1', name: 'Updated Item' };
       request.params = { id: '1' };
-      const updatedInventory = { ...mockInventory, ...updateInventoryInput };
-      (InventoryService.update as jest.Mock).mockResolvedValue(updatedInventory);
+      request.body = { name: 'Updated Item' };
+      (InventoryService.update as jest.Mock).mockResolvedValue(mockInventory);
 
-      await InventoryController.update(
-        request as FastifyRequest<{ Body: UpdateInventoryInput['body']; Params: { id: string } }>,
-        reply as FastifyReply
-      );
+      await InventoryController.update(request as any, reply as FastifyReply);
 
-      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: updatedInventory
-      }));
+      expect(InventoryService.update).toHaveBeenCalledWith('1', request.body, 'user123');
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(mockInventory));
     });
   });
 
   describe('delete', () => {
-    it('should delete an inventory and return 204', async () => {
+    it('should delete an inventory item and return 204', async () => {
       request.params = { id: '1' };
-      (InventoryService.delete as jest.Mock).mockResolvedValue(mockInventory);
+      (InventoryService.delete as jest.Mock).mockResolvedValue(undefined);
 
-      await InventoryController.delete(
-        request as FastifyRequest<{ Params: { id: string } }>,
-        reply as FastifyReply
-      );
+      await InventoryController.delete(request as any, reply as FastifyReply);
 
+      expect(InventoryService.delete).toHaveBeenCalledWith('1', 'user123');
       expect(reply.status).toHaveBeenCalledWith(204);
       expect(reply.send).toHaveBeenCalled();
     });

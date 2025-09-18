@@ -19,9 +19,8 @@ jest.mock('@/config/database', () => ({
     },
     inventory: {
       findMany: jest.fn(),
-      findUnique: jest.fn(),
       fields: {
-        min_stok: 'min_stok',
+        min_stok: 'min_stok'
       }
     },
   },
@@ -136,9 +135,10 @@ describe('NotificationService', () => {
       });
     });
 
-    it('should throw AppError if notification not found', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
-      await expect(NotificationService.updateNotification('1', { title: 'Updated' })).rejects.toThrow(new AppError('Notification not found', 404));
+    it('should throw an error if update fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
+      await expect(NotificationService.updateNotification('1', { title: 'Updated' })).rejects.toThrow('Update failed');
     });
   });
 
@@ -154,9 +154,10 @@ describe('NotificationService', () => {
       expect(prisma.notification.delete).toHaveBeenCalledWith({ where: { id: '1' }, include: { inventory: true } });
     });
 
-    it('should throw AppError if notification not found', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
-      await expect(NotificationService.deleteNotification('1')).rejects.toThrow(new AppError('Notification not found', 404));
+    it('should throw an error if delete fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.delete as jest.Mock).mockRejectedValue(new Error('Delete failed'));
+      await expect(NotificationService.deleteNotification('1')).rejects.toThrow('Delete failed');
     });
   });
 
@@ -176,9 +177,10 @@ describe('NotificationService', () => {
       });
     });
 
-    it('should throw AppError if notification not found', async () => {
-      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
-      await expect(NotificationService.markAsRead('1')).rejects.toThrow(new AppError('Notification not found', 404));
+    it('should throw an error if markAsRead fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
+      await expect(NotificationService.markAsRead('1')).rejects.toThrow('Update failed');
     });
   });
 

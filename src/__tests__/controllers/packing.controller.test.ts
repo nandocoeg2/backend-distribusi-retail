@@ -37,12 +37,9 @@ describe('PackingController', () => {
 
       await PackingController.createPacking(request, reply);
 
-      expect(PackingService.createPacking).toHaveBeenCalledWith({
-        ...mockPackingData,
-        updatedBy: 'user1',
-      });
+      expect(PackingService.createPacking).toHaveBeenCalledWith(mockPackingData, 'user1');
       expect(reply.code).toHaveBeenCalledWith(201);
-      expect(reply.send).toHaveBeenCalledWith(mockCreatedPacking);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockCreatedPacking });
     });
 
     it('should use system as fallback when user is not available', async () => {
@@ -72,10 +69,7 @@ describe('PackingController', () => {
 
       await PackingController.createPacking(request, reply);
 
-      expect(PackingService.createPacking).toHaveBeenCalledWith({
-        ...mockPackingData,
-        updatedBy: 'system',
-      });
+      expect(PackingService.createPacking).toHaveBeenCalledWith(mockPackingData, 'system');
     });
 
     it('should handle service errors', async () => {
@@ -123,7 +117,21 @@ describe('PackingController', () => {
 
       await PackingController.getPackings(request, reply);
 
-      expect(reply.send).toHaveBeenCalledWith(mockResult);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockResult });
+      expect(PackingService.getAllPackings).toHaveBeenCalledWith(1, 10);
+    });
+
+    it('should use default pagination when not provided', async () => {
+      const mockResult = {
+        data: [],
+        pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 },
+      };
+      (PackingService.getAllPackings as jest.Mock).mockResolvedValue(mockResult);
+      const request: any = { query: {} }; // No pagination params
+      const reply: any = { send: jest.fn().mockReturnThis() };
+
+      await PackingController.getPackings(request, reply);
+
       expect(PackingService.getAllPackings).toHaveBeenCalledWith(1, 10);
     });
   });
@@ -147,12 +155,12 @@ describe('PackingController', () => {
 
       await PackingController.getPacking(request, reply);
 
-      expect(reply.send).toHaveBeenCalledWith(mockPacking);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockPacking });
       expect(PackingService.getPackingById).toHaveBeenCalledWith('packing1');
     });
 
     it('should return 404 if packing not found', async () => {
-      (PackingService.getPackingById as jest.Mock).mockResolvedValue(null);
+      (PackingService.getPackingById as jest.Mock).mockRejectedValue(new Error('Packing not found'));
 
       const request: any = { params: { id: 'packing1' } };
       const reply: any = {
@@ -160,10 +168,7 @@ describe('PackingController', () => {
         send: jest.fn().mockReturnThis(),
       };
 
-      await PackingController.getPacking(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Packing not found' });
+      await expect(PackingController.getPacking(request, reply)).rejects.toThrow('Packing not found');
     });
   });
 
@@ -193,11 +198,8 @@ describe('PackingController', () => {
 
       await PackingController.updatePacking(request, reply);
 
-      expect(PackingService.updatePacking).toHaveBeenCalledWith('packing1', {
-        ...mockUpdateData,
-        updatedBy: 'user1',
-      });
-      expect(reply.send).toHaveBeenCalledWith(mockUpdatedPacking);
+      expect(PackingService.updatePacking).toHaveBeenCalledWith('packing1', mockUpdateData, 'user1');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockUpdatedPacking });
     });
 
     it('should return 404 if packing not found', async () => {
@@ -206,7 +208,7 @@ describe('PackingController', () => {
         statusId: 'status2',
       };
 
-      (PackingService.updatePacking as jest.Mock).mockResolvedValue(null);
+      (PackingService.updatePacking as jest.Mock).mockRejectedValue(new Error('Packing not found'));
 
       const request: any = {
         params: { id: 'packing1' },
@@ -218,10 +220,7 @@ describe('PackingController', () => {
         send: jest.fn().mockReturnThis(),
       };
 
-      await PackingController.updatePacking(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Packing not found' });
+      await expect(PackingController.updatePacking(request, reply)).rejects.toThrow('Packing not found');
     });
 
     it('should handle service errors', async () => {
@@ -245,6 +244,23 @@ describe('PackingController', () => {
 
       await expect(PackingController.updatePacking(request, reply)).rejects.toThrow(error);
     });
+
+    it('should update packing with system user if no user is authenticated', async () => {
+      const mockUpdateData = { statusId: 'status2' };
+      const mockUpdatedPacking = { id: 'packing1', ...mockUpdateData };
+      (PackingService.updatePacking as jest.Mock).mockResolvedValue(mockUpdatedPacking);
+      const request: any = {
+        params: { id: 'packing1' },
+        body: mockUpdateData,
+        user: undefined,
+      };
+      const reply: any = { send: jest.fn().mockReturnThis() };
+
+      await PackingController.updatePacking(request, reply);
+
+      expect(PackingService.updatePacking).toHaveBeenCalledWith('packing1', mockUpdateData, 'system');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockUpdatedPacking });
+    });
   });
 
   describe('deletePacking', () => {
@@ -267,13 +283,13 @@ describe('PackingController', () => {
 
       await PackingController.deletePacking(request, reply);
 
-      expect(PackingService.deletePacking).toHaveBeenCalledWith('packing1');
+      expect(PackingService.deletePacking).toHaveBeenCalledWith('packing1', 'system');
       expect(reply.code).toHaveBeenCalledWith(204);
       expect(reply.send).toHaveBeenCalledWith();
     });
 
     it('should return 404 if packing not found', async () => {
-      (PackingService.deletePacking as jest.Mock).mockResolvedValue(null);
+      (PackingService.deletePacking as jest.Mock).mockRejectedValue(new Error('Packing not found'));
 
       const request: any = { params: { id: 'packing1' } };
       const reply: any = {
@@ -281,10 +297,7 @@ describe('PackingController', () => {
         send: jest.fn().mockReturnThis(),
       };
 
-      await PackingController.deletePacking(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Packing not found' });
+      await expect(PackingController.deletePacking(request, reply)).rejects.toThrow('Packing not found');
     });
   });
 
@@ -317,7 +330,7 @@ describe('PackingController', () => {
       await PackingController.searchPackings(request, reply);
 
       expect(PackingService.searchPackings).toHaveBeenCalledWith(mockQuery);
-      expect(reply.send).toHaveBeenCalledWith(mockResult);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: mockResult });
     });
   });
 });

@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { UserController } from '@/controllers/user.controller';
 import { UserService } from '@/services/user.service';
+import { ResponseUtil } from '@/utils/response.util';
 
 jest.mock('@/services/user.service');
 
@@ -30,7 +31,7 @@ describe('UserController', () => {
       await UserController.getUsers(request as FastifyRequest, reply as FastifyReply);
 
       expect(UserService.getAllUsers).toHaveBeenCalled();
-      expect(reply.send).toHaveBeenCalledWith(users);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(users));
     });
   });
 
@@ -43,18 +44,19 @@ describe('UserController', () => {
       await UserController.getUser(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
 
       expect(UserService.getUserById).toHaveBeenCalledWith('1');
-      expect(reply.send).toHaveBeenCalledWith(user);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(user));
     });
 
-    it('should return 404 if user not found', async () => {
+    it('should return an error if user not found', async () => {
       request.params = { id: '1' };
-      (UserService.getUserById as jest.Mock).mockResolvedValue(null);
+      const error = new Error('User not found');
+      (UserService.getUserById as jest.Mock).mockRejectedValue(error);
 
-      await UserController.getUser(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
+      await expect(
+        UserController.getUser(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply)
+      ).rejects.toThrow(error);
 
       expect(UserService.getUserById).toHaveBeenCalledWith('1');
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'User not found' });
     });
   });
 });

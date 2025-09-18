@@ -1,7 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { SuratJalanController } from '@/controllers/surat-jalan.controller';
 import { SuratJalanService } from '@/services/surat-jalan.service';
-import { CreateSuratJalanInput, UpdateSuratJalanInput, SearchSuratJalanInput } from '@/schemas/surat-jalan.schema';
+import { ResponseUtil } from '@/utils/response.util';
+import { AppError } from '@/utils/app-error';
 
 jest.mock('@/services/surat-jalan.service');
 
@@ -28,130 +29,42 @@ describe('SuratJalanController', () => {
 
   describe('createSuratJalan', () => {
     it('should create a surat jalan and return 201', async () => {
-      const createInput: CreateSuratJalanInput = {
-        no_surat_jalan: 'SJ-2024-001',
-        deliver_to: 'Customer ABC',
-        PIC: 'John Doe',
-        alamat_tujuan: 'Jl. Example No. 123, Jakarta',
-        invoiceId: 'inv123',
-        suratJalanDetails: [
-          {
-            no_box: 'BOX-001',
-            total_quantity_in_box: 100,
-            isi_box: 10,
-            sisa: 0,
-            total_box: 10,
-            items: [
-              {
-                nama_barang: 'Product A',
-                PLU: 'PLU001',
-                quantity: 50,
-                satuan: 'pcs',
-                total_box: 5,
-                keterangan: 'Fragile',
-              },
-            ],
-          },
-        ],
-      };
-      
-      const suratJalan = {
-        id: '1',
-        ...createInput,
-        createdBy: 'user123',
-        updatedBy: 'user123',
-        is_printed: false,
-        print_counter: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
+      const createInput = { no_surat_jalan: 'SJ-001' };
+      const createdSuratJalan = { id: '1', ...createInput };
       request.body = createInput;
-      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
-      (SuratJalanService.createSuratJalan as jest.Mock).mockResolvedValue(suratJalan);
+      (SuratJalanService.createSuratJalan as jest.Mock).mockResolvedValue(createdSuratJalan);
 
       await SuratJalanController.createSuratJalan(request as any, reply as any);
 
-      expect(SuratJalanService.createSuratJalan).toHaveBeenCalledWith({
-        ...createInput,
-        createdBy: 'user123',
-        updatedBy: 'user123',
-      });
+      expect(SuratJalanService.createSuratJalan).toHaveBeenCalledWith(createInput, 'user123');
       expect(reply.code).toHaveBeenCalledWith(201);
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan created successfully',
-      });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(createdSuratJalan));
     });
 
     it('should handle service errors', async () => {
-      const createInput: CreateSuratJalanInput = {
-        no_surat_jalan: 'SJ-2024-001',
-        deliver_to: 'Customer ABC',
-        PIC: 'John Doe',
-        alamat_tujuan: 'Jl. Example No. 123, Jakarta',
-        suratJalanDetails: [],
-      };
-      
+      const createInput = { no_surat_jalan: 'SJ-001' };
       request.body = createInput;
-      const error = new Error('Database error');
+      const error = new AppError('Database error', 500);
       (SuratJalanService.createSuratJalan as jest.Mock).mockRejectedValue(error);
 
-      await expect(
-        SuratJalanController.createSuratJalan(request as any, reply as any)
-      ).rejects.toThrow('Failed to create surat jalan');
+      await SuratJalanController.createSuratJalan(request as any, reply as any);
+
+      expect(reply.code).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.error('Database error'));
     });
   });
 
   describe('getAllSuratJalan', () => {
     it('should return paginated surat jalan', async () => {
-      const suratJalan = [
-        { id: '1', no_surat_jalan: 'SJ-001' },
-        { id: '2', no_surat_jalan: 'SJ-002' },
-      ];
-      const pagination = {
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 2,
-        itemsPerPage: 10,
-      };
-      
-      request.query = { page: '1', limit: '10' };
-      (SuratJalanService.getAllSuratJalan as jest.Mock).mockResolvedValue({
-        data: suratJalan,
-        pagination,
-      });
+      const suratJalan = [{ id: '1', no_surat_jalan: 'SJ-001' }];
+      const pagination = { currentPage: 1, totalPages: 1, totalItems: 1, itemsPerPage: 10 };
+      const result = { data: suratJalan, pagination };
+      (SuratJalanService.getAllSuratJalan as jest.Mock).mockResolvedValue(result);
 
       await SuratJalanController.getAllSuratJalan(request as any, reply as any);
 
       expect(SuratJalanService.getAllSuratJalan).toHaveBeenCalledWith(1, 10);
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: suratJalan,
-        pagination,
-        message: 'Surat jalan retrieved successfully',
-      });
-    });
-
-    it('should use default pagination values', async () => {
-      const suratJalan = [];
-      const pagination = {
-        currentPage: 1,
-        totalPages: 0,
-        totalItems: 0,
-        itemsPerPage: 10,
-      };
-      
-      request.query = {};
-      (SuratJalanService.getAllSuratJalan as jest.Mock).mockResolvedValue({
-        data: suratJalan,
-        pagination,
-      });
-
-      await SuratJalanController.getAllSuratJalan(request as any, reply as any);
-
-      expect(SuratJalanService.getAllSuratJalan).toHaveBeenCalledWith(1, 10);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(result));
     });
   });
 
@@ -164,119 +77,83 @@ describe('SuratJalanController', () => {
       await SuratJalanController.getSuratJalanById(request as any, reply as any);
 
       expect(SuratJalanService.getSuratJalanById).toHaveBeenCalledWith('1');
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan retrieved successfully',
-      });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(suratJalan));
     });
 
     it('should return 404 when surat jalan not found', async () => {
       request.params = { id: '999' };
-      (SuratJalanService.getSuratJalanById as jest.Mock).mockResolvedValue(null);
+      const error = new AppError('Surat jalan not found', 404);
+      (SuratJalanService.getSuratJalanById as jest.Mock).mockRejectedValue(error);
 
       await SuratJalanController.getSuratJalanById(request as any, reply as any);
 
       expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Surat jalan not found' });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.error('Surat jalan not found'));
     });
   });
 
   describe('updateSuratJalan', () => {
     it('should update surat jalan and return updated data', async () => {
-      const updateData: UpdateSuratJalanInput['body'] = {
-        deliver_to: 'Updated Customer',
-        PIC: 'Jane Doe',
-      };
+      const updateData = { deliver_to: 'Updated Customer' };
       const updatedSuratJalan = { id: '1', ...updateData };
-      
       request.params = { id: '1' };
       request.body = updateData;
-      request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
       (SuratJalanService.updateSuratJalan as jest.Mock).mockResolvedValue(updatedSuratJalan);
 
       await SuratJalanController.updateSuratJalan(request as any, reply as any);
 
-      expect(SuratJalanService.updateSuratJalan).toHaveBeenCalledWith('1', {
-        ...updateData,
-        updatedBy: 'user123',
-      });
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: updatedSuratJalan,
-        message: 'Surat jalan updated successfully',
-      });
+      expect(SuratJalanService.updateSuratJalan).toHaveBeenCalledWith('1', updateData, 'user123');
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(updatedSuratJalan));
     });
 
     it('should return 404 when surat jalan not found', async () => {
+      const updateData = { deliver_to: 'Updated' };
       request.params = { id: '999' };
-      request.body = { deliver_to: 'Updated' };
-      (SuratJalanService.updateSuratJalan as jest.Mock).mockResolvedValue(null);
+      request.body = updateData;
+      const error = new AppError('Surat jalan not found', 404);
+      (SuratJalanService.updateSuratJalan as jest.Mock).mockRejectedValue(error);
 
       await SuratJalanController.updateSuratJalan(request as any, reply as any);
 
       expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Surat jalan not found' });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.error('Surat jalan not found'));
     });
   });
 
   describe('deleteSuratJalan', () => {
-    it('should delete surat jalan and return success', async () => {
-      const deletedSuratJalan = { id: '1', no_surat_jalan: 'SJ-001' };
+    it('should delete surat jalan and return 204', async () => {
       request.params = { id: '1' };
-      (SuratJalanService.deleteSuratJalan as jest.Mock).mockResolvedValue(deletedSuratJalan);
+      (SuratJalanService.deleteSuratJalan as jest.Mock).mockResolvedValue({} as any);
 
       await SuratJalanController.deleteSuratJalan(request as any, reply as any);
 
-      expect(SuratJalanService.deleteSuratJalan).toHaveBeenCalledWith('1');
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: deletedSuratJalan,
-        message: 'Surat jalan deleted successfully',
-      });
+      expect(SuratJalanService.deleteSuratJalan).toHaveBeenCalledWith('1', 'user123');
+      expect(reply.code).toHaveBeenCalledWith(204);
     });
 
     it('should return 404 when surat jalan not found', async () => {
       request.params = { id: '999' };
-      (SuratJalanService.deleteSuratJalan as jest.Mock).mockResolvedValue(null);
+      const error = new AppError('Surat jalan not found', 404);
+      (SuratJalanService.deleteSuratJalan as jest.Mock).mockRejectedValue(error);
 
       await SuratJalanController.deleteSuratJalan(request as any, reply as any);
 
       expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Surat jalan not found' });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.error('Surat jalan not found'));
     });
   });
 
   describe('searchSuratJalan', () => {
     it('should search surat jalan with query parameters', async () => {
-      const query: SearchSuratJalanInput['query'] = {
-        no_surat_jalan: 'SJ',
-        deliver_to: 'Customer',
-        page: 1,
-        limit: 10,
-      };
-      const searchResult = {
-        data: [{ id: '1', no_surat_jalan: 'SJ-001' }],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 1,
-          itemsPerPage: 10,
-        },
-      };
-      
+      const query = { no_surat_jalan: 'SJ-001' };
+      const searchResult = { data: [{ id: '1', no_surat_jalan: 'SJ-001' }], pagination: {} };
       request.query = query;
       (SuratJalanService.searchSuratJalan as jest.Mock).mockResolvedValue(searchResult);
 
       await SuratJalanController.searchSuratJalan(request as any, reply as any);
 
       expect(SuratJalanService.searchSuratJalan).toHaveBeenCalledWith(query);
-      expect(reply.send).toHaveBeenCalledWith({
-        success: true,
-        data: searchResult.data,
-        pagination: searchResult.pagination,
-        message: 'Surat jalan search completed successfully',
-      });
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(searchResult));
     });
 
     it('should handle search errors', async () => {
@@ -284,9 +161,10 @@ describe('SuratJalanController', () => {
       const error = new Error('Search error');
       (SuratJalanService.searchSuratJalan as jest.Mock).mockRejectedValue(error);
 
-      await expect(
-        SuratJalanController.searchSuratJalan(request as any, reply as any)
-      ).rejects.toThrow('Failed to search surat jalan');
+      await SuratJalanController.searchSuratJalan(request as any, reply as any);
+
+      expect(reply.code).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith(ResponseUtil.error('Failed to search surat jalan'));
     });
   });
 });

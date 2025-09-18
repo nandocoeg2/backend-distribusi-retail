@@ -1,10 +1,5 @@
 import { prisma } from '../../config/database';
-import {
-  getAllHistoryPengiriman,
-  getHistoryPengirimanBySuratJalanId,
-  getHistoryPengirimanByTanggalKirim,
-  getHistoryPengirimanByStatusCode,
-} from '../../services/history-pengiriman.service';
+import { HistoryPengirimanService } from '../../services/history-pengiriman.service';
 
 // Mock Prisma
 jest.mock('../../config/database', () => ({
@@ -15,7 +10,7 @@ jest.mock('../../config/database', () => ({
   },
 }));
 
-describe('History Pengiriman Service', () => {
+describe('HistoryPengirimanService', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -24,9 +19,14 @@ describe('History Pengiriman Service', () => {
     const mockData = [{ id: '1', notes: 'Test' }];
     (prisma.historyPengiriman.findMany as jest.Mock).mockResolvedValue(mockData);
 
-    const result = await getAllHistoryPengiriman();
+    const result = await HistoryPengirimanService.getAll();
 
-    expect(prisma.historyPengiriman.findMany).toHaveBeenCalledWith();
+    expect(prisma.historyPengiriman.findMany).toHaveBeenCalledWith({
+      include: {
+        suratJalan: true,
+        status: true,
+      },
+    });
     expect(result).toEqual(mockData);
   });
 
@@ -34,10 +34,14 @@ describe('History Pengiriman Service', () => {
     const mockData = [{ id: '1', surat_jalan_id: 'sj-123' }];
     (prisma.historyPengiriman.findMany as jest.Mock).mockResolvedValue(mockData);
 
-    const result = await getHistoryPengirimanBySuratJalanId('sj-123');
+    const result = await HistoryPengirimanService.getBySuratJalanId('sj-123');
 
     expect(prisma.historyPengiriman.findMany).toHaveBeenCalledWith({
       where: { surat_jalan_id: 'sj-123' },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
     });
     expect(result).toEqual(mockData);
   });
@@ -47,10 +51,14 @@ describe('History Pengiriman Service', () => {
     (prisma.historyPengiriman.findMany as jest.Mock).mockResolvedValue(mockData);
     const testDate = new Date('2025-09-07');
 
-    const result = await getHistoryPengirimanByTanggalKirim(testDate);
+    const result = await HistoryPengirimanService.getByTanggalKirim(testDate);
 
     expect(prisma.historyPengiriman.findMany).toHaveBeenCalledWith({
       where: { tanggal_kirim: testDate },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
     });
     expect(result).toEqual(mockData);
   });
@@ -59,12 +67,15 @@ describe('History Pengiriman Service', () => {
     const mockData = [{ id: '1', status_id: 'status-123' }];
     (prisma.historyPengiriman.findMany as jest.Mock).mockResolvedValue(mockData);
 
-    const result = await getHistoryPengirimanByStatusCode('status-123');
+    const result = await HistoryPengirimanService.getByStatusCode('status-123');
 
     expect(prisma.historyPengiriman.findMany).toHaveBeenCalledWith({
-      where: { status_id: 'status-123' },
+      where: { status: { status_code: 'status-123' } },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
     });
     expect(result).toEqual(mockData);
   });
 });
-

@@ -100,8 +100,9 @@ describe('AuthService', () => {
       expect(comparePassword).toHaveBeenCalledWith(loginInput.password, user.password);
       expect(signAccessToken).toHaveBeenCalledWith(user);
       expect(CacheService.set).toHaveBeenCalled();
-      expect(result.user).toHaveProperty('accessToken', accessToken);
+      expect(result).toHaveProperty('accessToken', accessToken);
       expect(result.user).toHaveProperty('email', user.email);
+      expect(result.user).not.toHaveProperty('accessToken');
     });
 
     it('should throw an error for invalid credentials', async () => {
