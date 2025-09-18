@@ -1,17 +1,15 @@
 import { prisma } from '@/config/database';
 import fs from 'fs/promises';
-import path from 'path';
+import { AppError } from '@/utils/app-error';
 
 export class FileService {
-  static async downloadFile(id: string): Promise<{ file: Buffer; filename: string; mimetype: string } | null> {
+  static async downloadFile(id: string): Promise<{ file: Buffer; filename: string; mimetype: string }> {
     const fileMetadata = await prisma.fileUploaded.findUnique({
       where: { id },
     });
 
-    console.log(fileMetadata);
-
     if (!fileMetadata) {
-      return null;
+      throw new AppError('File not found in database', 404);
     }
 
     const filePath = fileMetadata.path;
@@ -25,7 +23,7 @@ export class FileService {
       };
     } catch (error) {
       console.error(`File not found on disk for id: ${id} at path: ${filePath}`);
-      return null;
+      throw new AppError('File not found on disk', 404);
     }
   }
 }

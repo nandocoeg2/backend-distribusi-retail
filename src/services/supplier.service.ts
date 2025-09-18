@@ -69,7 +69,7 @@ export class SupplierService {
     });
 
     if (!supplier) {
-      return null;
+      throw new AppError('Supplier not found', 404);
     }
 
     const auditTrails = await prisma.auditTrail.findMany({

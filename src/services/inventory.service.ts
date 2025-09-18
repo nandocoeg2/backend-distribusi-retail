@@ -2,6 +2,7 @@ import { prisma } from '@/config/database';
 import { Inventory, Prisma } from '@prisma/client';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
 import { createAuditLog } from './audit.service';
+import { AppError } from '@/utils/app-error';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -114,10 +115,9 @@ export class InventoryService {
     });
 
     if (!inventory) {
-      return null;
+      throw new AppError('Inventory not found', 404);
     }
 
-    // Get audit trail for this inventory
     const auditTrails = await prisma.auditTrail.findMany({
       where: {
         tableName: 'Inventory',
@@ -150,7 +150,7 @@ export class InventoryService {
     });
 
     if (!existingInventory) {
-      return null;
+      throw new AppError('Inventory not found', 404);
     }
 
     const updatedInventory = await prisma.inventory.update({
@@ -175,7 +175,7 @@ export class InventoryService {
     });
 
     if (!existingInventory) {
-      return null;
+      throw new AppError('Inventory not found', 404);
     }
 
     await createAuditLog('Inventory', id, 'DELETE', userId, existingInventory);

@@ -1,24 +1,43 @@
 import { prisma } from '../config/database';
+import { HistoryPengiriman } from '@prisma/client';
 
-export const getAllHistoryPengiriman = async () => {
-  return prisma.historyPengiriman.findMany();
-};
+export class HistoryPengirimanService {
+  static async getAll(): Promise<HistoryPengiriman[]> {
+    return prisma.historyPengiriman.findMany({
+      include: {
+        suratJalan: true,
+        status: true,
+      },
+    });
+  }
 
-export const getHistoryPengirimanBySuratJalanId = async (suratJalanId: string) => {
-  return prisma.historyPengiriman.findMany({
-    where: { surat_jalan_id: suratJalanId },
-  });
-};
+  static async getBySuratJalanId(suratJalanId: string): Promise<HistoryPengiriman[]> {
+    return prisma.historyPengiriman.findMany({
+      where: { surat_jalan_id: suratJalanId },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
+    });
+  }
 
-export const getHistoryPengirimanByTanggalKirim = async (tanggalKirim: Date) => {
-  return prisma.historyPengiriman.findMany({
-    where: { tanggal_kirim: tanggalKirim },
-  });
-};
+  static async getByTanggalKirim(tanggalKirim: Date): Promise<HistoryPengiriman[]> {
+    return prisma.historyPengiriman.findMany({
+      where: { tanggal_kirim: tanggalKirim },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
+    });
+  }
 
-export const getHistoryPengirimanByStatusCode = async (statusCode: string) => {
-  return prisma.historyPengiriman.findMany({
-    where: { status_id: statusCode },
-  });
-};
-
+  static async getByStatusCode(statusCode: string): Promise<HistoryPengiriman[]> {
+    return prisma.historyPengiriman.findMany({
+      where: { status: { status_code: statusCode } },
+      include: {
+        suratJalan: true,
+        status: true,
+      },
+    });
+  }
+}

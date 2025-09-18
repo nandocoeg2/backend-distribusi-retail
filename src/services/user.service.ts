@@ -50,9 +50,12 @@ export class UserService {
       },
     });
 
-    if (user) {
-      await CacheService.set(`user:${id}`, user, 3600);
+    if (!user) {
+      // Throw an error instead of returning null to be consistent with other services
+      throw new AppError('User not found', 404);
     }
+
+    await CacheService.set(`user:${id}`, user, 3600);
 
     return user;
   }

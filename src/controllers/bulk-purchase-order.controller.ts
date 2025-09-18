@@ -8,13 +8,14 @@ import { promisify } from 'util';
 import { prisma } from '@/config/database';
 import { BulkPurchaseOrderService } from '@/services/bulk-purchase-order.service';
 import { FileUploaded, Prisma } from '@prisma/client';
+import { ResponseUtil } from '@/utils/response.util';
 
 const pump = promisify(pipeline);
 
 export class BulkPurchaseOrderController {
   static async bulkCreatePurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
     if (!request.isMultipart()) {
-      return reply.code(400).send(new AppError('Request is not multipart', 400));
+      throw new AppError('Request is not multipart', 400);
     }
 
     if (!request.user) {
@@ -69,10 +70,10 @@ export class BulkPurchaseOrderController {
         throw new AppError('At least one file is required for bulk upload', 400);
       }
 
-      return reply.code(201).send({
+      return reply.code(201).send(ResponseUtil.success({
         message: `${createdFiles.length} files uploaded successfully and are pending processing.`,
         files: createdFiles,
-      });
+      }));
     } catch (error) {
       if (tempFilepaths.length > 0) {
         for (const path of tempFilepaths) {
@@ -95,7 +96,7 @@ export class BulkPurchaseOrderController {
   ) {
     const { id } = request.params;
     const fileStatus = await BulkPurchaseOrderService.getBulkUploadStatus(id);
-    return reply.send(fileStatus);
+    return reply.send(ResponseUtil.success(fileStatus));
   }
 
   static async getAllBulkFiles(
@@ -104,6 +105,6 @@ export class BulkPurchaseOrderController {
   ) {
     const { status } = request.query as { status?: string };
     const files = await BulkPurchaseOrderService.getAllBulkFiles(status);
-    return reply.send(files);
+    return reply.send(ResponseUtil.success(files));
   }
 }
