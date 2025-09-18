@@ -1,0 +1,21 @@
+meta {
+  name: update
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/item-prices/clx1p0d3j000108l8g2f3d9b4
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "harga": 11000
+  }
+}
