@@ -15,26 +15,11 @@ export class SuratJalanController {
     reply: FastifyReply
   ) {
     try {
-      // Extract user ID from token for audit trail
       const userId = request.user?.id || 'system';
-      
-      const suratJalanData = {
-        ...request.body,
-        createdBy: userId,
-        updatedBy: userId,
-      };
-      
-      const suratJalan = await SuratJalanService.createSuratJalan(suratJalanData);
-      
-      reply.code(201).send({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan created successfully',
-      });
+      const suratJalan = await SuratJalanService.createSuratJalan(request.body, userId);
+      return reply.code(201).send(suratJalan);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to create surat jalan', 500);
     }
   }
@@ -47,16 +32,10 @@ export class SuratJalanController {
       const query = request.query as any;
       const page = parseInt(query.page || '1');
       const limit = parseInt(query.limit || '10');
-
       const result = await SuratJalanService.getAllSuratJalan(page, limit);
-
-      reply.send({
-        success: true,
-        data: result.data,
-        pagination: result.pagination,
-        message: 'Surat jalan retrieved successfully',
-      });
+      return reply.send(result);
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to retrieve surat jalan', 500);
     }
   }
@@ -67,20 +46,12 @@ export class SuratJalanController {
   ) {
     try {
       const suratJalan = await SuratJalanService.getSuratJalanById(request.params.id);
-
       if (!suratJalan) {
         return reply.code(404).send({ message: 'Surat jalan not found' });
       }
-
-      return reply.send({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan retrieved successfully',
-      });
+      return reply.send(suratJalan);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to retrieve surat jalan', 500);
     }
   }
@@ -90,32 +61,18 @@ export class SuratJalanController {
     reply: FastifyReply
   ) {
     try {
-      // Extract user ID from token for audit trail
       const userId = request.user?.id || 'system';
-      
-      const updateData = {
-        ...request.body,
-        updatedBy: userId,
-      };
-      
       const suratJalan = await SuratJalanService.updateSuratJalan(
         request.params.id,
-        updateData
+        request.body,
+        userId
       );
-
       if (!suratJalan) {
         return reply.code(404).send({ message: 'Surat jalan not found' });
       }
-
-      return reply.send({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan updated successfully',
-      });
+      return reply.send(suratJalan);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to update surat jalan', 500);
     }
   }
@@ -125,21 +82,14 @@ export class SuratJalanController {
     reply: FastifyReply
   ) {
     try {
-      const suratJalan = await SuratJalanService.deleteSuratJalan(request.params.id);
-
+      const userId = request.user?.id || 'system';
+      const suratJalan = await SuratJalanService.deleteSuratJalan(request.params.id, userId);
       if (!suratJalan) {
         return reply.code(404).send({ message: 'Surat jalan not found' });
       }
-
-      return reply.send({
-        success: true,
-        data: suratJalan,
-        message: 'Surat jalan deleted successfully',
-      });
+      return reply.code(204).send();
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to delete surat jalan', 500);
     }
   }
@@ -150,14 +100,9 @@ export class SuratJalanController {
   ) {
     try {
       const result = await SuratJalanService.searchSuratJalan(request.query);
-
-      reply.send({
-        success: true,
-        data: result.data,
-        pagination: result.pagination,
-        message: 'Surat jalan search completed successfully',
-      });
+      return reply.send(result);
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to search surat jalan', 500);
     }
   }

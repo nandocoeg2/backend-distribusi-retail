@@ -6,10 +6,10 @@ export const createPurchaseOrderSchema = z.object({
   body: z.object({
     customerId: z.string(),
     po_number: z.string(),
-    total_items: z.coerce.number().int(),
-    tanggal_order: z.string(),
+    total_items: z.coerce.number().int().optional(),
+    tanggal_order: z.coerce.date().optional(),
     po_type: z.nativeEnum(POType),
-    statusId: z.string(),
+    statusId: z.string().optional(),
     suratJalan: z.string().optional(),
     invoicePengiriman: z.string().optional(),
     suratPO: z.string().optional(),
@@ -36,7 +36,7 @@ const purchaseOrderDetailSchema = z.object({
   total_pembelian: z.coerce.number(),
   potongan_b: z.coerce.number().nullable().optional(),
   harga_after_potongan_b: z.coerce.number().nullable().optional(),
-  inventoryId: z.string().optional(),
+  inventoryId: z.string(),
 });
 
 export const updatePurchaseOrderSchema = z.object({

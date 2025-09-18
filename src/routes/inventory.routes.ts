@@ -1,12 +1,5 @@
 import { FastifyPluginCallback, FastifyPluginOptions } from 'fastify';
-import {
-  createInventoryHandler,
-  getAllInventoriesHandler,
-  getInventoryByIdHandler,
-  updateInventoryHandler,
-  deleteInventoryHandler,
-  searchInventoriesHandler,
-} from '@/controllers/inventory.controller';
+import { InventoryController } from '@/controllers/inventory.controller';
 import {
   createInventorySchema,
   getOrDeleteInventorySchema,
@@ -23,57 +16,50 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.post<{ Body: CreateInventoryInput }>(
     '/',
     {
-      schema: createInventorySchema,
       preHandler: [fastify.authenticate, validateRequest(createInventorySchema)],
     },
-    createInventoryHandler
+    InventoryController.create
   );
 
   fastify.get<{ Querystring: GetAllInventoriesInput['query'] }>(
     '/',
     {
-      schema: getAllInventoriesSchema,
       preHandler: [fastify.authenticate, validateRequest(getAllInventoriesSchema)],
     },
-    getAllInventoriesHandler
+    InventoryController.getAll
   );
 
   fastify.get<{ Querystring: SearchInventoryInput['query'] }>(
     '/search',
     {
-      schema: searchInventorySchema,
       preHandler: [fastify.authenticate, validateRequest(searchInventorySchema)],
     },
-    searchInventoriesHandler
+    InventoryController.search
   );
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
-      schema: getOrDeleteInventorySchema,
       preHandler: [fastify.authenticate, validateRequest(getOrDeleteInventorySchema)],
     },
-    getInventoryByIdHandler
+    InventoryController.getById
   );
 
   fastify.put<{ Body: UpdateInventoryInput['body']; Params: { id: string } }>(
     '/:id',
     {
-      schema: updateInventorySchema,
       preHandler: [fastify.authenticate, validateRequest(updateInventorySchema)],
     },
-    updateInventoryHandler
+    InventoryController.update
   );
 
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
-      schema: getOrDeleteInventorySchema,
       preHandler: [fastify.authenticate, validateRequest(getOrDeleteInventorySchema)],
     },
-    deleteInventoryHandler
+    InventoryController.delete
   );
 
   done();
 };
-

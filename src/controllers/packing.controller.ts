@@ -8,39 +8,45 @@ import {
 import { AppError } from '@/utils/app-error';
 
 export class PackingController {
-  static async createPacking(request: FastifyRequest, reply: FastifyReply) {
+  static async createPacking(
+    request: FastifyRequest<{ Body: CreatePackingInput }>,
+    reply: FastifyReply
+  ) {
     try {
-      const packingData: CreatePackingInput = request.body as CreatePackingInput;
-      // Add updatedBy from authenticated user (extract user ID from token)
       const userId = request.user?.id || 'system';
-      
-      const packingDataWithUser = {
-        ...packingData,
-        updatedBy: userId,
-      };
-      
-      const packing = await PackingService.createPacking(packingDataWithUser);
+      const packing = await PackingService.createPacking(request.body, userId);
       return reply.code(201).send(packing);
     } catch (error) {
-      throw error;
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error creating packing', 500);
     }
   }
 
   static async getPackings(request: FastifyRequest, reply: FastifyReply) {
-    const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
-    const result = await PackingService.getAllPackings(page, limit);
-    return reply.send(result);
+    try {
+      const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
+      const result = await PackingService.getAllPackings(page, limit);
+      return reply.send(result);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error fetching packings', 500);
+    }
   }
 
   static async getPacking(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    const packing = await PackingService.getPackingById(request.params.id);
-    if (!packing) {
-      return reply.code(404).send({ message: 'Packing not found' });
+    try {
+      const packing = await PackingService.getPackingById(request.params.id);
+      if (!packing) {
+        return reply.code(404).send({ message: 'Packing not found' });
+      }
+      return reply.send(packing);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error fetching packing', 500);
     }
-    return reply.send(packing);
   }
 
   static async updatePacking(
@@ -51,24 +57,19 @@ export class PackingController {
     reply: FastifyReply
   ) {
     try {
-      // Add updatedBy from authenticated user (extract user ID from token)
       const userId = request.user?.id || 'system';
-      
-      const updateData = {
-        ...request.body,
-        updatedBy: userId,
-      };
-      
       const packing = await PackingService.updatePacking(
         request.params.id,
-        updateData
+        request.body,
+        userId
       );
       if (!packing) {
         return reply.code(404).send({ message: 'Packing not found' });
       }
       return reply.send(packing);
     } catch (error) {
-      throw error;
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error updating packing', 500);
     }
   }
 
@@ -76,18 +77,29 @@ export class PackingController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    const packing = await PackingService.deletePacking(request.params.id);
-    if (!packing) {
-      return reply.code(404).send({ message: 'Packing not found' });
+    try {
+      const userId = request.user?.id || 'system';
+      const packing = await PackingService.deletePacking(request.params.id, userId);
+      if (!packing) {
+        return reply.code(404).send({ message: 'Packing not found' });
+      }
+      return reply.code(204).send();
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error deleting packing', 500);
     }
-    return reply.code(204).send();
   }
 
   static async searchPackings(
     request: FastifyRequest<{ Querystring: SearchPackingInput['query'] }>,
     reply: FastifyReply
   ) {
-    const result = await PackingService.searchPackings(request.query);
-    return reply.send(result);
+    try {
+      const result = await PackingService.searchPackings(request.query);
+      return reply.send(result);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error searching packings', 500);
+    }
   }
 }

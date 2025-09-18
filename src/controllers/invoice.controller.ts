@@ -62,7 +62,8 @@ export class InvoiceController {
 
     const invoice = await InvoiceService.updateInvoice(
       request.params.id,
-      updateData
+      updateData,
+      userId
     );
     if (!invoice) {
       return reply.code(404).send({ message: 'Invoice not found' });
@@ -74,7 +75,8 @@ export class InvoiceController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    const invoice = await InvoiceService.deleteInvoice(request.params.id);
+    const userId = request.user?.id || 'system';
+    const invoice = await InvoiceService.deleteInvoice(request.params.id, userId);
     if (!invoice) {
       return reply.code(404).send({ message: 'Invoice not found' });
     }
