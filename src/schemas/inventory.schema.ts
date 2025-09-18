@@ -47,7 +47,7 @@ export const getAllInventoriesSchema = z.object({
 
 export const searchInventorySchema = z.object({
   query: z.object({
-    query: z.string().optional(),
+    q: z.string().optional(),
   }).merge(paginationSchema),
 });
 

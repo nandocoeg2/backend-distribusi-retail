@@ -1,27 +1,31 @@
 import { Supplier, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import { AppError } from '@/utils/app-error';
-import { CreateSupplierInput, UpdateSupplierInput, SearchSupplierInput, GetAllSuppliersInput } from '@/schemas/supplier.schema';
+import { CreateSupplierInput, UpdateSupplierInput } from '@/schemas/supplier.schema';
 import { PaginatedResult } from './purchase-order.service';
+import { createAuditLog } from './audit.service';
 
 export class SupplierService {
-  static async createSupplier(data: CreateSupplierInput): Promise<Supplier> {
+  static async createSupplier(data: CreateSupplierInput, userId: string): Promise<Supplier> {
     try {
-      // Extract audit fields if present
       const { createdBy, updatedBy, ...supplierData } = data;
       
-      return await prisma.supplier.create({
+      const supplier = await prisma.supplier.create({
         data: {
           ...supplierData,
-          createdBy: createdBy || 'system',
-          updatedBy: updatedBy || 'system',
+          createdBy: userId,
+          updatedBy: userId,
         },
       });
+
+      await createAuditLog('Supplier', supplier.id, 'CREATE', userId, supplier);
+
+      return supplier;
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
         throw new AppError('Supplier with this code already exists', 409);
       }
-      throw error;
+      throw new AppError('Error creating supplier', 500);
     }
   }
 
@@ -53,7 +57,7 @@ export class SupplierService {
   }
 
   static async getSupplierById(id: string): Promise<Supplier | null> {
-    return prisma.supplier.findUnique({
+    const supplier = await prisma.supplier.findUnique({
       where: { id },
       include: {
         purchaseOrders: {
@@ -63,39 +67,84 @@ export class SupplierService {
         },
       },
     });
+
+    if (!supplier) {
+      return null;
+    }
+
+    const auditTrails = await prisma.auditTrail.findMany({
+      where: {
+        tableName: 'Supplier',
+        recordId: id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return {
+      ...supplier,
+      auditTrails,
+    } as any;
   }
 
-  static async updateSupplier(id: string, data: UpdateSupplierInput['body']): Promise<Supplier | null> {
+  static async updateSupplier(id: string, data: UpdateSupplierInput['body'], userId: string): Promise<Supplier | null> {
     try {
-      // Extract audit fields if present
+      const existingSupplier = await prisma.supplier.findUnique({ where: { id } });
+      if (!existingSupplier) {
+        throw new AppError('Supplier not found', 404);
+      }
+
       const { updatedBy, ...supplierData } = data;
       
-      return await prisma.supplier.update({
+      const updatedSupplier = await prisma.supplier.update({
         where: { id },
         data: {
           ...supplierData,
-          updatedBy: updatedBy || 'system',
+          updatedBy: userId,
         },
       });
+
+      await createAuditLog('Supplier', updatedSupplier.id, 'UPDATE', userId, {
+        before: existingSupplier,
+        after: updatedSupplier,
+      });
+
+      return updatedSupplier;
     } catch (error: any) {
+      if (error instanceof AppError) throw error;
       if (error.code === 'P2002' && error.meta?.target?.includes('code')) {
         throw new AppError('Supplier with this code already exists', 409);
       }
-      if (error.code === 'P2025') {
-        return null;
-      }
-      throw error;
+      throw new AppError('Error updating supplier', 500);
     }
   }
 
-  static async deleteSupplier(id: string): Promise<Supplier | null> {
+  static async deleteSupplier(id: string, userId: string): Promise<Supplier | null> {
     try {
+      const existingSupplier = await prisma.supplier.findUnique({ where: { id } });
+      if (!existingSupplier) {
+        throw new AppError('Supplier not found', 404);
+      }
+
+      await createAuditLog('Supplier', id, 'DELETE', userId, existingSupplier);
+
       return await prisma.supplier.delete({
         where: { id },
       });
     } catch (error) {
-      // Prisma throws an error if the record is not found on delete
-      return null;
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error deleting supplier', 500);
     }
   }
 
@@ -103,28 +152,7 @@ export class SupplierService {
     const skip = (page - 1) * limit;
     
     if (!query) {
-      const [data, totalItems] = await Promise.all([
-        prisma.supplier.findMany({
-          skip,
-          take: parseInt(limit.toString()),
-          orderBy: {
-            createdAt: 'desc',
-          },
-        }),
-        prisma.supplier.count(),
-      ]);
-      
-      const totalPages = Math.ceil(totalItems / limit);
-      
-      return {
-        data,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          itemsPerPage: limit,
-        },
-      };
+      return this.getAllSuppliers(page, limit);
     }
 
     const filters: Prisma.SupplierWhereInput[] = [

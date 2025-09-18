@@ -415,7 +415,7 @@ export class PurchaseOrderService {
       }
     }
     if (customer_name) {
-      filters.push({ customer: { name: { contains: customer_name, mode: 'insensitive' } } });
+      filters.push({ customer: { namaCustomer: { contains: customer_name, mode: 'insensitive' } } });
     }
     if (customerId) {
       filters.push({ customerId });

@@ -310,7 +310,8 @@ export class PackingService {
         where: { id },
       });
     } catch (error) {
-      return null;
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to delete packing', 500);
     }
   }
 

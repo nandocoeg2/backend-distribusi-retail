@@ -4,16 +4,8 @@ import { CreateSupplierInput, UpdateSupplierInput, SearchSupplierInput, GetAllSu
 
 export class SupplierController {
   static async createSupplier(request: FastifyRequest<{ Body: CreateSupplierInput }>, reply: FastifyReply) {
-    // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
-    
-    const supplierData = {
-      ...request.body,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    
-    const supplier = await SupplierService.createSupplier(supplierData);
+    const supplier = await SupplierService.createSupplier(request.body, userId);
     return reply.code(201).send(supplier);
   }
 
@@ -35,15 +27,8 @@ export class SupplierController {
     request: FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>,
     reply: FastifyReply
   ) {
-    // Extract user ID from token for audit trail
     const userId = request.user?.id || 'system';
-    
-    const updateData = {
-      ...request.body,
-      updatedBy: userId,
-    };
-    
-    const supplier = await SupplierService.updateSupplier(request.params.id, updateData);
+    const supplier = await SupplierService.updateSupplier(request.params.id, request.body, userId);
     if (!supplier) {
       return reply.code(404).send({ message: 'Supplier not found' });
     }
@@ -51,7 +36,8 @@ export class SupplierController {
   }
 
   static async deleteSupplier(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const supplier = await SupplierService.deleteSupplier(request.params.id);
+    const userId = request.user?.id || 'system';
+    const supplier = await SupplierService.deleteSupplier(request.params.id, userId);
     if (!supplier) {
       return reply.code(404).send({ message: 'Supplier not found' });
     }
