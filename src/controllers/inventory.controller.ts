@@ -23,7 +23,7 @@ export class InventoryController {
     reply: FastifyReply
   ) {
     const { page = 1, limit = 10 } = request.query;
-    const inventories = await InventoryService.getAll(page, limit);
+    const inventories = await InventoryService.getAll(Number(page), Number(limit));
     return reply.send(ResponseUtil.success(inventories));
   }
 
@@ -32,7 +32,7 @@ export class InventoryController {
     reply: FastifyReply
   ) {
     const { q, page = 1, limit = 10 } = request.query;
-    const inventories = await InventoryService.search(q, page, limit);
+    const inventories = await InventoryService.search(q, Number(page), Number(limit));
     return reply.send(ResponseUtil.success(inventories));
   }
 

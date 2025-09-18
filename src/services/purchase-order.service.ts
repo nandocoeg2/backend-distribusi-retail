@@ -43,7 +43,7 @@ export class PurchaseOrderService {
 
       const dataForDb = {
         ...poData,
-        tanggal_order: new Date(poData.tanggal_order),
+        tanggal_order: poData.tanggal_order ? new Date(poData.tanggal_order) : new Date(),
         files: {
           create: fileInfos,
         },
@@ -633,7 +633,7 @@ export class PurchaseOrderService {
               data: {
                 no_invoice: invoiceNumber,
                 tanggal: new Date(),
-                deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
+                deliver_to: purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
                 sub_total: subTotal,
                 total_discount: 0,
                 total_price: subTotal,
@@ -699,9 +699,9 @@ export class PurchaseOrderService {
             const newSuratJalan = await tx.suratJalan.create({
               data: {
                 no_surat_jalan: suratJalanNumber,
-                deliver_to: purchaseOrder.customer?.name || 'Unknown Customer',
-                PIC: purchaseOrder.customer?.name || 'Unknown PIC',
-                alamat_tujuan: purchaseOrder.customer?.address || 'Unknown Address',
+                deliver_to: purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
+                PIC: purchaseOrder.customer?.namaCustomer || 'Unknown PIC',
+                alamat_tujuan: purchaseOrder.customer?.alamatPengiriman || 'Unknown Address',
                 is_printed: false,
                 print_counter: 0,
                 invoiceId: createdInvoice.id,

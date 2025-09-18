@@ -50,10 +50,9 @@ export const deleteCustomerSchema = z.object({
 });
 
 export const searchCustomerSchema = z.object({
-  params: z.object({
+  query: z.object({
     q: z.string().optional(),
-  }),
-  query: paginationSchema,
+  }).merge(paginationSchema),
 });
 
 export const getAllCustomersSchema = z.object({

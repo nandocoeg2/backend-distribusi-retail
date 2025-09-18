@@ -11,10 +11,15 @@ export class AuthController {
   }
 
   static async login(request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) {
-    const { user, accessToken } = await AuthService.login(request.body);
-    // Note: The original controller returned { user }, but the service returns { user, accessToken }.
-    // I will return both as it seems more useful.
-    return reply.send(ResponseUtil.success({ user, accessToken }));
+    try {
+      const { user, accessToken } = await AuthService.login(request.body);
+      return reply.send(ResponseUtil.success({ user, accessToken }));
+    } catch (error) {
+      if (error instanceof AppError) {
+        return reply.status(error.statusCode).send(ResponseUtil.error(error.message));
+      }
+      return reply.status(500).send(ResponseUtil.error('Internal Server Error'));
+    }
   }
 
   static async logout(request: FastifyRequest, reply: FastifyReply) {

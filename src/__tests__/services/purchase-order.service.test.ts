@@ -1,6 +1,11 @@
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 import { AppError } from '@/utils/app-error';
 
+// Mock audit.service.ts
+jest.mock('@/services/audit.service', () => ({
+  createAuditLog: jest.fn(),
+}));
+
 // Mock Prisma
 jest.mock('@/config/database', () => ({
   prisma: {
@@ -164,7 +169,7 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.updatePurchaseOrder('po1', updateData);
+      const result = await PurchaseOrderService.updatePurchaseOrder('po1', { ...updateData, purchaseOrderDetails: updateData.purchaseOrderDetails as any }, 'user1');
 
       expect(result).toEqual(mockUpdatedPO);
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -213,7 +218,7 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.updatePurchaseOrder('po1', updateData);
+      const result = await PurchaseOrderService.updatePurchaseOrder('po1', updateData, 'user1');
 
       expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -230,7 +235,7 @@ describe('PurchaseOrderService', () => {
       });
 
       await expect(
-        PurchaseOrderService.updatePurchaseOrder('non-existent-po', {})
+        PurchaseOrderService.updatePurchaseOrder('non-existent-po', {}, 'user1')
       ).rejects.toThrow(AppError);
     });
   });
@@ -337,7 +342,7 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER');
+      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER', 'user1');
 
       expect(result.invoicePengiriman).toBe(mockCreatedInvoice.id);
       expect(result.suratJalan).toBe(mockCreatedSuratJalan.id);
@@ -397,7 +402,7 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER');
+      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER', 'user1');
 
       expect(result.invoicePengiriman).toBe(existingInvoice.id);
       expect(result.suratJalan).toBe(existingSuratJalan.id);
@@ -461,8 +466,7 @@ describe('PurchaseOrderService', () => {
             deleteMany: jest.fn().mockResolvedValue({ count: 1 })
           },
           suratJalan: {
-            findMany: jest.fn().mockResolvedValue(mockSuratJalans),
-            delete: jest.fn().mockResolvedValue({ count: 1 })
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
           },
           suratJalanDetailItem: {
             deleteMany: jest.fn().mockResolvedValue({ count: 1 })
@@ -477,13 +481,16 @@ describe('PurchaseOrderService', () => {
             deleteMany: jest.fn().mockResolvedValue({ count: 5 })
           },
           invoice: {
-            delete: jest.fn().mockResolvedValue({ count: 1 })
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
+          },
+          purchaseOrderDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 1 })
           }
         };
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.deletePurchaseOrder('po1');
+      const result = await PurchaseOrderService.deletePurchaseOrder('po1', 'user1');
 
       expect(result).toEqual(mockDeletedPO);
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -499,7 +506,7 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      await expect(PurchaseOrderService.deletePurchaseOrder('non-existent-po'))
+      await expect(PurchaseOrderService.deletePurchaseOrder('non-existent-po', 'user1'))
         .rejects.toThrow(new AppError('Purchase Order not found', 404));
     });
 
@@ -525,13 +532,40 @@ describe('PurchaseOrderService', () => {
         const mockTx = {
           purchaseOrder: {
             findUnique: jest.fn().mockResolvedValue(mockPurchaseOrderNoRelations),
-            delete: jest.fn().mockResolvedValue(mockDeletedPO)
-          }
+            delete: jest.fn().mockResolvedValue(mockDeletedPO),
+          },
+          packingItem: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          packing: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          suratJalan: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          suratJalanDetailItem: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          suratJalanDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          historyPengiriman: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          invoice: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          invoiceDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
+          purchaseOrderDetail: {
+            deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          },
         };
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.deletePurchaseOrder('po1');
+      const result = await PurchaseOrderService.deletePurchaseOrder('po1', 'user1');
 
       expect(result).toEqual(mockDeletedPO);
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -540,7 +574,7 @@ describe('PurchaseOrderService', () => {
     it('should handle errors during deletion and throw AppError', async () => {
       (prisma.$transaction as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-      await expect(PurchaseOrderService.deletePurchaseOrder('po1'))
+      await expect(PurchaseOrderService.deletePurchaseOrder('po1', 'user1'))
         .rejects.toThrow(new AppError('Failed to delete purchase order', 500));
     });
   });

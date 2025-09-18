@@ -155,51 +155,66 @@ export class SuratJalanService {
   static async updateSuratJalan(id: string, data: UpdateSuratJalanInput['body'], userId: string): Promise<SuratJalan> {
     const { suratJalanDetails, ...suratJalanInfo } = data;
 
-    return prisma.$transaction(async (tx) => {
-      const existingSuratJalan = await tx.suratJalan.findUnique({ where: { id } });
-      if (!existingSuratJalan) {
-        throw new AppError('Surat jalan not found', 404);
-      }
-
-      if (suratJalanDetails) {
-        const detailIds = existingSuratJalan.suratJalanDetails?.map(d => d.id) || [];
-        if (detailIds.length > 0) {
-          await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
-          await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const existingSuratJalan = await tx.suratJalan.findUnique({
+          where: { id },
+          include: {
+            suratJalanDetails: true,
+          },
+        });
+        if (!existingSuratJalan) {
+          throw new AppError('Surat jalan not found', 404);
         }
 
-        for (const detail of suratJalanDetails) {
-          await tx.suratJalanDetail.create({
-            data: {
-              surat_jalan_id: id,
-              no_box: detail.no_box,
-              total_quantity_in_box: detail.total_quantity_in_box,
-              isi_box: detail.isi_box,
-              sisa: detail.sisa,
-              total_box: detail.total_box,
-              suratJalanDetailItems: { create: detail.items.map(item => ({ ...item, createdBy: userId, updatedBy: userId })) }
-            }
-          });
+        if (suratJalanDetails) {
+          const detailIds = existingSuratJalan.suratJalanDetails?.map(d => d.id) || [];
+          if (detailIds.length > 0) {
+            await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
+            await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
+          }
+
+          for (const detail of suratJalanDetails) {
+            await tx.suratJalanDetail.create({
+              data: {
+                surat_jalan_id: id,
+                no_box: detail.no_box,
+                total_quantity_in_box: detail.total_quantity_in_box,
+                isi_box: detail.isi_box,
+                sisa: detail.sisa,
+                total_box: detail.total_box,
+                suratJalanDetailItems: { create: detail.items.map(item => ({ ...item, createdBy: userId, updatedBy: userId })) }
+              }
+            });
+          }
         }
+
+        const updatedSuratJalanData = await tx.suratJalan.update({
+          where: { id },
+          data: { ...suratJalanInfo, updatedBy: userId },
+          include: {
+            suratJalanDetails: { include: { suratJalanDetailItems: true } },
+            invoice: true,
+            status: true,
+          },
+        });
+
+        await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
+          before: existingSuratJalan,
+          after: updatedSuratJalanData,
+        });
+
+        return updatedSuratJalanData;
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      if (error.code === 'P2002' && error.meta?.target?.includes('no_surat_jalan')) {
+        throw new AppError('Surat jalan with this number already exists', 409);
       }
 
-      const updatedSuratJalanData = await tx.suratJalan.update({
-        where: { id },
-        data: { ...suratJalanInfo, updatedBy: userId },
-        include: {
-          suratJalanDetails: { include: { suratJalanDetailItems: true } },
-          invoice: true,
-          status: true,
-        },
-      });
-
-      await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
-        before: existingSuratJalan,
-        after: updatedSuratJalanData,
-      });
-
-      return updatedSuratJalanData;
-    });
+      throw new AppError('Failed to update surat jalan', 500);
+    }
   }
 
   static async deleteSuratJalan(id: string, userId: string): Promise<SuratJalan> {

@@ -46,13 +46,9 @@ describe('SupplierController', () => {
 
       await SupplierController.createSupplier(request as FastifyRequest<{ Body: CreateSupplierInput }>, reply as FastifyReply);
 
-      expect(SupplierService.createSupplier).toHaveBeenCalledWith({
-        ...createInput,
-        createdBy: 'user123',
-        updatedBy: 'user123',
-      });
+      expect(SupplierService.createSupplier).toHaveBeenCalledWith(createInput, 'user123');
       expect(reply.code).toHaveBeenCalledWith(201);
-      expect(reply.send).toHaveBeenCalledWith(supplier);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: supplier });
     });
   });
 
@@ -73,7 +69,7 @@ describe('SupplierController', () => {
       await SupplierController.getSuppliers(request as FastifyRequest<{ Querystring: GetAllSuppliersInput['query'] }>, reply as FastifyReply);
 
       expect(SupplierService.getAllSuppliers).toHaveBeenCalledWith(1, 10);
-      expect(reply.send).toHaveBeenCalledWith(paginatedResult);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: paginatedResult });
     });
   });
 
@@ -86,18 +82,14 @@ describe('SupplierController', () => {
       await SupplierController.getSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
 
       expect(SupplierService.getSupplierById).toHaveBeenCalledWith('1');
-      expect(reply.send).toHaveBeenCalledWith(supplier);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: supplier });
     });
 
     it('should return 404 if supplier not found', async () => {
       request.params = { id: '1' };
-      (SupplierService.getSupplierById as jest.Mock).mockResolvedValue(null);
+      (SupplierService.getSupplierById as jest.Mock).mockRejectedValue(new Error('Supplier not found'));
 
-      await SupplierController.getSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
-
-      expect(SupplierService.getSupplierById).toHaveBeenCalledWith('1');
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Supplier not found' });
+      await expect(SupplierController.getSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply)).rejects.toThrow('Supplier not found');
     });
   });
 
@@ -112,11 +104,8 @@ describe('SupplierController', () => {
 
       await SupplierController.updateSupplier(request as FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>, reply as FastifyReply);
 
-      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', {
-        ...updateInput,
-        updatedBy: 'user123',
-      });
-      expect(reply.send).toHaveBeenCalledWith(supplier);
+      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', updateInput, 'user123');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: supplier });
     });
 
     it('should return 404 if supplier to update not found', async () => {
@@ -124,16 +113,23 @@ describe('SupplierController', () => {
       request.params = { id: '1' };
       request.body = updateInput;
       request.user = { id: 'user123', iat: 0, exp: 0 }; // Mock authenticated user
-      (SupplierService.updateSupplier as jest.Mock).mockResolvedValue(null);
+      (SupplierService.updateSupplier as jest.Mock).mockRejectedValue(new Error('Supplier not found'));
+
+      await expect(SupplierController.updateSupplier(request as FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>, reply as FastifyReply)).rejects.toThrow('Supplier not found');
+    });
+
+    it('should update a supplier with system user if no user is authenticated', async () => {
+      const updateInput: UpdateSupplierInput['body'] = { name: 'Updated Name' };
+      const supplier = { id: '1', name: 'Updated Name' };
+      request.params = { id: '1' };
+      request.body = updateInput;
+      request.user = undefined;
+      (SupplierService.updateSupplier as jest.Mock).mockResolvedValue(supplier);
 
       await SupplierController.updateSupplier(request as FastifyRequest<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>, reply as FastifyReply);
 
-      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', {
-        ...updateInput,
-        updatedBy: 'user123',
-      });
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Supplier not found' });
+      expect(SupplierService.updateSupplier).toHaveBeenCalledWith('1', updateInput, 'system');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: supplier });
     });
   });
 
@@ -145,20 +141,16 @@ describe('SupplierController', () => {
 
       await SupplierController.deleteSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
 
-      expect(SupplierService.deleteSupplier).toHaveBeenCalledWith('1');
+      expect(SupplierService.deleteSupplier).toHaveBeenCalledWith('1', 'system');
       expect(reply.code).toHaveBeenCalledWith(204);
       expect(reply.send).toHaveBeenCalled();
     });
 
     it('should return 404 if supplier to delete not found', async () => {
       request.params = { id: '1' };
-      (SupplierService.deleteSupplier as jest.Mock).mockResolvedValue(null);
+      (SupplierService.deleteSupplier as jest.Mock).mockRejectedValue(new Error('Supplier not found'));
 
-      await SupplierController.deleteSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply);
-
-      expect(SupplierService.deleteSupplier).toHaveBeenCalledWith('1');
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Supplier not found' });
+      await expect(SupplierController.deleteSupplier(request as FastifyRequest<{ Params: { id: string } }>, reply as FastifyReply)).rejects.toThrow('Supplier not found');
     });
   });
 });

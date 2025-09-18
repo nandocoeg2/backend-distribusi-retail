@@ -18,6 +18,9 @@ jest.mock('@/config/database', () => ({
     },
     inventory: {
       findMany: jest.fn(),
+      fields: {
+        min_stok: 'min_stok'
+      }
     },
   },
 }));
@@ -129,10 +132,10 @@ describe('NotificationService', () => {
       });
     });
 
-    it('should return null if update fails', async () => {
-      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.updateNotification('1', { title: 'Updated' });
-      expect(result).toBeNull();
+    it('should throw an error if update fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
+      await expect(NotificationService.updateNotification('1', { title: 'Updated' })).rejects.toThrow('Update failed');
     });
   });
 
@@ -147,10 +150,10 @@ describe('NotificationService', () => {
       expect(prisma.notification.delete).toHaveBeenCalledWith({ where: { id: '1' }, include: { inventory: true } });
     });
 
-    it('should return null if delete fails', async () => {
-      (prisma.notification.delete as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.deleteNotification('1');
-      expect(result).toBeNull();
+    it('should throw an error if delete fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.delete as jest.Mock).mockRejectedValue(new Error('Delete failed'));
+      await expect(NotificationService.deleteNotification('1')).rejects.toThrow('Delete failed');
     });
   });
 
@@ -169,10 +172,10 @@ describe('NotificationService', () => {
       });
     });
 
-    it('should return null if markAsRead fails', async () => {
-      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.markAsRead('1');
-      expect(result).toBeNull();
+    it('should throw an error if markAsRead fails', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
+      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
+      await expect(NotificationService.markAsRead('1')).rejects.toThrow('Update failed');
     });
   });
 

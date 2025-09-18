@@ -48,7 +48,7 @@ export class AuthService {
 
   static async login(
     input: LoginInput
-  ): Promise<{ user: any }> {
+  ): Promise<{ user: any, accessToken: string }> {
     const user = await prisma.user.findUnique({
       where: { email: input.email },
       include: {
@@ -101,7 +101,7 @@ export class AuthService {
 
     await CacheService.set(`user:${user.id}`, userResponse, 3600);
 
-    return { user: { ...userResponse, accessToken } };
+    return { user: userResponse, accessToken };
   }
 
   static async logout(userId: string): Promise<void> {

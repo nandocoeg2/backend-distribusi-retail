@@ -1,5 +1,5 @@
 import { prisma } from '@/config/database';
-import { convertFileToJson } from '@/services/conversion.service';
+import { ConversionService } from '@/services/conversion.service';
 import { AppError } from '@/utils/app-error';
 import logger from '@/config/logger';
 import fs from 'fs/promises';
@@ -28,12 +28,11 @@ export class BulkPurchaseOrderService {
     const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
 
     if (!poPendingStatus || !fileProcessingStatus || !fileProcessedStatus || !fileFailedStatus) {
-      logger.error('Core statuses not found. Aborting.');
+      logger.error('Core statuses for bulk processing not found. Aborting.');
       return;
     }
 
     for (const file of pendingFiles) {
-      // Use type assertion as a workaround for potential stale client types
       const userId = (file as any).createdBy;
 
       if (!userId) {
@@ -42,7 +41,7 @@ export class BulkPurchaseOrderService {
           where: { id: file.id },
           data: { statusId: fileFailedStatus.id },
         });
-        continue; // Skip to the next file
+        continue;
       }
 
       try {
@@ -53,7 +52,7 @@ export class BulkPurchaseOrderService {
         logger.info(`Locked file ${file.id} for processing.`);
 
         const fileBuffer = await fs.readFile(file.path);
-        const jsonResult: any = await convertFileToJson(
+        const jsonResult: any = await ConversionService.convertFileToJson(
           fileBuffer,
           file.mimetype,
           'extract purchase order details as json'
@@ -69,9 +68,21 @@ export class BulkPurchaseOrderService {
           const customerName = jsonResult.customers?.name;
           if (!customerName) throw new Error('Customer name missing from file.');
 
-          let customer = await tx.customer.findFirst({ where: { name: { contains: customerName, mode: 'insensitive' } } });
+          let customer = await tx.customer.findFirst({ where: { namaCustomer: { contains: customerName, mode: 'insensitive' } } });
           if (!customer) {
-            customer = await tx.customer.create({ data: { name: customerName, phoneNumber: 'N/A', createdBy: userId, updatedBy: userId } });
+            // This is a simplified customer creation. In a real-world scenario, you might need more data.
+            customer = await tx.customer.create({
+              data: {
+                namaCustomer: customerName,
+                kodeCustomer: `CUST-${customerName.toUpperCase().replace(/\s/g, '-')}`,
+                alamatPengiriman: 'N/A',
+                phoneNumber: 'N/A',
+                groupCustomerId: 'a2cbe890-1c19-4586-9c16-9f15031b2649', // Default Group Customer
+                regionId: 'f7c8b4b0-1c19-4586-9c16-9f15031b2649', // Default Region
+                createdBy: userId,
+                updatedBy: userId,
+              },
+            });
           }
 
           let supplier: Supplier | null = null;
@@ -140,7 +151,6 @@ export class BulkPurchaseOrderService {
                 updatedBy: userId,
               },
             });
-
             poDetails.push({
               kode_barang: poDetail.kode_barang,
               nama_barang: poDetail.nama_barang,
@@ -200,7 +210,6 @@ export class BulkPurchaseOrderService {
       throw new AppError('File not found', 404);
     }
 
-    // Get audit trail for this file upload
     const auditTrails = await prisma.auditTrail.findMany({
       where: {
         tableName: 'FileUploaded',

@@ -1,13 +1,6 @@
 // @ts-nocheck
 import { prisma } from '@/config/database';
-import {
-  createInventory,
-  getAllInventories,
-  getInventoryById,
-  updateInventory,
-  deleteInventory,
-  searchInventories,
-} from '@/services/inventory.service';
+import { InventoryService } from '@/services/inventory.service';
 import { CreateInventoryInput, UpdateInventoryInput } from '@/schemas/inventory.schema';
 
 // Mock the database module
@@ -21,7 +14,14 @@ jest.mock('@/config/database', () => ({
       delete: jest.fn(),
       count: jest.fn(),
     },
+    auditTrail: {
+      findMany: jest.fn(),
+    },
   },
+}));
+
+jest.mock('@/services/audit.service', () => ({
+  createAuditLog: jest.fn(),
 }));
 
 describe('Inventory Service', () => {
@@ -42,7 +42,7 @@ describe('Inventory Service', () => {
 
       (prisma.inventory.create as jest.Mock).mockResolvedValue(mockInventory);
 
-      const result = await createInventory(input);
+      const result = await InventoryService.create(input, 'system');
       expect(result).toEqual(mockInventory);
       expect(prisma.inventory.create).toHaveBeenCalledWith({ 
         data: {
@@ -70,7 +70,7 @@ describe('Inventory Service', () => {
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
       (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await getAllInventories(1, 10);
+      const result = await InventoryService.getAll(1, 10);
       expect(result).toEqual({
         data: mockInventories,
         pagination: {
@@ -108,7 +108,7 @@ describe('Inventory Service', () => {
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
       (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await searchInventories(query, 1, 10);
+      const result = await InventoryService.search(query, 1, 10);
       expect(result).toEqual({
         data: mockInventories,
         pagination: {
@@ -176,7 +176,7 @@ describe('Inventory Service', () => {
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(mockInventories);
       (prisma.inventory.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await searchInventories(undefined, 1, 10);
+      const result = await InventoryService.search(undefined, 1, 10);
       expect(result).toEqual({
         data: mockInventories,
         pagination: {
@@ -209,9 +209,10 @@ describe('Inventory Service', () => {
         updatedAt: new Date(),
       };
       (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(mockInventory);
+      (prisma.auditTrail.findMany as jest.Mock).mockResolvedValue([]);
 
-      const result = await getInventoryById('1');
-      expect(result).toEqual(mockInventory);
+      const result = await InventoryService.getById('1');
+      expect(result).toEqual({ ...mockInventory, auditTrails: [] });
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
     });
   });
@@ -233,7 +234,7 @@ describe('Inventory Service', () => {
       (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(existingInventory);
       (prisma.inventory.update as jest.Mock).mockResolvedValue(updatedInventory);
 
-      const result = await updateInventory('1', data);
+      const result = await InventoryService.update('1', data, 'system');
       expect(result).toEqual(updatedInventory);
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
       expect(prisma.inventory.update).toHaveBeenCalledWith({ 
@@ -245,13 +246,12 @@ describe('Inventory Service', () => {
       });
     });
 
-    it('should return null when inventory does not exist', async () => {
+    it('should throw an error when inventory does not exist', async () => {
       const data: UpdateInventoryInput['body'] = { stok_barang: 150, min_stok: 20 };
       
       (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await updateInventory('1', data);
-      expect(result).toBeNull();
+      await expect(InventoryService.update('1', data, 'system')).rejects.toThrow('Inventory not found');
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
       expect(prisma.inventory.update).not.toHaveBeenCalled();
     });
@@ -271,17 +271,16 @@ describe('Inventory Service', () => {
       (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(mockInventory);
       (prisma.inventory.delete as jest.Mock).mockResolvedValue(mockInventory);
 
-      const result = await deleteInventory('1');
+      const result = await InventoryService.delete('1', 'system');
       expect(result).toEqual(mockInventory);
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
       expect(prisma.inventory.delete).toHaveBeenCalledWith({ where: { id: '1' } });
     });
 
-    it('should return null when inventory does not exist', async () => {
+    it('should throw an error when inventory does not exist', async () => {
       (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await deleteInventory('1');
-      expect(result).toBeNull();
+      await expect(InventoryService.delete('1', 'system')).rejects.toThrow('Inventory not found');
       expect(prisma.inventory.findUnique).toHaveBeenCalledWith({ where: { id: '1' } });
       expect(prisma.inventory.delete).not.toHaveBeenCalled();
     });

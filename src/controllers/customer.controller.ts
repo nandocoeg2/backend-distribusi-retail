@@ -19,7 +19,7 @@ export class CustomerController {
 
   static async getCustomers(request: FastifyRequest<{ Querystring: GetAllCustomersInput['query'] }>, reply: FastifyReply) {
     const { page = 1, limit = 10 } = request.query;
-    const result = await CustomerService.getAllCustomers(page, limit);
+    const result = await CustomerService.getAllCustomers(Number(page), Number(limit));
     return reply.send(ResponseUtil.success(result));
   }
 
@@ -49,9 +49,8 @@ export class CustomerController {
   }
 
   static async searchCustomers(request: FastifyRequest<{ Querystring: SearchCustomerInput['query'] }>, reply: FastifyReply) {
-    const params = request.params as { q?: string };
-    const { page = 1, limit = 10 } = request.query;
-    const result = await CustomerService.searchCustomers(params.q, page, limit);
+    const { q, page = 1, limit = 10 } = request.query;
+    const result = await CustomerService.searchCustomers(q, Number(page), Number(limit));
     return reply.send(ResponseUtil.success(result));
   }
 }

@@ -54,13 +54,9 @@ describe('InvoiceController', () => {
 
       await InvoiceController.createInvoice(request as any, reply as any);
 
-      expect(InvoiceService.createInvoice).toHaveBeenCalledWith({
-        ...createInput,
-        createdBy: 'user123',
-        updatedBy: 'user123',
-      });
+      expect(InvoiceService.createInvoice).toHaveBeenCalledWith(createInput, 'user123');
       expect(reply.code).toHaveBeenCalledWith(201);
-      expect(reply.send).toHaveBeenCalledWith(invoice);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: invoice });
     });
 
     it('should use system as fallback when user is not available', async () => {
@@ -90,11 +86,7 @@ describe('InvoiceController', () => {
 
       await InvoiceController.createInvoice(request as any, reply as any);
 
-      expect(InvoiceService.createInvoice).toHaveBeenCalledWith({
-        ...createInput,
-        createdBy: 'system',
-        updatedBy: 'system',
-      });
+      expect(InvoiceService.createInvoice).toHaveBeenCalledWith(createInput, 'system');
     });
   });
 
@@ -121,9 +113,23 @@ describe('InvoiceController', () => {
 
       expect(InvoiceService.getAllInvoices).toHaveBeenCalledWith(1, 10);
       expect(reply.send).toHaveBeenCalledWith({
-        data: invoices,
-        pagination,
+        success: true,
+        data: {
+          data: invoices,
+          pagination,
+        }
       });
+    });
+
+    it('should use default pagination when not provided', async () => {
+      const invoices = [{ id: '1', no_invoice: 'INV-001' }];
+      const pagination = { currentPage: 1, totalPages: 1, totalItems: 1, itemsPerPage: 10 };
+      request.query = {}; // No pagination params
+      (InvoiceService.getAllInvoices as jest.Mock).mockResolvedValue({ data: invoices, pagination });
+
+      await InvoiceController.getInvoices(request as any, reply as any);
+
+      expect(InvoiceService.getAllInvoices).toHaveBeenCalledWith(1, 10);
     });
   });
 
@@ -136,17 +142,14 @@ describe('InvoiceController', () => {
       await InvoiceController.getInvoice(request as any, reply as any);
 
       expect(InvoiceService.getInvoiceById).toHaveBeenCalledWith('1');
-      expect(reply.send).toHaveBeenCalledWith(invoice);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: invoice });
     });
 
     it('should return 404 when invoice not found', async () => {
       request.params = { id: '999' };
-      (InvoiceService.getInvoiceById as jest.Mock).mockResolvedValue(null);
+      (InvoiceService.getInvoiceById as jest.Mock).mockRejectedValue(new Error('Invoice not found'));
 
-      await InvoiceController.getInvoice(request as any, reply as any);
-
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Invoice not found' });
+      await expect(InvoiceController.getInvoice(request as any, reply as any)).rejects.toThrow('Invoice not found');
     });
   });
 
@@ -164,22 +167,30 @@ describe('InvoiceController', () => {
 
       await InvoiceController.updateInvoice(request as any, reply as any);
 
-      expect(InvoiceService.updateInvoice).toHaveBeenCalledWith('1', {
-        ...updateData,
-        updatedBy: 'user123',
-      });
-      expect(reply.send).toHaveBeenCalledWith(updatedInvoice);
+      expect(InvoiceService.updateInvoice).toHaveBeenCalledWith('1', updateData, 'user123');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: updatedInvoice });
     });
 
     it('should return 404 when invoice not found', async () => {
       request.params = { id: '999' };
       request.body = { deliver_to: 'Updated' };
-      (InvoiceService.updateInvoice as jest.Mock).mockResolvedValue(null);
+      (InvoiceService.updateInvoice as jest.Mock).mockRejectedValue(new Error('Invoice not found'));
+
+      await expect(InvoiceController.updateInvoice(request as any, reply as any)).rejects.toThrow('Invoice not found');
+    });
+
+    it('should update invoice with system user if no user is authenticated', async () => {
+      const updateData: UpdateInvoiceInput['body'] = { deliver_to: 'Updated Name' };
+      const updatedInvoice = { id: '1', ...updateData };
+      request.params = { id: '1' };
+      request.body = updateData;
+      request.user = undefined; // No user on request
+      (InvoiceService.updateInvoice as jest.Mock).mockResolvedValue(updatedInvoice);
 
       await InvoiceController.updateInvoice(request as any, reply as any);
 
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Invoice not found' });
+      expect(InvoiceService.updateInvoice).toHaveBeenCalledWith('1', updateData, 'system');
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: updatedInvoice });
     });
   });
 
@@ -191,19 +202,28 @@ describe('InvoiceController', () => {
 
       await InvoiceController.deleteInvoice(request as any, reply as any);
 
-      expect(InvoiceService.deleteInvoice).toHaveBeenCalledWith('1');
+      expect(InvoiceService.deleteInvoice).toHaveBeenCalledWith('1', 'user123');
       expect(reply.code).toHaveBeenCalledWith(204);
       expect(reply.send).toHaveBeenCalledWith();
     });
 
     it('should return 404 when invoice not found', async () => {
       request.params = { id: '999' };
-      (InvoiceService.deleteInvoice as jest.Mock).mockResolvedValue(null);
+      (InvoiceService.deleteInvoice as jest.Mock).mockRejectedValue(new Error('Invoice not found'));
+
+      await expect(InvoiceController.deleteInvoice(request as any, reply as any)).rejects.toThrow('Invoice not found');
+    });
+
+    it('should delete invoice with system user if no user is authenticated', async () => {
+      const deletedInvoice = { id: '1', no_invoice: 'INV-001' };
+      request.params = { id: '1' };
+      request.user = undefined; // No user on request
+      (InvoiceService.deleteInvoice as jest.Mock).mockResolvedValue(deletedInvoice);
 
       await InvoiceController.deleteInvoice(request as any, reply as any);
 
-      expect(reply.code).toHaveBeenCalledWith(404);
-      expect(reply.send).toHaveBeenCalledWith({ message: 'Invoice not found' });
+      expect(InvoiceService.deleteInvoice).toHaveBeenCalledWith('1', 'system');
+      expect(reply.code).toHaveBeenCalledWith(204);
     });
   });
 
@@ -231,7 +251,7 @@ describe('InvoiceController', () => {
       await InvoiceController.searchInvoices(request as any, reply as any);
 
       expect(InvoiceService.searchInvoices).toHaveBeenCalledWith(query);
-      expect(reply.send).toHaveBeenCalledWith(searchResult);
+      expect(reply.send).toHaveBeenCalledWith({ success: true, data: searchResult });
     });
   });
 });

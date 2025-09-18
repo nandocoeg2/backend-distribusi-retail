@@ -2,6 +2,10 @@ import { SuratJalanService } from '@/services/surat-jalan.service';
 import { prisma } from '@/config/database';
 import { AppError } from '@/utils/app-error';
 
+jest.mock('@/services/audit.service', () => ({
+  createAuditLog: jest.fn(),
+}));
+
 jest.mock('@/config/database', () => ({
   prisma: {
     suratJalan: {
@@ -27,6 +31,9 @@ jest.mock('@/config/database', () => ({
     },
     invoice: {
       findUnique: jest.fn(),
+    },
+    auditTrail: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
     $transaction: jest.fn(),
   },
@@ -80,7 +87,7 @@ describe('SuratJalanService', () => {
       (prisma.invoice.findUnique as jest.Mock).mockResolvedValue({ id: 'inv123' });
       (prisma.suratJalan.create as jest.Mock).mockResolvedValue(createdSuratJalan);
 
-      const result = await SuratJalanService.createSuratJalan(createInput);
+      const result = await SuratJalanService.createSuratJalan(createInput, 'user123');
 
       expect(prisma.suratJalan.create).toHaveBeenCalledWith({
         data: {
@@ -115,7 +122,7 @@ describe('SuratJalanService', () => {
       
       (prisma.suratJalan.create as jest.Mock).mockRejectedValue(error);
 
-      await expect(SuratJalanService.createSuratJalan(createInput))
+      await expect(SuratJalanService.createSuratJalan(createInput, 'user123'))
         .rejects.toThrow('Surat jalan with this number already exists');
     });
   });
@@ -170,15 +177,13 @@ describe('SuratJalanService', () => {
         where: { id: '1' },
         include: expect.any(Object),
       });
-      expect(result).toEqual(suratJalan);
+      expect(result).toEqual({ ...suratJalan, auditTrails: [] });
     });
 
-    it('should return null when surat jalan not found', async () => {
+    it('should throw an error when surat jalan not found', async () => {
       (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await SuratJalanService.getSuratJalanById('999');
-
-      expect(result).toBeNull();
+      await expect(SuratJalanService.getSuratJalanById('999')).rejects.toThrow('Surat Jalan not found');
     });
   });
 
@@ -208,7 +213,7 @@ describe('SuratJalanService', () => {
         return callback(mockTx);
       });
 
-      const result = await SuratJalanService.updateSuratJalan('1', updateData);
+      const result = await SuratJalanService.updateSuratJalan('1', updateData, 'user123');
 
       expect(result).toEqual(updatedSuratJalan);
     });
@@ -224,7 +229,7 @@ describe('SuratJalanService', () => {
       });
 
       await expect(
-        SuratJalanService.updateSuratJalan('999', { deliver_to: 'Updated' })
+        SuratJalanService.updateSuratJalan('999', { deliver_to: 'Updated' }, 'user123')
       ).rejects.toThrow('Surat jalan not found');
     });
 
@@ -238,7 +243,7 @@ describe('SuratJalanService', () => {
       (prisma.$transaction as jest.Mock).mockRejectedValue(error);
 
       await expect(
-        SuratJalanService.updateSuratJalan('1', updateData)
+        SuratJalanService.updateSuratJalan('1', updateData, 'user123')
       ).rejects.toThrow('Surat jalan with this number already exists');
     });
   });
@@ -267,6 +272,7 @@ describe('SuratJalanService', () => {
             deleteMany: jest.fn().mockResolvedValue({ count: 1 })
           },
           suratJalanDetail: {
+            findMany: jest.fn().mockResolvedValue([{ id: 'detail1' }]),
             deleteMany: jest.fn().mockResolvedValue({ count: 1 })
           },
           historyPengiriman: {
@@ -279,32 +285,27 @@ describe('SuratJalanService', () => {
         return callback(mockTx);
       });
 
-      const result = await SuratJalanService.deleteSuratJalan('1');
+      const result = await SuratJalanService.deleteSuratJalan('1', 'user123');
 
       expect(prisma.suratJalan.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
-        include: expect.any(Object),
       });
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(result).toEqual(suratJalanToDelete);
     });
 
-    it('should return null when surat jalan not found', async () => {
+    it('should throw an error when surat jalan not found', async () => {
       (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await SuratJalanService.deleteSuratJalan('999');
-
-      expect(result).toBeNull();
+      await expect(SuratJalanService.deleteSuratJalan('999', 'user123')).rejects.toThrow('Surat Jalan not found');
     });
 
-    it('should return null when deletion fails', async () => {
+    it('should throw an error when deletion fails', async () => {
       const suratJalanToDelete = { id: '1', no_surat_jalan: 'SJ-001' };
       (prisma.suratJalan.findUnique as jest.Mock).mockResolvedValue(suratJalanToDelete);
       (prisma.$transaction as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-      const result = await SuratJalanService.deleteSuratJalan('1');
-
-      expect(result).toBeNull();
+      await expect(SuratJalanService.deleteSuratJalan('1', 'user123')).rejects.toThrow('Database error');
     });
   });
 
