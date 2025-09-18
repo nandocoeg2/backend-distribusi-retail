@@ -90,6 +90,7 @@ model Customer {
   purchaseOrders   PurchaseOrder[]
   groupCustomer    GroupCustomer   @relation(fields: [groupCustomerId], references: [id])
   region           Region          @relation(fields: [regionId], references: [id])
+  itemPrices       ItemPrice[]
 
   @@map("customers")
 }
@@ -190,6 +191,7 @@ model Inventory {
   notifications        Notification[]
   purchaseOrderDetails PurchaseOrderDetail[]
   packingItems         PackingItem[]
+  itemPrices           ItemPrice[]
 
   @@map("inventories")
 }
@@ -489,4 +491,24 @@ model GroupCustomer {
   customers   Customer[]
 
   @@map("group_customer")
+}
+
+model ItemPrice {
+  id          String   @id @default(cuid())
+  inventoryId String
+  customerId  String
+  harga       Float
+  pot1        Float?
+  harga1      Float?
+  pot2        Float?
+  harga2      Float?
+  ppn         Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  updatedBy   String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  customer    Customer  @relation(fields: [customerId], references: [id])
+
+  @@map("item_prices")
 }
