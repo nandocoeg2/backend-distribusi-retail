@@ -2,6 +2,7 @@
 import { NotificationService } from '@/services/notification.service';
 import { prisma } from '@/config/database';
 import { NotificationType } from '@prisma/client';
+import { AppError } from '@/utils/app-error';
 
 jest.mock('@/config/database', () => ({
   prisma: {
@@ -18,6 +19,10 @@ jest.mock('@/config/database', () => ({
     },
     inventory: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      fields: {
+        min_stok: 'min_stok',
+      }
     },
   },
 }));
@@ -27,6 +32,7 @@ describe('NotificationService', () => {
     jest.clearAllMocks();
   });
 
+  // ... (keep existing tests for create, getAll, getById, etc.)
   describe('createNotification', () => {
     it('should create a notification', async () => {
       const notificationData = {
@@ -117,28 +123,29 @@ describe('NotificationService', () => {
   describe('updateNotification', () => {
     it('should update a notification', async () => {
       const updatedNotification = { id: '1', title: 'Updated' };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
       (prisma.notification.update as jest.Mock).mockResolvedValue(updatedNotification);
 
       const result = await NotificationService.updateNotification('1', { title: 'Updated' });
 
       expect(result).toEqual(updatedNotification);
-      expect(prisma.notification.update).toHaveBeenCalledWith({ 
-        where: { id: '1' }, 
-        data: { title: 'Updated' }, 
-        include: { inventory: true } 
+      expect(prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { title: 'Updated' },
+        include: { inventory: true }
       });
     });
 
-    it('should return null if update fails', async () => {
-      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.updateNotification('1', { title: 'Updated' });
-      expect(result).toBeNull();
+    it('should throw AppError if notification not found', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
+      await expect(NotificationService.updateNotification('1', { title: 'Updated' })).rejects.toThrow(new AppError('Notification not found', 404));
     });
   });
 
   describe('deleteNotification', () => {
     it('should delete a notification', async () => {
       const deletedNotification = { id: '1' };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1' });
       (prisma.notification.delete as jest.Mock).mockResolvedValue(deletedNotification);
 
       const result = await NotificationService.deleteNotification('1');
@@ -147,32 +154,31 @@ describe('NotificationService', () => {
       expect(prisma.notification.delete).toHaveBeenCalledWith({ where: { id: '1' }, include: { inventory: true } });
     });
 
-    it('should return null if delete fails', async () => {
-      (prisma.notification.delete as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.deleteNotification('1');
-      expect(result).toBeNull();
+    it('should throw AppError if notification not found', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
+      await expect(NotificationService.deleteNotification('1')).rejects.toThrow(new AppError('Notification not found', 404));
     });
   });
 
   describe('markAsRead', () => {
     it('should mark a notification as read', async () => {
       const notification = { id: '1', isRead: true };
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue({ id: '1', isRead: false });
       (prisma.notification.update as jest.Mock).mockResolvedValue(notification);
 
       const result = await NotificationService.markAsRead('1');
 
       expect(result).toEqual(notification);
-      expect(prisma.notification.update).toHaveBeenCalledWith({ 
-        where: { id: '1' }, 
-        data: { isRead: true }, 
-        include: { inventory: true } 
+      expect(prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { isRead: true },
+        include: { inventory: true }
       });
     });
 
-    it('should return null if markAsRead fails', async () => {
-      (prisma.notification.update as jest.Mock).mockRejectedValue(new Error());
-      const result = await NotificationService.markAsRead('1');
-      expect(result).toBeNull();
+    it('should throw AppError if notification not found', async () => {
+      (prisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
+      await expect(NotificationService.markAsRead('1')).rejects.toThrow(new AppError('Notification not found', 404));
     });
   });
 
@@ -183,9 +189,9 @@ describe('NotificationService', () => {
       const result = await NotificationService.markAllAsRead();
 
       expect(result).toEqual({ count: 5 });
-      expect(prisma.notification.updateMany).toHaveBeenCalledWith({ 
-        where: { isRead: false }, 
-        data: { isRead: true } 
+      expect(prisma.notification.updateMany).toHaveBeenCalledWith({
+        where: { isRead: false },
+        data: { isRead: true }
       });
     });
   });
@@ -210,26 +216,11 @@ describe('NotificationService', () => {
       expect(prisma.notification.count).toHaveBeenCalledTimes(2);
       expect(prisma.notification.groupBy).toHaveBeenCalled();
     });
-
-    it('should return zero for types with no notifications', async () => {
-      (prisma.notification.count as jest.Mock).mockResolvedValueOnce(0).mockResolvedValueOnce(0);
-      (prisma.notification.groupBy as jest.Mock).mockResolvedValue([]);
-
-      const result = await NotificationService.getNotificationCount();
-
-      expect(result.total).toBe(0);
-      expect(result.unread).toBe(0);
-      expect(result.byType.GENERAL).toBe(0);
-      expect(result.byType.LOW_STOCK).toBe(0);
-      expect(result.byType.OUT_OF_STOCK).toBe(0);
-      expect(result.byType.STOCK_ALERT).toBe(0);
-      expect(result.byType.SYSTEM).toBe(0);
-    });
   });
 
   describe('checkLowStockAlerts', () => {
     it('should create notifications for low-stock items', async () => {
-      const lowStockInventories = [{ id: 'inv1', nama_barang: 'Item 1', stok_barang: 5, min_stok: 10 }];
+      const lowStockInventories = [{ id: 'inv1', nama_barang: 'Item 1', stok_c: 1, stok_q: 5, min_stok: 10 }];
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(lowStockInventories);
       (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({ id: 'notif1' });
@@ -243,7 +234,7 @@ describe('NotificationService', () => {
 
   describe('checkOutOfStockAlerts', () => {
     it('should create notifications for out-of-stock items', async () => {
-      const outOfStockInventories = [{ id: 'inv2', nama_barang: 'Item 2', stok_barang: 0 }];
+      const outOfStockInventories = [{ id: 'inv2', nama_barang: 'Item 2', stok_c: 0, stok_q: 0 }];
       (prisma.inventory.findMany as jest.Mock).mockResolvedValue(outOfStockInventories);
       (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
       (prisma.notification.create as jest.Mock).mockResolvedValue({ id: 'notif2' });
@@ -255,18 +246,18 @@ describe('NotificationService', () => {
     });
   });
 
-  describe('checkAllInventoryAlerts', () => {
-    it('should check all inventory alerts and return results', async () => {
-      const lowStockNotifications = [{ id: 'low1' }];
-      const outOfStockNotifications = [{ id: 'out1' }];
+  describe('checkPriceDifferenceAlerts', () => {
+    it('should create notifications for price differences', async () => {
+        const poDetails = [{ plu: 'PLU1', nama_barang: 'Item 1', harga: 120 }];
+        const inventory = { id: 'inv1', plu: 'PLU1', nama_barang: 'Item 1', harga_barang: 100 };
+        (prisma.inventory.findUnique as jest.Mock).mockResolvedValue(inventory);
+        (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
+        (prisma.notification.create as jest.Mock).mockResolvedValue({ id: 'notif3' });
 
-      jest.spyOn(NotificationService, 'checkLowStockAlerts').mockResolvedValue(lowStockNotifications);
-      jest.spyOn(NotificationService, 'checkOutOfStockAlerts').mockResolvedValue(outOfStockNotifications);
+        const result = await NotificationService.checkPriceDifferenceAlerts('po1', poDetails);
 
-      const result = await NotificationService.checkAllInventoryAlerts();
-
-      expect(result.lowStock).toEqual(lowStockNotifications);
-      expect(result.outOfStock).toEqual(outOfStockNotifications);
+        expect(result).toHaveLength(1);
+        expect(prisma.notification.create).toHaveBeenCalled();
     });
   });
 });

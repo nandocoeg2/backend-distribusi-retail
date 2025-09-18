@@ -71,7 +71,7 @@ export class InventoryService {
         },
       },
       {
-        kode_barang: {
+        plu: {
           contains: query,
           mode: 'insensitive',
         },

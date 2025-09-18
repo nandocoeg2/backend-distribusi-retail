@@ -25,7 +25,7 @@ export const getPurchaseOrderSchema = z.object({
 
 const purchaseOrderDetailSchema = z.object({
   id: z.string().optional(),
-  kode_barang: z.string(),
+  plu: z.string(),
   nama_barang: z.string(),
   quantity: z.coerce.number().int(),
   isi: z.coerce.number().int(),

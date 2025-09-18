@@ -116,7 +116,7 @@ export class NotificationService {
 
   static async checkLowStockAlerts(): Promise<Notification[]> {
     const inventories = await prisma.inventory.findMany({
-      where: { stok_barang: { lte: prisma.inventory.fields.min_stok } }
+      where: { stok_q: { lte: prisma.inventory.fields.min_stok } } // Assuming min_stok is in pcs
     });
 
     const notifications: Notification[] = [];
@@ -127,7 +127,7 @@ export class NotificationService {
       if (!existing) {
         notifications.push(await this.createNotification({
           title: `Low Stock Alert: ${inventory.nama_barang}`,
-          message: `Stock for ${inventory.nama_barang} is running low. Current stock: ${inventory.stok_barang}, Minimum stock: ${inventory.min_stok}`,
+          message: `Stock for ${inventory.nama_barang} is running low. Current stock: ${inventory.stok_c} cartons, ${inventory.stok_q} pcs. Minimum stock: ${inventory.min_stok} pcs.`,
           type: 'LOW_STOCK',
           inventoryId: inventory.id,
         }));
@@ -137,7 +137,7 @@ export class NotificationService {
   }
 
   static async checkOutOfStockAlerts(): Promise<Notification[]> {
-    const inventories = await prisma.inventory.findMany({ where: { stok_barang: 0 } });
+    const inventories = await prisma.inventory.findMany({ where: { stok_c: 0, stok_q: 0 } });
     const notifications: Notification[] = [];
     for (const inventory of inventories) {
       const existing = await prisma.notification.findFirst({
@@ -178,10 +178,10 @@ export class NotificationService {
     return { total, unread, byType };
   }
 
-  static async checkPriceDifferenceAlerts(purchaseOrderId: string, poDetails: Array<{ kode_barang: string; nama_barang: string; harga: number; }>): Promise<Notification[]> {
+  static async checkPriceDifferenceAlerts(purchaseOrderId: string, poDetails: Array<{ plu: string; nama_barang: string; harga: number; }>): Promise<Notification[]> {
     const notifications: Notification[] = [];
     for (const poDetail of poDetails) {
-      const inventory = await prisma.inventory.findUnique({ where: { kode_barang: poDetail.kode_barang } });
+      const inventory = await prisma.inventory.findUnique({ where: { plu: poDetail.plu } });
       if (inventory) {
         const priceDifference = Math.abs(poDetail.harga - inventory.harga_barang);
         if (priceDifference > (inventory.harga_barang * 0.10)) { // 10% threshold

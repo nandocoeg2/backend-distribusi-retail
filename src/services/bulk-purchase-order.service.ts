@@ -60,7 +60,7 @@ export class BulkPurchaseOrderService {
         );
 
         let newPurchaseOrder: any;
-        let poDetails: Array<{ kode_barang: string; nama_barang: string; harga: number; harga_netto: number; }> = [];
+        let poDetails: Array<{ plu: string; nama_barang: string; harga: number; harga_netto: number; }> = [];
 
         await prisma.$transaction(async (tx) => {
           const poNumber = jsonResult.order?.id;
@@ -110,17 +110,18 @@ export class BulkPurchaseOrderService {
 
           for (const item of jsonResult.items) {
             const inventoryItem = await tx.inventory.upsert({
-              where: { kode_barang: item.plu },
+              where: { plu: item.plu },
               create: {
-                kode_barang: item.plu,
+                plu: item.plu,
                 nama_barang: item.productName,
-                stok_barang: item.qtyOrdered_carton || 0,
+                stok_c: item.qtyOrdered_carton || 0,
+                stok_q: 0, // NOTE: stok_q (pcs) is not available in bulk upload, so default to 0
                 harga_barang: item.price_perCarton || item.netPrice_perPcs || 0,
                 createdBy: userId,
                 updatedBy: userId,
               },
               update: {
-                stok_barang: { increment: item.qtyOrdered_carton || 0 },
+                stok_c: { increment: item.qtyOrdered_carton || 0 },
                 updatedBy: userId,
               },
             });
@@ -129,7 +130,7 @@ export class BulkPurchaseOrderService {
               data: {
                 purchaseOrderId: newPurchaseOrder.id,
                 inventoryId: inventoryItem.id,
-                kode_barang: item.plu,
+                plu: item.plu,
                 nama_barang: item.productName,
                 quantity: item.qtyOrdered_carton || 0,
                 isi: 1,
@@ -142,7 +143,7 @@ export class BulkPurchaseOrderService {
             });
 
             poDetails.push({
-              kode_barang: poDetail.kode_barang,
+              plu: poDetail.plu,
               nama_barang: poDetail.nama_barang,
               harga: poDetail.harga,
               harga_netto: poDetail.harga_netto,
