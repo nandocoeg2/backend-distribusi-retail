@@ -1,45 +1,304 @@
-# Packing API Collection
+# Packing API Documentation
 
-This collection contains requests for managing packing operations in the backend-distribusi-retail system.
+Dokumentasi lengkap untuk endpoint Packing API pada sistem Backend Distribusi Retail.
 
-**Note:** Packing records are automatically created when a Purchase Order is processed. The system will:
-- Set the packing date to the current date/time
-- Assign the "PENDING PACKING" status (ID: cmf7s8zn2000vh1trq9whv9x1)
-- Create packing items based on the purchase order details
-- Set the updatedBy field to the user who processed the purchase order
+## Base URL
+```
+http://localhost:5050/api/v1/packings
+```
+
+## Authentication
+Semua endpoint memerlukan Bearer Token yang valid di header Authorization.
 
 ## Endpoints
 
-1. **Create Packing** - POST `/packings/`
-   Creates a new packing record for a purchase order with associated packing items.
+### 1. Create Packing
+Membuat data packing baru.
 
-2. **Get All Packings** - GET `/packings/`
-   Retrieves a paginated list of all packings.
+**Endpoint:** `POST /`
 
-3. **Get Packing by ID** - GET `/packings/{{packingId}}`
-   Retrieves a specific packing by its ID.
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-4. **Update Packing** - PUT `/packings/{{packingId}}`
-   Updates an existing packing record and its associated items.
+**Request Body:**
+```json
+{
+  "tanggal_packing": "2025-09-06T00:00:00.000Z",
+  "statusId": "status-uuid",
+  "purchaseOrderId": "purchase-order-uuid",
+  "packingItems": [
+    {
+      "nama_barang": "Product Name",
+      "total_qty": 100,
+      "jumlah_carton": 10,
+      "isi_per_carton": 10,
+      "no_box": "BOX001",
+      "inventoryId": "inventory-uuid"
+    }
+  ]
+}
+```
 
-5. **Delete Packing** - DELETE `/packings/{{packingId}}`
-   Deletes a packing record.
+**Validation Rules:**
+- `tanggal_packing`: **Required** - Tanggal packing
+- `statusId`: **Required** - ID status packing
+- `purchaseOrderId`: **Required** - ID purchase order
+- `packingItems`: **Required** - Array item packing
 
-6. **Search Packings** - GET `/packings/search`
-   Searches for packings based on specific criteria such as status, date, etc.
+**Response Success (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "packing-uuid",
+    "packing_number": "PKG-2024-001",
+    "tanggal_packing": "2025-09-06T00:00:00.000Z",
+    "statusId": "status-uuid",
+    "purchaseOrderId": "purchase-order-uuid",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "status": {...},
+    "purchaseOrder": {...},
+    "packingItems": [...]
+  }
+}
+```
 
-## Required Environment Variables
+---
 
-- `baseUrl` - The base URL of the API (e.g., http://localhost:5050/api/v1)
-- `access_token` - JWT token for authentication
-- `statusId` - ID of a status record
-- `purchaseOrderId` - ID of a purchase order record
-- `inventoryId` - ID of an inventory record
-- `packingId` - ID of a packing record (for update, get by ID, and delete operations)
+### 2. Get All Packings
+Mengambil daftar semua packing dengan pagination.
 
-## Usage
+**Endpoint:** `GET /`
 
-1. First, authenticate using the auth endpoints to get an access token
-2. Set the required environment variables
-3. Execute the requests in the desired order
-4. For operations that require a packingId (update, get by ID, delete), first create a packing and then use the returned ID
+**Headers:**
+```json
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Query Parameters:**
+- `page` (optional): Nomor halaman (default: 1)
+- `limit` (optional): Jumlah data per halaman (default: 10)
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [...],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 1,
+      "totalItems": 1,
+      "itemsPerPage": 10
+    }
+  }
+}
+```
+
+---
+
+### 3. Get Packing By ID
+Mengambil data packing berdasarkan ID.
+
+**Endpoint:** `GET /:id`
+
+**Headers:**
+```json
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID packing
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "packing-uuid",
+    "packing_number": "PKG-2024-001",
+    "tanggal_packing": "2025-09-06T00:00:00.000Z",
+    "statusId": "status-uuid",
+    "purchaseOrderId": "purchase-order-uuid",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "status": {...},
+    "purchaseOrder": {...},
+    "packingItems": [...]
+  }
+}
+```
+
+---
+
+### 4. Update Packing
+Memperbarui data packing berdasarkan ID.
+
+**Endpoint:** `PUT /:id`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID packing
+
+**Request Body:**
+```json
+{
+  "tanggal_packing": "2025-09-06T00:00:00.000Z",
+  "statusId": "status-uuid",
+  "packingItems": [
+    {
+      "nama_barang": "Updated Product Name",
+      "total_qty": 200,
+      "jumlah_carton": 20,
+      "isi_per_carton": 10,
+      "no_box": "BOX002",
+      "inventoryId": "inventory-uuid"
+    }
+  ]
+}
+```
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "packing-uuid",
+    "packing_number": "PKG-2024-001",
+    "tanggal_packing": "2025-09-06T00:00:00.000Z",
+    "statusId": "status-uuid",
+    "purchaseOrderId": "purchase-order-uuid",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "status": {...},
+    "purchaseOrder": {...},
+    "packingItems": [...]
+  }
+}
+```
+
+---
+
+### 5. Delete Packing
+Menghapus data packing berdasarkan ID.
+
+**Endpoint:** `DELETE /:id`
+
+**Headers:**
+```json
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID packing
+
+**Response Success (204 No Content):**
+```
+Status: 204 No Content
+Body: (empty)
+```
+
+---
+
+### 6. Search Packings
+Mencari packing berdasarkan berbagai filter dengan pagination.
+
+**Endpoint:** `GET /search`
+
+**Headers:**
+```json
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Query Parameters:**
+- `packing_number` (optional): Pencarian berdasarkan nomor packing
+- `tanggal_packing` (optional): Pencarian berdasarkan tanggal packing
+- `statusId` (optional): Pencarian berdasarkan status ID
+- `purchaseOrderId` (optional): Pencarian berdasarkan Purchase Order ID
+- `page` (optional): Nomor halaman (default: 1)
+- `limit` (optional): Jumlah data per halaman (default: 10)
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [...],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 1,
+      "totalItems": 1,
+      "itemsPerPage": 10
+    }
+  }
+}
+```
+
+---
+
+## Error Handling
+
+Semua endpoint menggunakan format error response yang konsisten:
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Error description"
+  }
+}
+```
+
+## Status Codes
+
+- `200 OK`: Request berhasil
+- `201 Created`: Resource berhasil dibuat
+- `204 No Content`: Resource berhasil dihapus
+- `400 Bad Request`: Request tidak valid
+- `401 Unauthorized`: Tidak terautentikasi atau token tidak valid
+- `404 Not Found`: Resource tidak ditemukan
+- `500 Internal Server Error`: Error server internal
+
+## Notes
+
+- Semua endpoint memerlukan autentikasi Bearer Token
+- Field `createdBy` dan `updatedBy` akan otomatis diisi berdasarkan user yang sedang login
+- Timestamp `createdAt` dan `updatedAt` akan otomatis diatur oleh sistem
+- Untuk update, hanya field yang ingin diubah yang perlu dikirim dalam request body
+- Nomor packing akan otomatis di-generate jika tidak disediakan
+- Packing terintegrasi dengan Purchase Order dan Inventory
+- Sistem mendukung multiple items dalam satu packing
+- Search mendukung multiple filter yang dapat dikombinasikan

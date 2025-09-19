@@ -1,80 +1,431 @@
-# Status API Collection
+# Status API Documentation
 
-This collection contains requests for retrieving different types of statuses used throughout the backend-distribusi-retail system.
+API untuk mengelola data status dalam sistem distribusi retail. Status digunakan untuk melacak status berbagai entitas seperti purchase order, invoice, packing, surat jalan, dan bulk file.
 
-The status system is used to track the lifecycle of various entities including Purchase Orders, Packing operations, Invoices, Surat Jalan (delivery notes), and Packing Items.
+## Base URL
+```
+{{baseUrl}}/statuses
+```
+
+## Authentication
+Semua endpoint memerlukan Bearer Token authentication.
+
+**Header:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+---
 
 ## Endpoints
 
-1. **Get All Statuses** - GET `/statuses/`
-   Retrieves all available statuses in the system.
+### 1. Get All Statuses
+Mengambil daftar semua status yang tersedia.
 
-2. **Get Purchase Order Statuses** - GET `/statuses/purchase_order`
-   Retrieves statuses that contain "Purchase Order" in their name.
+**Request:**
+```http
+GET {{baseUrl}}/statuses
+```
 
-3. **Get Bulk File Statuses** - GET `/statuses/bulk_file`
-   Retrieves statuses that contain "Bulk File" in their name.
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
 
-4. **Get Packing Statuses** - GET `/statuses/packing`
-   Retrieves statuses that contain "Packing" in their name.
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_1",
+      "name": "Pending",
+      "code": "PENDING",
+      "description": "Status pending",
+      "entity_type": "purchase_order",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_2",
+      "name": "Approved",
+      "code": "APPROVED",
+      "description": "Status approved",
+      "entity_type": "purchase_order",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-5. **Get Packing Item Statuses** - GET `/statuses/packing_item`
-   Retrieves statuses that contain "Item" in their name (e.g., "Pending Item", "Processing Item").
+---
 
-6. **Get Invoice Statuses** - GET `/statuses/invoice`
-   Retrieves statuses that contain "Invoice" in their name.
+### 2. Get Statuses by Purchase Order
+Mengambil status yang terkait dengan purchase order.
 
-7. **Get Surat Jalan Statuses** - GET `/statuses/surat_jalan`
-   Retrieves statuses that contain "Surat Jalan" in their name.
+**Request:**
+```http
+GET {{baseUrl}}/statuses/purchase_order
+```
 
-## Status Categories
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
 
-### Packing Item Statuses
-- **PENDING ITEM**: Packing detail item is pending processing
-- **PROCESSING ITEM**: Packing detail item is currently being processed
-- **PROCESSED ITEM**: Packing detail item has been processed
-- **FAILED ITEM**: Packing detail item processing has failed
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Purchase order statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_1",
+      "name": "Draft",
+      "code": "DRAFT",
+      "description": "Purchase order in draft status",
+      "entity_type": "purchase_order",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_2",
+      "name": "Submitted",
+      "code": "SUBMITTED",
+      "description": "Purchase order submitted for approval",
+      "entity_type": "purchase_order",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_3",
+      "name": "Approved",
+      "code": "APPROVED",
+      "description": "Purchase order approved",
+      "entity_type": "purchase_order",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-### Purchase Order Statuses
-- **PENDING PURCHASE ORDER**: Purchase order is pending approval
-- **PROCESSING PURCHASE ORDER**: Purchase order is being processed
-- **PROCESSED PURCHASE ORDER**: Purchase order has been processed
-- **APPROVED PURCHASE ORDER**: Purchase order has been approved
-- **FAILED PURCHASE ORDER**: Purchase order processing failed
+---
 
-### Packing Statuses
-- **PENDING PACKING**: Packing is pending processing
-- **PROCESSING PACKING**: Packing is currently being processed
-- **COMPLETED PACKING**: Packing has been completed
-- **FAILED PACKING**: Packing processing failed
+### 3. Get Statuses by Bulk File
+Mengambil status yang terkait dengan bulk file upload.
 
-### Surat Jalan Statuses
-- **PENDING SURAT JALAN**: Surat jalan is pending processing
-- **SENT SURAT JALAN**: Surat jalan has been sent
-- **DELIVERED SURAT JALAN**: Surat jalan has been delivered
-- **RETURNED SURAT JALAN**: Surat jalan has been returned
+**Request:**
+```http
+GET {{baseUrl}}/statuses/bulk_file
+```
 
-## Required Environment Variables
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
 
-- `baseUrl` - The base URL of the API (e.g., http://localhost:5050/api/v1)
-- `access_token` - JWT token for authentication
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Bulk file statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_4",
+      "name": "Uploading",
+      "code": "UPLOADING",
+      "description": "Bulk file is being uploaded",
+      "entity_type": "bulk_file",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_5",
+      "name": "Processing",
+      "code": "PROCESSING",
+      "description": "Bulk file is being processed",
+      "entity_type": "bulk_file",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_6",
+      "name": "Completed",
+      "code": "COMPLETED",
+      "description": "Bulk file processing completed",
+      "entity_type": "bulk_file",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
-## Usage
+---
 
-1. First, authenticate using the auth endpoints to get an access token
-2. Set the required environment variables
-3. Use the appropriate endpoint based on what type of statuses you need
-4. The filtered endpoints return only statuses that match the specific category
-5. Use these statuses when creating or updating related entities (packing items, purchase orders, etc.)
+### 4. Get Statuses by Packing
+Mengambil status yang terkait dengan packing.
 
-## Integration with Entity Creation
+**Request:**
+```http
+GET {{baseUrl}}/statuses/packing
+```
 
-- **Packing Items**: Automatically assigned "PENDING ITEM" status when created through purchase order processing
-- **Surat Jalan**: Automatically assigned "PENDING SURAT JALAN" status when created through purchase order processing
-- **Purchase Orders**: Should use "PENDING PURCHASE ORDER" status for new orders
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Packing statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_7",
+      "name": "Ready to Pack",
+      "code": "READY_TO_PACK",
+      "description": "Items ready for packing",
+      "entity_type": "packing",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_8",
+      "name": "Packed",
+      "code": "PACKED",
+      "description": "Items have been packed",
+      "entity_type": "packing",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 5. Get Statuses by Invoice
+Mengambil status yang terkait dengan invoice.
+
+**Request:**
+```http
+GET {{baseUrl}}/statuses/invoice
+```
+
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Invoice statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_9",
+      "name": "Draft",
+      "code": "DRAFT",
+      "description": "Invoice in draft status",
+      "entity_type": "invoice",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_10",
+      "name": "Sent",
+      "code": "SENT",
+      "description": "Invoice has been sent",
+      "entity_type": "invoice",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_11",
+      "name": "Paid",
+      "code": "PAID",
+      "description": "Invoice has been paid",
+      "entity_type": "invoice",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 6. Get Statuses by Surat Jalan
+Mengambil status yang terkait dengan surat jalan.
+
+**Request:**
+```http
+GET {{baseUrl}}/statuses/surat_jalan
+```
+
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Surat jalan statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_12",
+      "name": "Draft",
+      "code": "DRAFT",
+      "description": "Surat jalan in draft status",
+      "entity_type": "surat_jalan",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_13",
+      "name": "Ready to Ship",
+      "code": "READY_TO_SHIP",
+      "description": "Surat jalan ready to ship",
+      "entity_type": "surat_jalan",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_14",
+      "name": "Shipped",
+      "code": "SHIPPED",
+      "description": "Surat jalan has been shipped",
+      "entity_type": "surat_jalan",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_15",
+      "name": "Delivered",
+      "code": "DELIVERED",
+      "description": "Surat jalan has been delivered",
+      "entity_type": "surat_jalan",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 7. Get Statuses by Packing Item
+Mengambil status yang terkait dengan packing item.
+
+**Request:**
+```http
+GET {{baseUrl}}/statuses/packing_item
+```
+
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Packing item statuses retrieved successfully",
+  "data": [
+    {
+      "id": "status_id_16",
+      "name": "Not Packed",
+      "code": "NOT_PACKED",
+      "description": "Item not yet packed",
+      "entity_type": "packing_item",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_17",
+      "name": "Packed",
+      "code": "PACKED",
+      "description": "Item has been packed",
+      "entity_type": "packing_item",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "status_id_18",
+      "name": "Shipped",
+      "code": "SHIPPED",
+      "description": "Item has been shipped",
+      "entity_type": "packing_item",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## Error Responses
+
+### 401 Unauthorized
+```json
+{
+  "success": false,
+  "message": "Unauthorized access"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "success": false,
+  "message": "Status entity type not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "success": false,
+  "message": "Internal server error"
+}
+```
+
+---
+
+## Entity Types
+
+Status dapat dikategorikan berdasarkan entity type berikut:
+
+- **purchase_order**: Status untuk purchase order
+- **bulk_file**: Status untuk bulk file upload
+- **packing**: Status untuk packing
+- **invoice**: Status untuk invoice
+- **surat_jalan**: Status untuk surat jalan
+- **packing_item**: Status untuk item dalam packing
+
+---
 
 ## Notes
 
-- All endpoints require authentication
-- Status filtering is based on case-insensitive string matching in the status name
-- The status system supports workflow tracking across all major business entities
+- Status bersifat read-only dan dikelola oleh sistem
+- Setiap entity type memiliki status yang spesifik
+- Status dapat digunakan untuk melacak progress dan workflow
+- Status code harus unik untuk setiap entity type

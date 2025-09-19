@@ -37,14 +37,67 @@ describe('CustomerService', () => {
       };
       const expectedCustomer = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date() };
 
+      // Mock findUnique untuk cek duplikasi (return null = tidak ada duplikasi)
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.customer.create as jest.Mock).mockResolvedValue(expectedCustomer);
 
       const result = await CustomerService.createCustomer(input);
 
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { kodeCustomer: input.kodeCustomer },
+      });
       expect(prisma.customer.create).toHaveBeenCalledWith({
-        data: input,
+        data: {
+          ...input,
+          createdBy: 'user123',
+          updatedBy: 'user123',
+        },
       });
       expect(result).toEqual(expectedCustomer);
+    });
+
+    it('should throw error if kodeCustomer already exists', async () => {
+      const input: CreateCustomerInput = {
+        namaCustomer: 'John Doe',
+        kodeCustomer: 'CUST-001',
+        alamatPengiriman: '123 Main St',
+        phoneNumber: '1234567890',
+        email: 'john.doe@example.com',
+        groupCustomerId: 'group1',
+        regionId: 'region1',
+        createdBy: 'user123',
+        updatedBy: 'user123',
+      };
+
+      // Mock findUnique untuk cek duplikasi (return existing customer = ada duplikasi)
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ id: '2', kodeCustomer: 'CUST-001' });
+
+      await expect(CustomerService.createCustomer(input)).rejects.toThrow(
+        new AppError('Customer dengan kode ini sudah ada', 409)
+      );
+    });
+
+    it('should throw error if email already exists', async () => {
+      const input: CreateCustomerInput = {
+        namaCustomer: 'John Doe',
+        kodeCustomer: 'CUST-002',
+        alamatPengiriman: '123 Main St',
+        phoneNumber: '1234567890',
+        email: 'john.doe@example.com',
+        groupCustomerId: 'group1',
+        regionId: 'region1',
+        createdBy: 'user123',
+        updatedBy: 'user123',
+      };
+
+      // Mock findUnique untuk cek duplikasi kodeCustomer (tidak ada)
+      (prisma.customer.findUnique as jest.Mock)
+        .mockResolvedValueOnce(null) // kodeCustomer check
+        .mockResolvedValueOnce({ id: '2', email: 'john.doe@example.com' }); // email check
+
+      await expect(CustomerService.createCustomer(input)).rejects.toThrow(
+        new AppError('Customer dengan email ini sudah ada', 409)
+      );
     });
   });
 
@@ -121,12 +174,17 @@ describe('CustomerService', () => {
       const input: UpdateCustomerInput['body'] = {
         namaCustomer: 'John Doe Updated',
       };
+      const existingCustomer = { id: customerId, kodeCustomer: 'CUST-001', email: 'john.doe@example.com' };
       const expectedCustomer = { id: customerId, namaCustomer: 'John Doe Updated', email: 'john.doe@example.com', alamatPengiriman: '123 Main St', phoneNumber: '1234567890', createdAt: new Date(), updatedAt: new Date() };
 
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(existingCustomer);
       (prisma.customer.update as jest.Mock).mockResolvedValue(expectedCustomer);
 
       const result = await CustomerService.updateCustomer(customerId, input);
 
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { id: customerId },
+      });
       expect(prisma.customer.update).toHaveBeenCalledWith({
         where: { id: customerId },
         data: {
@@ -138,15 +196,47 @@ describe('CustomerService', () => {
     });
 
     it('should throw an error if customer to update is not found', async () => {
-        const customerId = '999';
-        const input: UpdateCustomerInput['body'] = { namaCustomer: 'Non Existent' };
+      const customerId = '999';
+      const input: UpdateCustomerInput['body'] = { namaCustomer: 'Non Existent' };
 
-        (prisma.customer.update as jest.Mock).mockRejectedValue({ code: 'P2025' });
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
 
-        await expect(CustomerService.updateCustomer(customerId, input)).rejects.toThrow(
-          new AppError('Customer not found', 404)
-        );
-      });
+      await expect(CustomerService.updateCustomer(customerId, input)).rejects.toThrow(
+        new AppError('Customer tidak ditemukan', 404)
+      );
+    });
+
+    it('should throw error if kodeCustomer already exists when updating', async () => {
+      const customerId = '1';
+      const input: UpdateCustomerInput['body'] = {
+        kodeCustomer: 'CUST-002',
+      };
+      const existingCustomer = { id: customerId, kodeCustomer: 'CUST-001', email: 'john.doe@example.com' };
+
+      (prisma.customer.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingCustomer) // check if customer exists
+        .mockResolvedValueOnce({ id: '2', kodeCustomer: 'CUST-002' }); // check duplicate kodeCustomer
+
+      await expect(CustomerService.updateCustomer(customerId, input)).rejects.toThrow(
+        new AppError('Customer dengan kode ini sudah ada', 409)
+      );
+    });
+
+    it('should throw error if email already exists when updating', async () => {
+      const customerId = '1';
+      const input: UpdateCustomerInput['body'] = {
+        email: 'new.email@example.com',
+      };
+      const existingCustomer = { id: customerId, kodeCustomer: 'CUST-001', email: 'john.doe@example.com' };
+
+      (prisma.customer.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingCustomer) // check if customer exists
+        .mockResolvedValueOnce({ id: '2', email: 'new.email@example.com' }); // check duplicate email
+
+      await expect(CustomerService.updateCustomer(customerId, input)).rejects.toThrow(
+        new AppError('Customer dengan email ini sudah ada', 409)
+      );
+    });
   });
 
   describe('deleteCustomer', () => {

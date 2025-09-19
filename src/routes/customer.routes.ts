@@ -12,16 +12,17 @@ import {
   UpdateCustomerInput,
   GetAllCustomersInput,
   getAllCustomersSchema,
+  SearchCustomerInput,
 } from '@/schemas/customer.schema';
 
 export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fastify, options, done) => {
-  fastify.get<{ Params: { q: string }; Querystring: GetAllCustomersInput['query'] }>(
+  fastify.get<{ Querystring: SearchCustomerInput['query'] }>(
     '/search/:q',
     {
       schema: {
         tags: ['Customer'],
         params: z.object({ q: z.string().describe('Search query') }),
-        querystring: getAllCustomersSchema.shape.query,
+        querystring: searchCustomerSchema.shape.query,
         security: [{ Bearer: [] }],
       },
       preHandler: [fastify.authenticate, validateRequest(searchCustomerSchema)],
@@ -29,15 +30,15 @@ export const customerRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
     CustomerController.searchCustomers
   );
 
-  fastify.get<{ Querystring: GetAllCustomersInput['query'] }>(
+  fastify.get<{ Querystring: SearchCustomerInput['query'] }>(
     '/search',
     {
       schema: {
         tags: ['Customer'],
-        querystring: getAllCustomersSchema.shape.query,
+        querystring: searchCustomerSchema.shape.query,
         security: [{ Bearer: [] }],
       },
-      preHandler: [fastify.authenticate, validateRequest(getAllCustomersSchema)],
+      preHandler: [fastify.authenticate, validateRequest(searchCustomerSchema)],
     },
     CustomerController.searchCustomers
   );

@@ -9,6 +9,26 @@ export class CustomerService {
     try {
       const { createdBy, updatedBy, ...customerData } = data;
       
+      // Cek apakah kodeCustomer sudah ada
+      const existingCustomer = await prisma.customer.findUnique({
+        where: { kodeCustomer: customerData.kodeCustomer },
+      });
+      
+      if (existingCustomer) {
+        throw new AppError('Customer dengan kode ini sudah ada', 409);
+      }
+      
+      // Cek apakah email sudah ada (jika email diberikan)
+      if (customerData.email) {
+        const existingEmail = await prisma.customer.findUnique({
+          where: { email: customerData.email },
+        });
+        
+        if (existingEmail) {
+          throw new AppError('Customer dengan email ini sudah ada', 409);
+        }
+      }
+      
       return await prisma.customer.create({
         data: {
           ...customerData,
@@ -17,16 +37,24 @@ export class CustomerService {
         },
       });
     } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('kodeCustomer')) {
-        throw new AppError('Customer with this code already exists', 409);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (error.code === 'P2002') {
+        if (error.meta?.target?.includes('kodeCustomer')) {
+          throw new AppError('Customer dengan kode ini sudah ada', 409);
+        }
+        if (error.meta?.target?.includes('email')) {
+          throw new AppError('Customer dengan email ini sudah ada', 409);
+        }
       }
       if (error.code === 'P2003') {
         const field = error.meta?.field_name as string;
         if (field.includes('groupCustomerId')) {
-          throw new AppError('Group Customer not found', 404);
+          throw new AppError('Group Customer tidak ditemukan', 404);
         }
         if (field.includes('regionId')) {
-          throw new AppError('Region not found', 404);
+          throw new AppError('Region tidak ditemukan', 404);
         }
       }
       throw error;
@@ -84,6 +112,37 @@ export class CustomerService {
     try {
       const { updatedBy, ...customerData } = data;
       
+      // Cek apakah customer ada
+      const existingCustomer = await prisma.customer.findUnique({
+        where: { id },
+      });
+      
+      if (!existingCustomer) {
+        throw new AppError('Customer tidak ditemukan', 404);
+      }
+      
+      // Cek duplikasi kodeCustomer jika diupdate
+      if (customerData.kodeCustomer && customerData.kodeCustomer !== existingCustomer.kodeCustomer) {
+        const duplicateKode = await prisma.customer.findUnique({
+          where: { kodeCustomer: customerData.kodeCustomer },
+        });
+        
+        if (duplicateKode) {
+          throw new AppError('Customer dengan kode ini sudah ada', 409);
+        }
+      }
+      
+      // Cek duplikasi email jika diupdate
+      if (customerData.email && customerData.email !== existingCustomer.email) {
+        const duplicateEmail = await prisma.customer.findUnique({
+          where: { email: customerData.email },
+        });
+        
+        if (duplicateEmail) {
+          throw new AppError('Customer dengan email ini sudah ada', 409);
+        }
+      }
+      
       return await prisma.customer.update({
         where: { id },
         data: {
@@ -92,17 +151,28 @@ export class CustomerService {
         },
       });
     } catch (error: any) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      if (error.code === 'P2002') {
+        if (error.meta?.target?.includes('kodeCustomer')) {
+          throw new AppError('Customer dengan kode ini sudah ada', 409);
+        }
+        if (error.meta?.target?.includes('email')) {
+          throw new AppError('Customer dengan email ini sudah ada', 409);
+        }
+      }
       if (error.code === 'P2003') {
         const field = error.meta?.field_name as string;
         if (field.includes('groupCustomerId')) {
-          throw new AppError('Group Customer not found', 404);
+          throw new AppError('Group Customer tidak ditemukan', 404);
         }
         if (field.includes('regionId')) {
-          throw new AppError('Region not found', 404);
+          throw new AppError('Region tidak ditemukan', 404);
         }
       }
       if (error.code === 'P2025') {
-        throw new AppError('Customer not found', 404);
+        throw new AppError('Customer tidak ditemukan', 404);
       }
       throw error;
     }
