@@ -205,399 +205,213 @@ backend-distribusi-retail/
 
 Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/docs` ketika aplikasi berjalan.
 
-## 🔧 Detail Penggunaan Service
-
-### 🔐 Service Autentikasi & Otorisasi
-
-#### Registrasi Pengguna (`POST /api/auth/register`)
-**Requirements:**
-- Body request harus berisi: `username`, `email`, `password`, `fullName`, `roleId`
-- Email harus unik dan valid format
-- Password minimal 8 karakter
-- RoleId harus valid (ada di database)
-
-**Kondisi:**
-- ✅ Berhasil: User baru dibuat, return user data tanpa password
-- ❌ Gagal: Email sudah terdaftar, role tidak valid, validasi gagal
-
-**Contoh Request:**
-```json
-{
-  "username": "john_doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "fullName": "John Doe",
-  "roleId": 1
-}
-```
-
-#### Login (`POST /api/auth/login`)
-**Requirements:**
-- Body request: `email` dan `password`
-- Email harus terdaftar di sistem
-- Password harus benar
-
-**Kondisi:**
-- ✅ Berhasil: Return access token dan refresh token
-- ❌ Gagal: Email tidak ditemukan, password salah, akun tidak aktif
-
-**Response:**
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 1,
-    "username": "john_doe",
-    "email": "john@example.com",
-    "fullName": "John Doe"
-  }
-}
-```
-
-### 👥 Service Manajemen Pengguna
-
-#### Mendapatkan Semua Pengguna (`GET /api/users`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- User harus memiliki role yang memiliki akses ke menu users
-
-**Query Parameters:**
-- `page` (optional): Halaman data (default: 1)
-- `limit` (optional): Jumlah data per halaman (default: 10)
-- `search` (optional): Pencarian berdasarkan nama atau email
-
-**Kondisi:**
-- ✅ Berhasil: Return list pengguna dengan pagination
-- ❌ Gagal: Token tidak valid, tidak ada akses, server error
-
-#### Membuat Pengguna Baru (`POST /api/users`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_USER
-- Body request: `username`, `email`, `password`, `fullName`, `roleId`
-
-**Kondisi:**
-- ✅ Berhasil: User baru dibuat, return user data
-- ❌ Gagal: Email sudah ada, role tidak valid, permission denied
-
-### 🏢 Service Manajemen Role & Menu
-
-#### Mendapatkan Semua Role (`GET /api/roles`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- User harus memiliki akses ke menu roles
-
-**Kondisi:**
-- ✅ Berhasil: Return list semua role dengan menu yang terkait
-- ❌ Gagal: Token tidak valid, tidak ada akses
-
-#### Update Menu untuk Role (`PUT /api/roles/:id/menus`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission MANAGE_ROLES
-- Body request: array menu IDs
-
-**Contoh Request:**
-```json
-{
-  "menuIds": [1, 2, 3, 5, 8]
-}
-```
-
-**Kondisi:**
-- ✅ Berhasil: Menu role diupdate, return role dengan menu baru
-- ❌ Gagal: Role tidak ditemukan, menu tidak valid, permission denied
-
-### 🛒 Service Manajemen Pelanggan
-
-#### Pencarian Pelanggan (`GET /api/customers/search`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `q` untuk keyword pencarian
-
-**Query Parameters:**
-- `q` (required): Keyword pencarian
-- `page` (optional): Halaman data
-- `limit` (optional): Jumlah data per halaman
-
-**Kondisi:**
-- ✅ Berhasil: Return list pelanggan yang match dengan keyword
-- ❌ Gagal: Token tidak valid, parameter tidak valid
-
-#### Membuat Pelanggan Baru (`POST /api/customers`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_CUSTOMER
-- Body request: `name`, `email`, `phone`, `address`, `city`, `postalCode`
-
-**Kondisi:**
-- ✅ Berhasil: Pelanggan baru dibuat, return data pelanggan
-- ❌ Gagal: Email sudah ada, data tidak valid, permission denied
-
-### 🚚 Service Manajemen Supplier
-
-#### Pencarian Supplier (`GET /api/suppliers/search`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `q` untuk keyword pencarian
-
-**Kondisi:**
-- ✅ Berhasil: Return list supplier yang match
-- ❌ Gagal: Token tidak valid, parameter tidak valid
-
-#### Membuat Supplier Baru (`POST /api/suppliers`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_SUPPLIER
-- Body request: `name`, `email`, `phone`, `address`, `contactPerson`, `taxNumber`
-
-**Kondisi:**
-- ✅ Berhasil: Supplier baru dibuat
-- ❌ Gagal: Email sudah ada, data tidak valid, permission denied
-
-### 📦 Service Manajemen Inventory
-
-#### Pencarian Inventory (`GET /api/inventories/search`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `q` untuk keyword pencarian
-
-**Kondisi:**
-- ✅ Berhasil: Return list inventory yang match
-- ❌ Gagal: Token tidak valid, parameter tidak valid
-
-#### Membuat Inventory Baru (`POST /api/inventories`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_INVENTORY
-- Body request: `name`, `description`, `sku`, `category`, `unitPrice`, `stockQuantity`, `minStockLevel`
-
-**Kondisi:**
-- ✅ Berhasil: Inventory baru dibuat
-- ❌ Gagal: SKU sudah ada, data tidak valid, permission denied
-
-### 📋 Service Purchase Order Management
-
-#### Membuat Purchase Order (`POST /api/purchase-orders`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_PURCHASE_ORDER
-- Body request: `supplierId`, `items` (array), `notes` (optional)
-
-**Contoh Request:**
-```json
-{
-  "supplierId": 1,
-  "items": [
-    {
-      "inventoryId": 1,
-      "quantity": 10,
-      "unitPrice": 50000
-    }
-  ],
-  "notes": "Pesanan urgent"
-}
-```
-
-**Kondisi:**
-- ✅ Berhasil: PO dibuat dengan status DRAFT
-- ❌ Gagal: Supplier tidak ditemukan, inventory tidak valid, permission denied
-
-#### Process Purchase Order (`POST /api/purchase-orders/:id/process`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission PROCESS_PURCHASE_ORDER
-- PO harus dalam status DRAFT
-
-**Kondisi:**
-- ✅ Berhasil: Status PO berubah menjadi PROCESSING
-- ❌ Gagal: PO tidak ditemukan, status tidak valid, permission denied
-
-#### Bulk Upload Purchase Order (`POST /api/purchase-orders/bulk-create`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission BULK_CREATE_PURCHASE_ORDER
-- File Excel dengan format yang sesuai
-
-**Format Excel:**
-- Kolom: Supplier Name, Item SKU, Quantity, Unit Price, Notes
-- Header row harus ada
-- Data mulai dari row 2
-
-**Kondisi:**
-- ✅ Berhasil: File diproses, return job ID untuk tracking
-- ❌ Gagal: Format file salah, data tidak valid, permission denied
-
-#### Status Bulk Upload (`GET /api/purchase-orders/bulk-status/:id`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Job ID harus valid
-
-**Kondisi:**
-- ✅ Berhasil: Return status processing (PENDING, PROCESSING, COMPLETED, FAILED)
-- ❌ Gagal: Job ID tidak ditemukan, token tidak valid
-
-### 📦 Service Manajemen Packing
-
-#### Membuat Packing (`POST /api/packings`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_PACKING
-- Body request: `purchaseOrderId`, `items` (array), `packedBy`, `notes`
-
-**Contoh Request:**
-```json
-{
-  "purchaseOrderId": 1,
-  "items": [
-    {
-      "inventoryId": 1,
-      "quantity": 10,
-      "packedQuantity": 8
-    }
-  ],
-  "packedBy": "John Doe",
-  "notes": "Packing selesai"
-}
-```
-
-**Kondisi:**
-- ✅ Berhasil: Packing dibuat dengan status PACKED
-- ❌ Gagal: PO tidak ditemukan, quantity tidak valid, permission denied
-
-### 📄 Service Manajemen Surat Jalan
-
-#### Membuat Surat Jalan (`POST /api/surat-jalan`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_SURAT_JALAN
-- Body request: `packingId`, `customerId`, `deliveryAddress`, `driverName`, `vehicleNumber`
-
-**Kondisi:**
-- ✅ Berhasil: Surat jalan dibuat dengan status READY
-- ❌ Gagal: Packing tidak ditemukan, customer tidak valid, permission denied
-
-#### Pencarian Surat Jalan (`GET /api/surat-jalan/search`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `q` untuk keyword pencarian
-
-**Kondisi:**
-- ✅ Berhasil: Return list surat jalan yang match
-- ❌ Gagal: Token tidak valid, parameter tidak valid
-
-### 🧾 Service Manajemen Invoice
-
-#### Membuat Invoice (`POST /api/invoices`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission CREATE_INVOICE
-- Body request: `suratJalanId`, `invoiceNumber`, `dueDate`, `taxRate`
-
-**Kondisi:**
-- ✅ Berhasil: Invoice dibuat dengan status PENDING
-- ❌ Gagal: Surat jalan tidak ditemukan, data tidak valid, permission denied
-
-### 📊 Service History Pengiriman
-
-#### History Berdasarkan Status (`GET /api/history-pengiriman/status/:code`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Status code harus valid (READY, IN_TRANSIT, DELIVERED, RETURNED)
-
-**Kondisi:**
-- ✅ Berhasil: Return list history dengan status tersebut
-- ❌ Gagal: Status code tidak valid, token tidak valid
-
-#### History Berdasarkan Tanggal (`GET /api/history-pengiriman/date`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `startDate` dan `endDate` (format: YYYY-MM-DD)
-
-**Kondisi:**
-- ✅ Berhasil: Return list history dalam rentang tanggal
-- ❌ Gagal: Format tanggal salah, token tidak valid
-
-### 📁 Service Manajemen File
-
-#### Upload File (`POST /api/files/upload`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Content-Type: multipart/form-data
-- File size maksimal 10MB
-- Format file yang diizinkan: .pdf, .jpg, .jpeg, .png, .xlsx, .xls
-
-**Kondisi:**
-- ✅ Berhasil: File tersimpan, return file info
-- ❌ Gagal: File terlalu besar, format tidak didukung, permission denied
-
-#### Download File (`GET /api/files/download/:filename`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Filename harus valid dan file harus ada
-
-**Kondisi:**
-- ✅ Berhasil: File terdownload
-- ❌ Gagal: File tidak ditemukan, token tidak valid
-
-### 🔄 Service Konversi Data
-
-#### Upload dan Konversi Data (`POST /api/conversions/upload`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- File Excel dengan format yang sesuai
-- Role harus memiliki permission DATA_CONVERSION
-
-**Kondisi:**
-- ✅ Berhasil: Data dikonversi, return hasil konversi
-- ❌ Gagal: Format file salah, data tidak valid, permission denied
-
-### 🔔 Service Sistem Notifikasi
-
-#### Mendapatkan Notifikasi (`GET /api/notifications`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Query parameter `page` dan `limit` untuk pagination
-
-**Kondisi:**
-- ✅ Berhasil: Return list notifikasi dengan pagination
-- ❌ Gagal: Token tidak valid
-
-#### Notifikasi Belum Dibaca (`GET /api/notifications/unread`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-
-**Kondisi:**
-- ✅ Berhasil: Return list notifikasi yang belum dibaca
-- ❌ Gagal: Token tidak valid
-
-#### Tandai Semua Dibaca (`POST /api/notifications/mark-all-read`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-
-**Kondisi:**
-- ✅ Berhasil: Semua notifikasi ditandai sebagai dibaca
-- ❌ Gagal: Token tidak valid
-
-#### Periksa Alert Sistem (`POST /api/notifications/check-alerts`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-- Role harus memiliki permission SYSTEM_ALERTS
-
-**Kondisi:**
-- ✅ Berhasil: Alert diperiksa, notifikasi dibuat jika ada alert
-- ❌ Gagal: Token tidak valid, permission denied
-
-### 📊 Service Status Management
-
-#### Mendapatkan Semua Status (`GET /api/statuses`)
-**Requirements:**
-- Header Authorization dengan Bearer token
-
-**Kondisi:**
-- ✅ Berhasil: Return list semua status yang tersedia
-- ❌ Gagal: Token tidak valid
+### 🔐 Autentikasi & Otorisasi
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/auth/register` | `POST` | Registrasi pengguna baru | - | `{ "username": "john_doe", "email": "john@example.com", "password": "password123", "fullName": "John Doe", "roleId": 1 }` | `{ "id": 1, "username": "john_doe", "email": "john@example.com", "fullName": "John Doe" }` |
+| `/api/auth/login` | `POST` | Login dan mendapatkan access token | - | `{ "email": "john@example.com", "password": "password123" }` | `{ "accessToken": "...", "refreshToken": "...", "user": { ... } }` |
+| `/api/auth/logout` | `POST` | Logout pengguna | `Authorization: Bearer <token>` | - | `{ "message": "Logout successful" }` |
+
+### 👥 Manajemen Pengguna
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/users` | `GET` | Mendapatkan semua pengguna | `Authorization: Bearer <token>` | - | `[{ "id": 1, "username": "john_doe", ... }]` |
+| `/api/users/:id` | `GET` | Mendapatkan pengguna berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "username": "john_doe", ... }` |
+
+### 🏢 Manajemen Role & Menu
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/roles` | `GET` | Mendapatkan semua role | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "admin", ... }]` |
+| `/api/roles` | `POST` | Membuat role baru | `Authorization: Bearer <token>` | `{ "name": "new_role" }` | `{ "id": 2, "name": "new_role" }` |
+| `/api/roles/:roleId/menus` | `PUT` | Update menu untuk role tertentu | `Authorization: Bearer <token>` | `{ "menuIds": [1, 2, 3] }` | `{ "id": 1, "name": "admin", "menus": [...] }` |
+| `/api/roles/:roleId` | `DELETE` | Menghapus role | `Authorization: Bearer <token>` | - | `{ "message": "Role deleted" }` |
+| `/api/menus` | `GET` | Mendapatkan semua menu | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Dashboard", ... }]` |
+
+### 🛒 Manajemen Pelanggan
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/customers` | `GET` | Mendapatkan semua pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Customer A", ... }]` |
+| `/api/customers/:id` | `GET` | Mendapatkan pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Customer A", ... }` |
+| `/api/customers` | `POST` | Membuat pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Customer B", ... }` | `{ "id": 2, "name": "Customer B", ... }` |
+| `/api/customers/:id` | `PUT` | Update data pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Customer A", ... }` | `{ "id": 1, "name": "Updated Customer A", ... }` |
+| `/api/customers/:id` | `DELETE` | Menghapus pelanggan | `Authorization: Bearer <token>` | - | `{ "message": "Customer deleted" }` |
+| `/api/customers/search` | `GET` | Pencarian pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Customer A", ... }]` |
+
+### 🚚 Manajemen Supplier
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/suppliers` | `GET` | Mendapatkan semua supplier | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Supplier A", ... }]` |
+| `/api/suppliers/:id` | `GET` | Mendapatkan supplier berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Supplier A", ... }` |
+| `/api/suppliers` | `POST` | Membuat supplier baru | `Authorization: Bearer <token>` | `{ "name": "Supplier B", ... }` | `{ "id": 2, "name": "Supplier B", ... }` |
+| `/api/suppliers/:id` | `PUT` | Update data supplier | `Authorization: Bearer <token>` | `{ "name": "Updated Supplier A", ... }` | `{ "id": 1, "name": "Updated Supplier A", ... }` |
+| `/api/suppliers/:id` | `DELETE` | Menghapus supplier | `Authorization: Bearer <token>` | - | `{ "message": "Supplier deleted" }` |
+| `/api/suppliers/search` | `GET` | Pencarian supplier | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Supplier A", ... }]` |
+
+### 📦 Manajemen Inventory
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/inventories` | `GET` | Mendapatkan semua inventory | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Product A", ... }]` |
+| `/api/inventories/:id` | `GET` | Mendapatkan inventory berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Product A", ... }` |
+| `/api/inventories` | `POST` | Membuat inventory baru | `Authorization: Bearer <token>` | `{ "name": "Product B", ... }` | `{ "id": 2, "name": "Product B", ... }` |
+| `/api/inventories/:id` | `PUT` | Update data inventory | `Authorization: Bearer <token>` | `{ "name": "Updated Product A", ... }` | `{ "id": 1, "name": "Updated Product A", ... }` |
+| `/api/inventories/:id` | `DELETE` | Menghapus inventory | `Authorization: Bearer <token>` | - | `{ "message": "Inventory deleted" }` |
+| `/api/inventories/search` | `GET` | Pencarian inventory | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Product A", ... }]` |
+
+### 📋 Purchase Order Management
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/purchase-orders` | `GET` | Mendapatkan semua purchase order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "poNumber": "PO-001", ... }]` |
+| `/api/purchase-orders/:id` | `GET` | Mendapatkan PO berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "poNumber": "PO-001", ... }` |
+| `/api/purchase-orders` | `POST` | Membuat purchase order baru | `Authorization: Bearer <token>` | `{ "supplierId": 1, "items": [...] }` | `{ "id": 2, "poNumber": "PO-002", ... }` |
+| `/api/purchase-orders/:id` | `PUT` | Update purchase order | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "id": 1, "notes": "Updated notes", ... }` |
+| `/api/purchase-orders/:id` | `DELETE` | Menghapus purchase order | `Authorization: Bearer <token>` | - | `{ "message": "Purchase Order deleted" }` |
+| `/api/purchase-orders/search` | `GET` | Pencarian purchase order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "poNumber": "PO-001", ... }]` |
+| `/api/purchase-orders/:id/history` | `GET` | History perubahan PO | `Authorization: Bearer <token>` | - | `[{ "change": "Status updated", ... }]` |
+| `/api/purchase-orders/:id/process` | `POST` | Process purchase order | `Authorization: Bearer <token>` | - | `{ "message": "Purchase Order processed" }` |
+| `/api/purchase-orders/bulk` | `POST` | Bulk upload purchase order | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "jobId": "..." }` |
+| `/api/purchase-orders/bulk/status/:id`| `GET` | Status bulk upload | `Authorization: Bearer <token>` | - | `{ "status": "COMPLETED" }` |
+| `/api/purchase-orders/bulk/all` | `GET` | Mendapatkan semua bulk uploads | `Authorization: Bearer <token>` | - | `[{ "id": 1, "fileName": "...", ... }]` |
+
+### 📦 Manajemen Packing
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/packings` | `GET` | Mendapatkan semua packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "packingNumber": "PACK-001", ... }]` |
+| `/api/packings/:id` | `GET` | Mendapatkan packing berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "packingNumber": "PACK-001", ... }` |
+| `/api/packings` | `POST` | Membuat packing baru | `Authorization: Bearer <token>` | `{ "purchaseOrderId": 1, "items": [...] }` | `{ "id": 2, "packingNumber": "PACK-002", ... }` |
+| `/api/packings/:id` | `PUT` | Update data packing | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "id": 1, "notes": "Updated notes", ... }` |
+| `/api/packings/:id` | `DELETE` | Menghapus packing | `Authorization: Bearer <token>` | - | `{ "message": "Packing deleted" }` |
+| `/api/packings/search` | `GET` | Pencarian packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "packingNumber": "PACK-001", ... }]` |
+
+### 📄 Manajemen Surat Jalan
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/surat-jalan` | `GET` | Mendapatkan semua surat jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "suratJalanNumber": "SJ-001", ... }]` |
+| `/api/surat-jalan/:id` | `GET` | Mendapatkan surat jalan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "suratJalanNumber": "SJ-001", ... }` |
+| `/api/surat-jalan` | `POST` | Membuat surat jalan baru | `Authorization: Bearer <token>` | `{ "packingId": 1, "customerId": 1, ... }` | `{ "id": 2, "suratJalanNumber": "SJ-002", ... }` |
+| `/api/surat-jalan/:id` | `PUT` | Update data surat jalan | `Authorization: Bearer <token>` | `{ "driverName": "New Driver" }` | `{ "id": 1, "driverName": "New Driver", ... }` |
+| `/api/surat-jalan/:id` | `DELETE` | Menghapus surat jalan | `Authorization: Bearer <token>` | - | `{ "message": "Surat Jalan deleted" }` |
+| `/api/surat-jalan/search` | `GET` | Pencarian surat jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "suratJalanNumber": "SJ-001", ... }]` |
+
+### 🧾 Manajemen Invoice
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/invoices` | `GET` | Mendapatkan semua invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "invoiceNumber": "INV-001", ... }]` |
+| `/api/invoices/:id` | `GET` | Mendapatkan invoice berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "invoiceNumber": "INV-001", ... }` |
+| `/api/invoices` | `POST` | Membuat invoice baru | `Authorization: Bearer <token>` | `{ "suratJalanId": 1, ... }` | `{ "id": 2, "invoiceNumber": "INV-002", ... }` |
+| `/api/invoices/:id` | `PUT` | Update data invoice | `Authorization: Bearer <token>` | `{ "dueDate": "..." }` | `{ "id": 1, "dueDate": "...", ... }` |
+| `/api/invoices/:id` | `DELETE` | Menghapus invoice | `Authorization: Bearer <token>` | - | `{ "message": "Invoice deleted" }` |
+| `/api/invoices/search` | `GET` | Pencarian invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "invoiceNumber": "INV-001", ... }]` |
+
+### 📊 History Pengiriman
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/history-pengiriman` | `GET` | Mendapatkan semua history pengiriman | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
+| `/api/history-pengiriman/status/:statusCode` | `GET` | History berdasarkan status code | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
+| `/api/history-pengiriman/surat-jalan/:suratJalanId` | `GET` | History berdasarkan surat jalan ID | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
+| `/api/history-pengiriman/tanggal/:tanggalKirim` | `GET` | History berdasarkan tanggal kirim | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
+
+### 📁 Manajemen File
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/files/download/:id` | `GET` | Download file | `Authorization: Bearer <token>` | - | (file stream) |
+
+### 🔄 Konversi Data
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/conversions/upload` | `POST` | Upload dan konversi data | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "message": "File converted" }` |
+
+### 🔔 Sistem Notifikasi
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/notifications` | `GET` | Mendapatkan semua notifikasi | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+| `/api/notifications/unread` | `GET` | Mendapatkan notifikasi belum dibaca | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+| `/api/notifications/count` | `GET` | Jumlah notifikasi | `Authorization: Bearer <token>` | - | `{ "count": 5 }` |
+| `/api/notifications/read-all` | `PATCH` | Tandai semua sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "message": "All marked as read" }` |
+| `/api/notifications/:id/read` | `PATCH` | Tandai notifikasi tertentu sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "message": "Marked as read" }` |
+| `/api/notifications/alerts` | `GET` | Periksa alert sistem | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+| `/api/notifications/price-differences` | `GET` | Notifikasi perbedaan harga | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+| `/api/notifications/type/:type` | `GET` | Mendapatkan notifikasi berdasarkan tipe | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+
+### 📊 Status Management
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/statuses` | `GET` | Mendapatkan semua status | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/purchase_order` | `GET` | Mendapatkan status untuk Purchase Order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/bulk_file` | `GET` | Mendapatkan status untuk Bulk File | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/packing` | `GET` | Mendapatkan status untuk Packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/packing_item`| `GET` | Mendapatkan status untuk Packing Item | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/invoice` | `GET` | Mendapatkan status untuk Invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses/surat_jalan`| `GET` | Mendapatkan status untuk Surat Jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+
+### 🏢 Manajemen Perusahaan
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/companies` | `GET` | Mendapatkan semua perusahaan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Company A", ... }]` |
+| `/api/companies/:id` | `GET` | Mendapatkan perusahaan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Company A", ... }` |
+| `/api/companies` | `POST` | Membuat perusahaan baru | `Authorization: Bearer <token>` | `{ "name": "Company B", ... }` | `{ "id": 2, "name": "Company B", ... }` |
+| `/api/companies/:id` | `PUT` | Update data perusahaan | `Authorization: Bearer <token>` | `{ "name": "Updated Company A", ... }` | `{ "id": 1, "name": "Updated Company A", ... }` |
+| `/api/companies/:id` | `DELETE` | Menghapus perusahaan | `Authorization: Bearer <token>` | - | `{ "message": "Company deleted" }` |
+| `/api/companies/search` | `GET` | Pencarian perusahaan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Company A", ... }]` |
+
+### 👥 Manajemen Grup Pelanggan
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/group-customers` | `GET` | Mendapatkan semua grup pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Group A", ... }]` |
+| `/api/group-customers/:id` | `GET` | Mendapatkan grup pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Group A", ... }` |
+| `/api/group-customers` | `POST` | Membuat grup pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Group B", ... }` | `{ "id": 2, "name": "Group B", ... }` |
+| `/api/group-customers/:id`| `PUT` | Update data grup pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Group A", ... }` | `{ "id": 1, "name": "Updated Group A", ... }` |
+| `/api/group-customers/:id`| `DELETE`| Menghapus grup pelanggan | `Authorization: Bearer <token>` | - | `{ "message": "Group Customer deleted" }` |
+| `/api/group-customers/search`| `GET` | Pencarian grup pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Group A", ... }]` |
+
+### 💲 Manajemen Harga Barang
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/item-prices` | `GET` | Mendapatkan semua harga barang | `Authorization: Bearer <token>` | - | `[{ "id": 1, "price": 10000, ... }]` |
+| `/api/item-prices/:id` | `GET` | Mendapatkan harga barang berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "price": 10000, ... }` |
+| `/api/item-prices` | `POST` | Membuat harga barang baru | `Authorization: Bearer <token>` | `{ "itemId": 1, "price": 12000, ... }` | `{ "id": 2, "price": 12000, ... }` |
+| `/api/item-prices/:id`| `PUT` | Update data harga barang | `Authorization: Bearer <token>` | `{ "price": 11000, ... }` | `{ "id": 1, "price": 11000, ... }` |
+| `/api/item-prices/:id`| `DELETE`| Menghapus harga barang | `Authorization: Bearer <token>` | - | `{ "message": "Item Price deleted" }` |
+| `/api/item-prices/search`| `GET` | Pencarian harga barang | `Authorization: Bearer <token>` | - | `[{ "id": 1, "price": 10000, ... }]` |
+
+### 🌍 Manajemen Wilayah
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/regions` | `GET` | Mendapatkan semua wilayah | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Region A", ... }]` |
+| `/api/regions/:id` | `GET` | Mendapatkan wilayah berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Region A", ... }` |
+| `/api/regions` | `POST` | Membuat wilayah baru | `Authorization: Bearer <token>` | `{ "name": "Region B", ... }` | `{ "id": 2, "name": "Region B", ... }` |
+| `/api/regions/:id`| `PUT` | Update data wilayah | `Authorization: Bearer <token>` | `{ "name": "Updated Region A", ... }` | `{ "id": 1, "name": "Updated Region A", ... }` |
+| `/api/regions/:id`| `DELETE`| Menghapus wilayah | `Authorization: Bearer <token>` | - | `{ "message": "Region deleted" }` |
+| `/api/regions/search`| `GET` | Pencarian wilayah | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Region A", ... }]` |
+
+### 💳 Manajemen Termin Pembayaran
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/term-of-payments` | `GET` | Mendapatkan semua termin pembayaran | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "30 Days", ... }]` |
+| `/api/term-of-payments/:id` | `GET` | Mendapatkan termin pembayaran berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "30 Days", ... }` |
+| `/api/term-of-payments` | `POST` | Membuat termin pembayaran baru | `Authorization: Bearer <token>` | `{ "name": "60 Days", ... }` | `{ "id": 2, "name": "60 Days", ... }` |
+| `/api/term-of-payments/:id`| `PUT` | Update data termin pembayaran | `Authorization: Bearer <token>` | `{ "name": "90 Days", ... }` | `{ "id": 1, "name": "90 Days", ... }` |
+| `/api/term-of-payments/:id`| `DELETE`| Menghapus termin pembayaran | `Authorization: Bearer <token>` | - | `{ "message": "Term of Payment deleted" }` |
+| `/api/term-of-payments/search`| `GET` | Pencarian termin pembayaran | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "30 Days", ... }]` |
 
 ## 🚨 Error Handling
 
@@ -636,167 +450,6 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 - Access token expired dalam 15 menit
 - Refresh token expired dalam 7 hari
 - Token di-blacklist saat logout
-
-### 🔐 Autentikasi
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/register` | Registrasi pengguna baru |
-| `POST` | `/api/auth/login` | Login dan mendapatkan access token |
-| `POST` | `/api/auth/logout` | Logout pengguna |
-
-### 👥 Manajemen Pengguna
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/users` | Mendapatkan semua pengguna |
-| `GET` | `/api/users/:id` | Mendapatkan pengguna berdasarkan ID |
-| `POST` | `/api/users` | Membuat pengguna baru |
-| `PUT` | `/api/users/:id` | Update data pengguna |
-| `DELETE` | `/api/users/:id` | Menghapus pengguna |
-
-### 🏢 Manajemen Role & Menu
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/roles` | Mendapatkan semua role |
-| `POST` | `/api/roles` | Membuat role baru |
-| `PUT` | `/api/roles/:id` | Update role |
-| `DELETE` | `/api/roles/:id` | Menghapus role |
-| `PUT` | `/api/roles/:id/menus` | Update menu untuk role tertentu |
-| `GET` | `/api/menus` | Mendapatkan semua menu |
-
-### 🛒 Manajemen Pelanggan
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/customers` | Mendapatkan semua pelanggan |
-| `GET` | `/api/customers/:id` | Mendapatkan pelanggan berdasarkan ID |
-| `POST` | `/api/customers` | Membuat pelanggan baru |
-| `PUT` | `/api/customers/:id` | Update data pelanggan |
-| `DELETE` | `/api/customers/:id` | Menghapus pelanggan |
-| `GET` | `/api/customers/search` | Pencarian pelanggan |
-
-### 🚚 Manajemen Supplier
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/suppliers` | Mendapatkan semua supplier |
-| `GET` | `/api/suppliers/:id` | Mendapatkan supplier berdasarkan ID |
-| `POST` | `/api/suppliers` | Membuat supplier baru |
-| `PUT` | `/api/suppliers/:id` | Update data supplier |
-| `DELETE` | `/api/suppliers/:id` | Menghapus supplier |
-| `GET` | `/api/suppliers/search` | Pencarian supplier |
-
-### 📦 Manajemen Inventory
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/inventories` | Mendapatkan semua inventory |
-| `GET` | `/api/inventories/:id` | Mendapatkan inventory berdasarkan ID |
-| `POST` | `/api/inventories` | Membuat inventory baru |
-| `PUT` | `/api/inventories/:id` | Update data inventory |
-| `DELETE` | `/api/inventories/:id` | Menghapus inventory |
-| `GET` | `/api/inventories/search` | Pencarian inventory |
-
-### 📋 Purchase Order Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/purchase-orders` | Mendapatkan semua purchase order |
-| `GET` | `/api/purchase-orders/:id` | Mendapatkan PO berdasarkan ID |
-| `POST` | `/api/purchase-orders` | Membuat purchase order baru |
-| `PUT` | `/api/purchase-orders/:id` | Update purchase order |
-| `DELETE` | `/api/purchase-orders/:id` | Menghapus purchase order |
-| `GET` | `/api/purchase-orders/search` | Pencarian purchase order |
-| `GET` | `/api/purchase-orders/:id/history` | History perubahan PO |
-| `POST` | `/api/purchase-orders/:id/process` | Process purchase order |
-
-#### Bulk Purchase Order Operations
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/purchase-orders/bulk-create` | Bulk upload purchase order |
-| `GET` | `/api/purchase-orders/bulk-upload` | Mendapatkan semua bulk uploads |
-| `GET` | `/api/purchase-orders/bulk-status/:id` | Status bulk upload |
-
-### 📦 Manajemen Packing
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/packings` | Mendapatkan semua packing |
-| `GET` | `/api/packings/:id` | Mendapatkan packing berdasarkan ID |
-| `POST` | `/api/packings` | Membuat packing baru |
-| `PUT` | `/api/packings/:id` | Update data packing |
-| `DELETE` | `/api/packings/:id` | Menghapus packing |
-| `GET` | `/api/packings/search` | Pencarian packing |
-
-### 📄 Manajemen Surat Jalan
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/surat-jalan` | Mendapatkan semua surat jalan |
-| `GET` | `/api/surat-jalan/:id` | Mendapatkan surat jalan berdasarkan ID |
-| `POST` | `/api/surat-jalan` | Membuat surat jalan baru |
-| `PUT` | `/api/surat-jalan/:id` | Update data surat jalan |
-| `DELETE` | `/api/surat-jalan/:id` | Menghapus surat jalan |
-| `GET` | `/api/surat-jalan/search` | Pencarian surat jalan |
-
-### 🧾 Manajemen Invoice
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/invoices` | Mendapatkan semua invoice |
-| `GET` | `/api/invoices/:id` | Mendapatkan invoice berdasarkan ID |
-| `POST` | `/api/invoices` | Membuat invoice baru |
-| `PUT` | `/api/invoices/:id` | Update data invoice |
-| `DELETE` | `/api/invoices/:id` | Menghapus invoice |
-| `GET` | `/api/invoices/search` | Pencarian invoice |
-
-### 📊 History Pengiriman
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/history-pengiriman` | Mendapatkan semua history pengiriman |
-| `GET` | `/api/history-pengiriman/status/:code` | History berdasarkan status code |
-| `GET` | `/api/history-pengiriman/surat-jalan/:id` | History berdasarkan surat jalan ID |
-| `GET` | `/api/history-pengiriman/date` | History berdasarkan tanggal kirim |
-
-### 📁 Manajemen File
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/files/upload` | Upload file |
-| `GET` | `/api/files/download/:filename` | Download file |
-
-### 🔄 Konversi Data
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/conversions/upload` | Upload dan konversi data |
-
-### 🔔 Sistem Notifikasi
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/notifications` | Mendapatkan semua notifikasi |
-| `GET` | `/api/notifications/unread` | Mendapatkan notifikasi belum dibaca |
-| `GET` | `/api/notifications/count` | Jumlah notifikasi |
-| `POST` | `/api/notifications/mark-all-read` | Tandai semua sebagai dibaca |
-| `POST` | `/api/notifications/:id/mark-read` | Tandai notifikasi tertentu sebagai dibaca |
-| `POST` | `/api/notifications/check-alerts` | Periksa alert sistem |
-
-### 📊 Status Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/statuses` | Mendapatkan semua status |
-| `GET` | `/api/statuses/purchase_order` | Mendapatkan status untuk Purchase Order |
-| `GET` | `/api/statuses/bulk_file` | Mendapatkan status untuk Bulk File |
-| `GET` | `/api/statuses/packing` | Mendapatkan status untuk Packing |
-| `GET` | `/api/statuses/packing_item` | Mendapatkan status untuk Packing Item |
-| `GET` | `/api/statuses/invoice` | Mendapatkan status untuk Invoice |
-| `GET` | `/api/statuses/surat_jalan` | Mendapatkan status untuk Surat Jalan |
 
 ## 🔧 Development Scripts
 
