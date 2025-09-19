@@ -1,6 +1,5 @@
-import { PrismaClient, ActionType, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { ActionType, Prisma } from '@prisma/client';
+import { prisma } from '@/config/database';
 
 /**
  * Creates an audit log entry.

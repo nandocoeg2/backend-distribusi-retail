@@ -1,11 +1,11 @@
 meta {
-  name: Get User by ID
+  name: Get All Users with Pagination
   type: http
-  seq: 7
+  seq: 5
 }
 
 get {
-  url: {{base_url}}/api/v1/users/{{user_id}}
+  url: {{base_url}}/api/v1/users
   body: none
   auth: bearer
 }
@@ -16,4 +16,9 @@ auth:bearer {
 
 headers {
   Accept: application/json
+}
+
+params:query {
+  page: 1
+  limit: 10
 }
