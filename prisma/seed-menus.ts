@@ -21,6 +21,15 @@ async function main() {
     },
   });
 
+  await prisma.menu.upsert({
+    where: { name: 'Users' },
+    update: {},
+    create: {
+      name: 'Users',
+      url: '/users',
+    },
+  });
+
   const masterDataMenu = await prisma.menu.upsert({
     where: { name: 'Master Data' },
     update: {},

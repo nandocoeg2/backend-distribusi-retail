@@ -5,12 +5,15 @@ meta {
 }
 
 get {
-  url: {{base_url}}/group-customers/{{group_customer_id}}
+  url: http://localhost:5050/api/v1/group-customers/{{group_customer_id}}
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
 
+vars:pre-request {
+  group_customer_id: cmfqb1k5k003c117odknnnica
+}

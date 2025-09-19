@@ -5,12 +5,11 @@ meta {
 }
 
 get {
-  url: {{base_url}}/group-customers/search/GC001
+  url: http://localhost:5050/api/v1/group-customers/search/GC001
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{token}}
+  token: {{access_token}}
 }
-
