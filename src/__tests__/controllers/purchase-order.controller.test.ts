@@ -3,6 +3,7 @@ import { PurchaseOrderController } from '@/controllers/purchase-order.controller
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 import { CreatePurchaseOrderInput, UpdatePurchaseOrderInput, HistoryPurchaseOrderInput } from '@/schemas/purchase-order.schema';
 import { ResponseUtil } from '@/utils/response.util';
+import { AppError } from '@/utils/app-error';
 
 jest.mock('@/services/purchase-order.service');
 
@@ -66,6 +67,20 @@ describe('PurchaseOrderController', () => {
       request.isMultipart = jest.fn().mockReturnValue(false);
       await expect(PurchaseOrderController.createPurchaseOrder(request as FastifyRequest, reply as FastifyReply)).rejects.toThrow('Request is not multipart');
     });
+
+    it('should throw a 400 error if total_items is not a valid number', async () => {
+        request.parts = jest.fn().mockImplementation(async function* () {
+          yield { type: 'field', fieldname: 'customerId', value: 'cust1' };
+          yield { type: 'field', fieldname: 'po_number', value: 'PO123' };
+          yield { type: 'field', fieldname: 'total_items', value: 'not-a-number' }; // Invalid value
+          yield { type: 'field', fieldname: 'tanggal_order', value: new Date().toISOString() };
+          yield { type: 'field', fieldname: 'po_type', value: 'SINGLE' };
+          yield { type: 'field', fieldname: 'statusId', value: 'status1' };
+        });
+
+        await expect(PurchaseOrderController.createPurchaseOrder(request as FastifyRequest, reply as FastifyReply))
+          .rejects.toThrow(new AppError('total_items must be a valid number', 400));
+      });
   });
 
   describe('getPurchaseOrders', () => {
@@ -142,7 +157,7 @@ describe('PurchaseOrderController', () => {
     it('should return success with null if purchase order to update not found', async () => {
       const updateInput: UpdatePurchaseOrderInput['body'] = { po_number: 'PO456' };
       request.params = { id: '1' };
-      request.body = updateInput;
+      request.body = update.Input;
       (PurchaseOrderService.updatePurchaseOrder as jest.Mock).mockResolvedValue(null);
 
       await PurchaseOrderController.updatePurchaseOrder(request as FastifyRequest<{ Params: { id: string }; Body: UpdatePurchaseOrderInput['body'] }>, reply as FastifyReply);
