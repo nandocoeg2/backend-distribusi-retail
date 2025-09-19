@@ -2,42 +2,22 @@
 
 Backend untuk aplikasi distribusi retail yang komprehensif, dibangun dengan Fastify, Prisma, TypeScript, Redis, dan PostgreSQL. Sistem ini menyediakan manajemen lengkap untuk operasi distribusi retail termasuk pengelolaan inventory, purchase order, invoice, dan tracking pengiriman.
 
-## 🚀 Fitur Utama
+## 🚀 Fitur
 
-### Autentikasi & Otorisasi
-- Registrasi dan login pengguna
-- JWT-based session management dengan refresh token
-- Role-based access control (RBAC)
-- Manajemen menu berdasarkan role
-
-### Manajemen Data Master
-- **Pengguna**: CRUD operations untuk manajemen pengguna
-- **Pelanggan**: Manajemen data pelanggan retail
-- **Supplier**: Manajemen data pemasok
-- **Inventory**: Tracking stok produk dan barang
-- **Role & Menu**: Sistem hak akses berbasis role
-
-### Operasi Bisnis
-- **Purchase Order**: Pembuatan dan manajemen pesanan pembelian
-  - Bulk upload purchase order
-  - Processing dan tracking status
-  - History perubahan
-- **Packing**: Manajemen proses packing barang
-- **Surat Jalan**: Sistem delivery note untuk pengiriman
-- **Invoice**: Manajemen faktur dan billing
-- **History Pengiriman**: Tracking riwayat pengiriman
-
-### Fitur Tambahan
-- **File Upload/Download**: Sistem manajemen file
-- **Konversi Data**: Utilitas konversi format data
-- **Notifikasi**: Sistem alert dan notifikasi
-- **Status Management**: Centralized status tracking
-- Caching dengan Redis untuk performa optimal
-- Structured logging dengan Winston
-- Request validation dengan Zod
-- Rate limiting dan security headers
-- Dockerized environment untuk deployment mudah
-- Comprehensive testing dengan Jest
+- **Autentikasi & Otorisasi**: Registrasi, login, JWT, RBAC, dan manajemen menu.
+- **Manajemen Data Master**: Pengguna, pelanggan, supplier, inventory, role, dan menu.
+- **Operasi Bisnis**: Purchase order (termasuk bulk upload), packing, surat jalan, invoice, dan history pengiriman.
+- **Fitur Lanjutan**:
+  - Upload/download file
+  - Konversi data
+  - Notifikasi dan alert sistem
+  - Manajemen status terpusat
+  - Caching dengan Redis untuk performa
+  - Logging terstruktur dengan Winston
+  - Validasi request dengan Zod
+  - Rate limiting dan header keamanan
+  - Lingkungan Docker untuk deployment
+  - Pengujian komprehensif dengan Jest
 
 ## 🛠️ Teknologi Stack
 
@@ -172,34 +152,22 @@ npm test -- --coverage
 
 ## 📁 Struktur Proyek
 
-```
-backend-distribusi-retail/
-├── src/
-│   ├── controllers/        # Business logic controllers
-│   ├── routes/            # API route definitions
-│   ├── services/          # Business logic services
-│   ├── schemas/           # Zod validation schemas
-│   ├── middleware/        # Custom middleware
-│   ├── config/           # Configuration files
-│   ├── utils/            # Utility functions
-│   ├── types/            # TypeScript type definitions
-│   └── __tests__/        # Test files
-├── prisma/
-│   ├── schema.prisma     # Database schema
-│   ├── migrations/       # Database migrations
-│   ├── seed-roles.ts     # Seed roles data
-│   ├── seed-menus.ts     # Seed menus data
-│   ├── seed-role-menus.ts # Assign menus to roles
-│   ├── seed-master-data.ts # Seed customers, suppliers, inventories
-│   ├── seed-statuses.ts  # Seed status data
-│   ├── seed-purchase-order.ts # Seed purchase orders
-│   └── README.md         # Prisma documentation
-├── backend-distribusi-retail-collection/
-│   └── ...              # Bruno API collections
-├── logs/                # Application logs
-├── fileuploaded/        # Uploaded files directory
-└── docker-compose.yml   # Docker services
-```
+| Path | Deskripsi |
+| --- | --- |
+| `src/controllers/` | Kontroler untuk business logic |
+| `src/routes/` | Definisi rute API |
+| `src/services/` | Layanan untuk business logic |
+| `src/schemas/` | Skema validasi Zod |
+| `src/middleware/` | Middleware kustom |
+| `src/config/` | File konfigurasi |
+| `src/utils/` | Fungsi utilitas |
+| `src/types/` | Definisi tipe TypeScript |
+| `src/__tests__/` | File pengujian |
+| `prisma/` | Skema, migrasi, dan data seed Prisma |
+| `backend-distribusi-retail-collection/` | Koleksi API Bruno |
+| `logs/` | Log aplikasi |
+| `fileuploaded/` | Direktori file yang diunggah |
+| `docker-compose.yml` | Layanan Docker |
 
 ## 📚 API Documentation
 
