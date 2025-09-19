@@ -369,5 +369,4 @@ export class UserService {
 
     return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
-  }
 }

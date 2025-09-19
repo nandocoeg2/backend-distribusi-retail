@@ -240,5 +240,4 @@ export class CustomerService {
 
     return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
-  }
 }
