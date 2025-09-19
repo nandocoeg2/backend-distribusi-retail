@@ -16,6 +16,11 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.post<{ Body: CreateInventoryInput }>(
     '/',
     {
+      schema: {
+        tags: ['Inventory'],
+        body: createInventorySchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(createInventorySchema)],
     },
     InventoryController.create
@@ -24,6 +29,11 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.get<{ Querystring: GetAllInventoriesInput['query'] }>(
     '/',
     {
+      schema: {
+        tags: ['Inventory'],
+        querystring: getAllInventoriesSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getAllInventoriesSchema)],
     },
     InventoryController.getAll
@@ -32,6 +42,11 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.get<{ Querystring: SearchInventoryInput['query'] }>(
     '/search',
     {
+      schema: {
+        tags: ['Inventory'],
+        querystring: searchInventorySchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchInventorySchema)],
     },
     InventoryController.search
@@ -40,6 +55,11 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Inventory'],
+        params: getOrDeleteInventorySchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getOrDeleteInventorySchema)],
     },
     InventoryController.getById
@@ -48,6 +68,12 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.put<{ Body: UpdateInventoryInput['body']; Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Inventory'],
+        params: updateInventorySchema.shape.params,
+        body: updateInventorySchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(updateInventorySchema)],
     },
     InventoryController.update
@@ -56,6 +82,11 @@ export const inventoryRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fas
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Inventory'],
+        params: getOrDeleteInventorySchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getOrDeleteInventorySchema)],
     },
     InventoryController.delete

@@ -20,6 +20,11 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.get<{ Querystring: SearchSuratJalanInput['query'] }>(
     '/search',
     {
+      schema: {
+        tags: ['Surat Jalan'],
+        querystring: searchSuratJalanSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchSuratJalanSchema)],
     },
     SuratJalanController.searchSuratJalan
@@ -28,6 +33,11 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.post<{ Body: CreateSuratJalanInput }>(
     '/',
     {
+      schema: {
+        tags: ['Surat Jalan'],
+        body: createSuratJalanSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(createSuratJalanSchema)],
     },
     SuratJalanController.createSuratJalan
@@ -35,13 +45,24 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
 
   fastify.get(
     '/',
-    { preHandler: [fastify.authenticate] },
+    {
+      schema: {
+        tags: ['Surat Jalan'],
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [fastify.authenticate],
+    },
     SuratJalanController.getAllSuratJalan
   );
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Surat Jalan'],
+        params: getSuratJalanByIdSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getSuratJalanByIdSchema)],
     },
     SuratJalanController.getSuratJalanById
@@ -50,6 +71,12 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.put<{ Params: { id: string }; Body: UpdateSuratJalanInput['body'] }>(
     '/:id',
     {
+      schema: {
+        tags: ['Surat Jalan'],
+        params: updateSuratJalanSchema.shape.params,
+        body: updateSuratJalanSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(updateSuratJalanSchema),
@@ -61,6 +88,11 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Surat Jalan'],
+        params: deleteSuratJalanSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(deleteSuratJalanSchema),

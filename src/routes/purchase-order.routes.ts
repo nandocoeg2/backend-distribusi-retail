@@ -23,6 +23,11 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.get<{ Querystring: SearchPurchaseOrderInput['query'] }>(
     '/search',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        querystring: searchPurchaseOrderSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchPurchaseOrderSchema)],
     },
     PurchaseOrderController.searchPurchaseOrders
@@ -31,6 +36,11 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.post<{ Body: CreatePurchaseOrderInput }>(
     '/',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        body: createPurchaseOrderSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate],
     },
     PurchaseOrderController.createPurchaseOrder
@@ -38,13 +48,24 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
 
   fastify.get(
     '/',
-    { preHandler: [fastify.authenticate] },
+    {
+      schema: {
+        tags: ['Purchase Order'],
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [fastify.authenticate],
+    },
     PurchaseOrderController.getPurchaseOrders
   );
 
   fastify.get<{ Querystring: HistoryPurchaseOrderInput }>(
     '/history',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        querystring: searchPurchaseOrderSchema.shape.query, // This might need a specific schema
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate],
     },
     PurchaseOrderController.getHistoryPurchaseOrders
@@ -53,6 +74,11 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        params: getPurchaseOrderSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getPurchaseOrderSchema)],
     },
     PurchaseOrderController.getPurchaseOrder
@@ -61,6 +87,12 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.put<{ Params: { id: string }; Body: UpdatePurchaseOrderInput['body'] }>(
     '/:id',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        params: updatePurchaseOrderSchema.shape.params,
+        body: updatePurchaseOrderSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(updatePurchaseOrderSchema),
@@ -72,6 +104,11 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        params: deletePurchaseOrderSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(deletePurchaseOrderSchema),
@@ -83,6 +120,12 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
   fastify.patch<{ Params: { id: string }; Body: ProcessPurchaseOrderInput['body'] }>(
     '/process/:id',
     {
+      schema: {
+        tags: ['Purchase Order'],
+        params: processPurchaseOrderSchema.shape.params,
+        body: processPurchaseOrderSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(processPurchaseOrderSchema),

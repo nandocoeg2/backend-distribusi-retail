@@ -17,6 +17,12 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
   fastify.get<{ Params: { q: string }; Querystring: GetAllSuppliersInput['query'] }>(
     '/search/:q',
     {
+      schema: {
+        tags: ['Supplier'],
+        params: searchSupplierSchema.shape.params,
+        querystring: getAllSuppliersSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchSupplierSchema)],
     },
     SupplierController.searchSuppliers
@@ -25,6 +31,11 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
   fastify.get<{ Querystring: GetAllSuppliersInput['query'] }>(
     '/search',
     {
+      schema: {
+        tags: ['Supplier'],
+        querystring: getAllSuppliersSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getAllSuppliersSchema)],
     },
     SupplierController.searchSuppliers
@@ -33,18 +44,33 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
   fastify.post<{ Body: CreateSupplierInput }>(
     '/',
     {
+      schema: {
+        tags: ['Supplier'],
+        body: createSupplierSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(createSupplierSchema)],
     },
     SupplierController.createSupplier
   );
 
-  fastify.get<{ Querystring: GetAllSuppliersInput['query'] }>('/', { 
-    preHandler: [fastify.authenticate, validateRequest(getAllSuppliersSchema)] 
+  fastify.get<{ Querystring: GetAllSuppliersInput['query'] }>('/', {
+    schema: {
+        tags: ['Supplier'],
+        querystring: getAllSuppliersSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
+    preHandler: [fastify.authenticate, validateRequest(getAllSuppliersSchema)]
   }, SupplierController.getSuppliers);
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Supplier'],
+        params: getSupplierSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getSupplierSchema)],
     },
     SupplierController.getSupplier
@@ -53,6 +79,12 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
   fastify.put<{ Params: { id: string }; Body: UpdateSupplierInput['body'] }>(
     '/:id',
     {
+      schema: {
+        tags: ['Supplier'],
+        params: updateSupplierSchema.shape.params,
+        body: updateSupplierSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(updateSupplierSchema)],
     },
     SupplierController.updateSupplier
@@ -61,6 +93,11 @@ export const supplierRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fast
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Supplier'],
+        params: deleteSupplierSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(deleteSupplierSchema)],
     },
     SupplierController.deleteSupplier
