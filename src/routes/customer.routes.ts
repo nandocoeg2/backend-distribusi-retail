@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyPluginCallback } from 'fastify';
+import { z } from 'zod';
 import { CustomerController } from '@/controllers/customer.controller';
 import { validateRequest } from '@/middleware/validate-request';
 import {

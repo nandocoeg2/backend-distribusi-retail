@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationSchema } from './pagination.schema';
 
 export const createUserSchema = z.object({
   body: z.object({
@@ -21,4 +22,8 @@ export const getUserSchema = z.object({
   params: z.object({
     id: z.string(), // Changed from uuid() to allow CUIDs
   }),
+});
+
+export const getAllUsersSchema = z.object({
+  query: paginationSchema,
 });
