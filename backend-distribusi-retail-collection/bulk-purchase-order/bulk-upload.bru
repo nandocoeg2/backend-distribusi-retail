@@ -1,0 +1,48 @@
+meta {
+  name: Bulk Upload Purchase Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/purchase-orders/bulk
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:multipart-form {
+  file: @file(./sample-bulk-po.xlsx)
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Response has success message", function() {
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().message).to.include("files uploaded successfully");
+  });
+  
+  test("Response contains files array", function() {
+    expect(res.getBody().data.files).to.be.an('array');
+    expect(res.getBody().data.files.length).to.be.greaterThan(0);
+  });
+  
+  test("Each file has required properties", function() {
+    const files = res.getBody().data.files;
+    files.forEach(file => {
+      expect(file).to.have.property('id');
+      expect(file).to.have.property('filename');
+      expect(file).to.have.property('path');
+      expect(file).to.have.property('mimetype');
+      expect(file).to.have.property('size');
+      expect(file).to.have.property('statusId');
+      expect(file).to.have.property('userId');
+    });
+  });
+}

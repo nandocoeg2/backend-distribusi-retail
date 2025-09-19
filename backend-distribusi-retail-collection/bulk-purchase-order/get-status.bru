@@ -1,0 +1,39 @@
+meta {
+  name: Get Bulk Upload Status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/purchase-orders/bulk/status/{{bulk_upload_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has success property", function() {
+    expect(res.getBody().success).to.be.true;
+  });
+  
+  test("Response contains file status data", function() {
+    expect(res.getBody().data).to.be.an('object');
+    expect(res.getBody().data).to.have.property('id');
+    expect(res.getBody().data).to.have.property('filename');
+    expect(res.getBody().data).to.have.property('status');
+  });
+  
+  test("Status object has required properties", function() {
+    const status = res.getBody().data.status;
+    expect(status).to.have.property('id');
+    expect(status).to.have.property('status_code');
+    expect(status).to.have.property('description');
+  });
+}

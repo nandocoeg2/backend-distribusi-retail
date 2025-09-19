@@ -1,0 +1,54 @@
+meta {
+  name: Get All Bulk Uploads
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/purchase-orders/bulk/all
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has success property", function() {
+    expect(res.getBody().success).to.be.true;
+  });
+  
+  test("Response contains files array", function() {
+    expect(res.getBody().data).to.be.an('array');
+  });
+  
+  test("Each file has required properties", function() {
+    const files = res.getBody().data;
+    files.forEach(file => {
+      expect(file).to.have.property('id');
+      expect(file).to.have.property('filename');
+      expect(file).to.have.property('path');
+      expect(file).to.have.property('mimetype');
+      expect(file).to.have.property('size');
+      expect(file).to.have.property('statusId');
+      expect(file).to.have.property('userId');
+      expect(file).to.have.property('createdAt');
+      expect(file).to.have.property('updatedAt');
+    });
+  });
+  
+  test("Files are filtered by status if provided", function() {
+    const files = res.getBody().data;
+    const statusFilter = req.getQueryParam('status');
+    if (statusFilter) {
+      files.forEach(file => {
+        expect(file.status.status_code).to.equal(statusFilter);
+      });
+    }
+  });
+}
