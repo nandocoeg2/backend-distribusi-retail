@@ -22,5 +22,5 @@ body:json {
 }
 
 script:post-response {
-  bru.setEnvVar("access_token", res.body.data.user.accessToken);
+  bru.setEnvVar("access_token", res.body.data.accessToken);
 }
