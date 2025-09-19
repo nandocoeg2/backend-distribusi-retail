@@ -52,10 +52,15 @@ export class PurchaseOrderController {
         }
       }
 
+      const totalItems = parseInt(fields.total_items, 10);
+      if (isNaN(totalItems)) {
+        throw new AppError('total_items must be a valid number', 400);
+      }
+
       const poData: CreatePurchaseOrderInput = {
         customerId: fields.customerId,
         po_number: fields.po_number,
-        total_items: parseInt(fields.total_items, 10),  
+        total_items: totalItems,
         tanggal_order: fields.tanggal_order,
         po_type: fields.po_type as 'BULK' | 'SINGLE',
         statusId: fields.statusId,
