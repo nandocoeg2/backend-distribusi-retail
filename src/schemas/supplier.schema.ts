@@ -3,59 +3,59 @@ import { paginationSchema } from './pagination.schema';
 
 export const createSupplierSchema = z.object({
   body: z.object({
-    name: z.string({ required_error: 'Name is required' }),
-    code: z.string().optional(),
-    description: z.string().optional(),
-    address: z.string().optional(),
-    phoneNumber: z.string({ required_error: 'Phone number is required' }),
-    email: z.string().email('Not a valid email').optional(),
-    createdBy: z.string().optional(),
-    updatedBy: z.string().optional(),
+    name: z.string({ required_error: 'Name is required' }).describe('Supplier name'),
+    code: z.string().optional().describe('Supplier code'),
+    description: z.string().optional().describe('Supplier description'),
+    address: z.string().optional().describe('Supplier address'),
+    phoneNumber: z.string({ required_error: 'Phone number is required' }).describe('Supplier phone number'),
+    email: z.string().email('Not a valid email').optional().describe('Supplier email address'),
+    createdBy: z.string().optional().describe('User who created the supplier'),
+    updatedBy: z.string().optional().describe('User who updated the supplier'),
     bank: z.object({
-      name: z.string({ required_error: 'Bank name is required' }),
-      account: z.string({ required_error: 'Bank account is required' }),
-      holder: z.string({ required_error: 'Bank holder is required' }),
-    }).optional(),
+      name: z.string({ required_error: 'Bank name is required' }).describe('Bank name'),
+      account: z.string({ required_error: 'Bank account is required' }).describe('Bank account number'),
+      holder: z.string({ required_error: 'Bank holder is required' }).describe('Bank account holder name'),
+    }).optional().describe('Bank details'),
   }),
 });
 
 export const getSupplierSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string().describe('The ID of the supplier'),
   }),
 });
 
 export const updateSupplierSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string().describe('The ID of the supplier'),
   }),
   body: z.object({
-    name: z.string().optional(),
-    code: z.string().optional(),
-    description: z.string().optional(),
-    address: z.string().optional(),
-    phoneNumber: z.string().optional(),
-    email: z.string().email('Not a valid email').optional(),
-    updatedBy: z.string().optional(),
+    name: z.string().optional().describe('Supplier name'),
+    code: z.string().optional().describe('Supplier code'),
+    description: z.string().optional().describe('Supplier description'),
+    address: z.string().optional().describe('Supplier address'),
+    phoneNumber: z.string().optional().describe('Supplier phone number'),
+    email: z.string().email('Not a valid email').optional().describe('Supplier email address'),
+    updatedBy: z.string().optional().describe('User who updated the supplier'),
     bank: z
       .object({
-        name: z.string().optional(),
-        account: z.string().optional(),
-        holder: z.string().optional(),
+        name: z.string().optional().describe('Bank name'),
+        account: z.string().optional().describe('Bank account number'),
+        holder: z.string().optional().describe('Bank account holder name'),
       })
-      .optional(),
+      .optional().describe('Bank details'),
   }),
 });
 
 export const deleteSupplierSchema = z.object({
   params: z.object({
-    id: z.string(), // Changed from uuid() to allow CUIDs
+    id: z.string().describe('The ID of the supplier'),
   }),
 });
 
 export const searchSupplierSchema = z.object({
   params: z.object({
-    q: z.string().optional(),
+    q: z.string().optional().describe('Search query'),
   }),
   query: paginationSchema,
 });

@@ -20,6 +20,11 @@ export const invoiceRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.get<{ Querystring: SearchInvoiceInput['query'] }>(
     '/search',
     {
+      schema: {
+        tags: ['Invoice'],
+        querystring: searchInvoiceSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchInvoiceSchema)],
     },
     InvoiceController.searchInvoices
@@ -28,6 +33,11 @@ export const invoiceRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.post<{ Body: CreateInvoiceInput }>(
     '/',
     {
+      schema: {
+        tags: ['Invoice'],
+        body: createInvoiceSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(createInvoiceSchema)],
     },
     InvoiceController.createInvoice
@@ -35,13 +45,24 @@ export const invoiceRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
 
   fastify.get(
     '/',
-    { preHandler: [fastify.authenticate] },
+    {
+      schema: {
+        tags: ['Invoice'],
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [fastify.authenticate],
+    },
     InvoiceController.getInvoices
   );
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Invoice'],
+        params: getInvoiceSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getInvoiceSchema)],
     },
     InvoiceController.getInvoice
@@ -50,6 +71,12 @@ export const invoiceRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.put<{ Params: { id: string }; Body: UpdateInvoiceInput['body'] }>(
     '/:id',
     {
+      schema: {
+        tags: ['Invoice'],
+        params: updateInvoiceSchema.shape.params,
+        body: updateInvoiceSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(updateInvoiceSchema),
@@ -61,6 +88,11 @@ export const invoiceRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Invoice'],
+        params: deleteInvoiceSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [
         fastify.authenticate,
         validateRequest(deleteInvoiceSchema),

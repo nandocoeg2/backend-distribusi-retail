@@ -17,6 +17,11 @@ export const companyRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fasti
   fastify.get<{ Querystring: GetAllCompaniesInput['query'] & { q?: string } }>(
     '/search',
     {
+      schema: {
+        tags: ['Company'],
+        querystring: searchCompanySchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(searchCompanySchema)],
     },
     CompanyController.searchCompanies
@@ -25,18 +30,33 @@ export const companyRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fasti
   fastify.post<{ Body: CreateCompanyInput }>(
     '/',
     {
+      schema: {
+        tags: ['Company'],
+        body: createCompanySchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(createCompanySchema)],
     },
     CompanyController.createCompany
   );
 
-  fastify.get<{ Querystring: GetAllCompaniesInput['query'] }>('/', { 
-    preHandler: [fastify.authenticate, validateRequest(getAllCompaniesSchema)] 
+  fastify.get<{ Querystring: GetAllCompaniesInput['query'] }>('/', {
+    schema: {
+      tags: ['Company'],
+      querystring: getAllCompaniesSchema.shape.query,
+      security: [{ Bearer: [] }],
+    },
+    preHandler: [fastify.authenticate, validateRequest(getAllCompaniesSchema)]
   }, CompanyController.getCompanies);
 
   fastify.get<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Company'],
+        params: getCompanySchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getCompanySchema)],
     },
     CompanyController.getCompany
@@ -45,6 +65,12 @@ export const companyRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fasti
   fastify.put<{ Params: { id: string }; Body: UpdateCompanyInput['body'] }>(
     '/:id',
     {
+      schema: {
+        tags: ['Company'],
+        params: updateCompanySchema.shape.params,
+        body: updateCompanySchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(updateCompanySchema)],
     },
     CompanyController.updateCompany
@@ -53,6 +79,11 @@ export const companyRoutes: FastifyPluginCallback<FastifyPluginOptions> = (fasti
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
     {
+      schema: {
+        tags: ['Company'],
+        params: deleteCompanySchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(deleteCompanySchema)],
     },
     CompanyController.deleteCompany

@@ -11,6 +11,11 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
   fastify.post(
     '/bulk',
     {
+      schema: {
+        tags: ['Bulk Purchase Order'],
+        security: [{ Bearer: [] }],
+        consumes: ['multipart/form-data'],
+      },
       preHandler: [fastify.authenticate],
     },
     BulkPurchaseOrderController.bulkCreatePurchaseOrder
@@ -19,6 +24,11 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
   fastify.get<{ Params: { id: string } }>(
     '/bulk/status/:id',
     {
+      schema: {
+        tags: ['Bulk Purchase Order'],
+        params: getBulkUploadStatusSchema.shape.params,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getBulkUploadStatusSchema)],
     },
     BulkPurchaseOrderController.getUploadStatus
@@ -27,6 +37,11 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
   fastify.get(
     '/bulk/all',
     {
+      schema: {
+        tags: ['Bulk Purchase Order'],
+        querystring: getBulkUploadsSchema.shape.query,
+        security: [{ Bearer: [] }],
+      },
       preHandler: [fastify.authenticate, validateRequest(getBulkUploadsSchema)],
     },
     BulkPurchaseOrderController.getAllBulkFiles
