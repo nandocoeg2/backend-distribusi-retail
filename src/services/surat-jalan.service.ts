@@ -7,16 +7,9 @@ import {
 } from '@/schemas/surat-jalan.schema';
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-}
+import { PaginatedResult } from '@/types/common.types';
+import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.utils';
+import { getEntityWithAuditTrails } from '@/utils/audit.utils';
 
 export class SuratJalanService {
   static async createSuratJalan(suratJalanData: CreateSuratJalanInput, userId: string): Promise<SuratJalan> {
@@ -99,37 +92,26 @@ export class SuratJalanService {
   }
 
   static async getAllSuratJalan(page: number = 1, limit: number = 10): Promise<PaginatedResult<SuratJalan>> {
-    const skip = (page - 1) * limit;
+    const { skip, take } = calculatePagination(page, limit);
 
-    const [data, totalItems] = await Promise.all([
-      prisma.suratJalan.findMany({
-        skip,
-        take: parseInt(limit.toString()),
-        include: {
-          suratJalanDetails: { include: { suratJalanDetailItems: true } },
-          invoice: true,
-          status: true,
-        },
-        orderBy: { id: 'desc' }
-      }),
-      prisma.suratJalan.count(),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
+    const dataQuery = prisma.suratJalan.findMany({
+      skip,
+      take,
+      include: {
+        suratJalanDetails: { include: { suratJalanDetailItems: true } },
+        invoice: true,
+        status: true,
       },
-    };
+      orderBy: { id: 'desc' }
+    });
+
+    const countQuery = prisma.suratJalan.count();
+
+    return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
 
   static async getSuratJalanById(id: string) {
-    const suratJalan = await prisma.suratJalan.findUnique({
+    const findQuery = prisma.suratJalan.findUnique({
       where: { id },
       include: {
         suratJalanDetails: { include: { suratJalanDetailItems: true } },
@@ -139,17 +121,7 @@ export class SuratJalanService {
       },
     });
 
-    if (!suratJalan) {
-      throw new AppError('Surat Jalan not found', 404);
-    }
-
-    const auditTrails = await prisma.auditTrail.findMany({
-      where: { tableName: 'SuratJalan', recordId: id },
-      include: { user: { select: { id: true, username: true, firstName: true, lastName: true } } },
-      orderBy: { timestamp: 'desc' },
-    });
-
-    return { ...suratJalan, auditTrails };
+    return getEntityWithAuditTrails(findQuery, 'SuratJalan', id, 'Surat Jalan not found');
   }
 
   static async updateSuratJalan(id: string, data: UpdateSuratJalanInput['body'], userId: string): Promise<SuratJalan> {
@@ -240,7 +212,7 @@ export class SuratJalanService {
 
   static async searchSuratJalan(query: SearchSuratJalanInput['query']): Promise<PaginatedResult<SuratJalan>> {
     const { no_surat_jalan, deliver_to, PIC, invoiceId, statusId, is_printed, page = 1, limit = 10 } = query;
-    const skip = (page - 1) * limit;
+    const { skip, take } = calculatePagination(page, limit);
     const filters: Prisma.SuratJalanWhereInput[] = [];
     
     if (no_surat_jalan) filters.push({ no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' } });
@@ -250,22 +222,22 @@ export class SuratJalanService {
     if (statusId) filters.push({ statusId });
     if (is_printed !== undefined) filters.push({ is_printed });
 
-    const [data, totalItems] = await Promise.all([
-      prisma.suratJalan.findMany({
-        where: { AND: filters.length > 0 ? filters : undefined },
-        skip,
-        take: parseInt(limit.toString()),
-        include: {
-          suratJalanDetails: { include: { suratJalanDetailItems: true } },
-          invoice: { include: { purchaseOrder: { include: { customer: true } } } },
-          status: true,
-        },
-        orderBy: { id: 'desc' }
-      }),
-      prisma.suratJalan.count({ where: { AND: filters.length > 0 ? filters : undefined } }),
-    ]);
+    const whereClause = filters.length > 0 ? { AND: filters } : {};
 
-    const totalPages = Math.ceil(totalItems / limit);
-    return { data, pagination: { currentPage: page, totalPages, totalItems, itemsPerPage: limit } };
+    const dataQuery = prisma.suratJalan.findMany({
+      where: whereClause,
+      skip,
+      take,
+      include: {
+        suratJalanDetails: { include: { suratJalanDetailItems: true } },
+        invoice: { include: { purchaseOrder: { include: { customer: true } } } },
+        status: true,
+      },
+      orderBy: { id: 'desc' }
+    });
+
+    const countQuery = prisma.suratJalan.count({ where: whereClause });
+
+    return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
 }

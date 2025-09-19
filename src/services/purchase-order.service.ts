@@ -8,22 +8,13 @@ import {
 import { AppError } from '@/utils/app-error';
 import { generatePackingNumber, generateUniqueInvoiceNumber, generateSuratJalanNumber } from '@/utils/random.utils';
 import { createAuditLog } from './audit.service';
+import { PaginatedResult } from '@/types/common.types';
 
 export interface FileInfo {
   filename: string;
   path: string;
   mimetype: string;
   size: number;
-}
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
 }
 
 export class PurchaseOrderService {

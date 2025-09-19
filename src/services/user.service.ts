@@ -3,8 +3,9 @@ import { prisma } from '@/config/database';
 import { CacheService } from '@/services/cache.service';
 import { AppError } from '@/utils/app-error';
 import { CreateUserInput, UpdateUserInput } from '@/schemas/user.schema';
-import { PaginatedResult } from './purchase-order.service';
+import { PaginatedResult } from '@/types/common.types';
 import { createAuditLog } from './audit.service';
+import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.utils';
 import bcrypt from 'bcrypt';
 
 export class UserService {
@@ -87,42 +88,33 @@ export class UserService {
   }
 
   static async getAllUsers(page: number = 1, limit: number = 10): Promise<PaginatedResult<Omit<User, 'password'>>> {
-    const skip = (page - 1) * limit;
+    const { skip, take } = calculatePagination(page, limit);
     
-    const [data, totalItems] = await Promise.all([
-      prisma.user.findMany({
-        skip,
-        take: parseInt(limit.toString()),
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.user.count(),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
+    const userSelect = {
+      id: true,
+      email: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      roleId: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
     };
+    
+    const dataQuery = prisma.user.findMany({
+      skip,
+      take,
+      select: userSelect,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const countQuery = prisma.user.count();
+
+    return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
 
   static async getUserById(id: string): Promise<Omit<User, 'password'>> {
@@ -313,11 +305,24 @@ export class UserService {
   }
 
   static async searchUsers(query?: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<Omit<User, 'password'>>> {
-    const skip = (page - 1) * limit;
-    
     if (!query) {
       return this.getAllUsers(page, limit);
     }
+
+    const { skip, take } = calculatePagination(page, limit);
+    
+    const userSelect = {
+      id: true,
+      email: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      roleId: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
+    };
 
     const filters: Prisma.UserWhereInput[] = [
       {
@@ -346,46 +351,23 @@ export class UserService {
       },
     ];
 
-    const [data, totalItems] = await Promise.all([
-      prisma.user.findMany({
-        where: {
-          OR: filters,
-        },
-        skip,
-        take: parseInt(limit.toString()),
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.user.count({
-        where: {
-          OR: filters,
-        },
-      }),
-    ]);
+    const whereClause = { OR: filters };
 
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
+    const dataQuery = prisma.user.findMany({
+      where: whereClause,
+      skip,
+      take,
+      select: userSelect,
+      orderBy: {
+        createdAt: 'desc',
       },
-    };
+    });
+
+    const countQuery = prisma.user.count({
+      where: whereClause,
+    });
+
+    return executePaginatedQuery(dataQuery, countQuery, page, limit);
+  }
   }
 }

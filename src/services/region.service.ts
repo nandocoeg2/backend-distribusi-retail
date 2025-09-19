@@ -1,144 +1,67 @@
 import { Region, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { CreateRegionInput, UpdateRegionInput } from '../schemas/region.schema';
-import { AppError } from '../utils/app-error';
-import { PaginatedResult } from './purchase-order.service';
-import { createAuditLog } from './audit.service';
+import { BaseService } from './base.service';
+import { PaginatedResult } from '@/types/common.types';
 
-export class RegionService {
+export class RegionService extends BaseService<
+  Region,
+  CreateRegionInput,
+  UpdateRegionInput['body']
+> {
+  protected modelName = 'Region';
+  protected tableName = 'Region';
+  protected prismaModel = prisma.region;
+
   static async createRegion(data: CreateRegionInput, userId: string): Promise<Region> {
-    try {
+    const service = new RegionService();
+    
+    const preprocessData = (data: CreateRegionInput, userId: string) => {
       const { createdBy, updatedBy, ...regionData } = data;
-      
-      const region = await prisma.region.create({
-        data: {
-          ...regionData,
-          createdBy: userId,
-          updatedBy: userId,
-        },
-      });
+      return {
+        ...regionData,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+    };
 
-      await createAuditLog('Region', region.id, 'CREATE', userId, region);
-      
-      return region;
-    } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('kode_region')) {
-        throw new AppError('Region with this code already exists', 409);
-      }
-      throw error;
-    }
+    return service.createEntity(data, userId, preprocessData);
   }
 
   static async getAllRegions(page: number = 1, limit: number = 10): Promise<PaginatedResult<Region>> {
-    const skip = (page - 1) * limit;
-    
-    const [data, totalItems] = await Promise.all([
-      prisma.region.findMany({
-        skip,
-        take: parseInt(limit.toString()),
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.region.count(),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
-    };
+    const service = new RegionService();
+    return service.getAllEntities(page, limit);
   }
 
   static async getRegionById(id: string) {
-    const region = await prisma.region.findUnique({
-      where: { id },
-    });
-
-    if (!region) {
-      throw new AppError('Region not found', 404);
-    }
-
-    const auditTrails = await prisma.auditTrail.findMany({
-      where: {
-        tableName: 'Region',
-        recordId: id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        timestamp: 'desc',
-      },
-    });
-
-    return {
-      ...region,
-      auditTrails,
-    };
+    const service = new RegionService();
+    return service.getEntityById(id);
   }
 
   static async updateRegion(id: string, data: UpdateRegionInput['body'], userId: string): Promise<Region> {
-    const existingRegion = await prisma.region.findUnique({
-      where: { id },
-    });
-
-    if (!existingRegion) {
-      throw new AppError('Region not found', 404);
-    }
-
-    const { updatedBy, ...regionData } = data;
-
-    const updatedRegion = await prisma.region.update({
-      where: { id },
-      data: {
+    const service = new RegionService();
+    
+    const preprocessData = (data: UpdateRegionInput['body'], userId: string) => {
+      const { updatedBy, ...regionData } = data;
+      return {
         ...regionData,
         updatedBy: userId,
-      },
-    });
+      };
+    };
 
-    await createAuditLog('Region', updatedRegion.id, 'UPDATE', userId, {
-      before: existingRegion,
-      after: updatedRegion,
-    });
-
-    return updatedRegion;
+    return service.updateEntity(id, data, userId, preprocessData);
   }
 
   static async deleteRegion(id: string, userId: string): Promise<Region> {
-    const existingRegion = await prisma.region.findUnique({
-      where: { id },
-    });
-
-    if (!existingRegion) {
-      throw new AppError('Region not found', 404);
-    }
-
-    await createAuditLog('Region', id, 'DELETE', userId, existingRegion);
-
-    return await prisma.region.delete({
-      where: { id },
-    });
+    const service = new RegionService();
+    return service.deleteEntity(id, userId);
   }
 
   static async searchRegions(query?: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<Region>> {
-    const skip = (page - 1) * limit;
+    const service = new RegionService();
     
     if (!query) {
-      return this.getAllRegions(page, limit);
+      return service.getAllEntities(page, limit);
     }
 
     const filters: Prisma.RegionWhereInput[] = [
@@ -156,34 +79,6 @@ export class RegionService {
       },
     ];
 
-    const [data, totalItems] = await Promise.all([
-      prisma.region.findMany({
-        where: {
-          OR: filters,
-        },
-        skip,
-        take: parseInt(limit.toString()),
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.region.count({
-        where: {
-          OR: filters,
-        },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
-    };
+    return service.searchEntities(filters, page, limit);
   }
 }

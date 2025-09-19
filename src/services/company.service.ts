@@ -1,147 +1,67 @@
 import { Company, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { CreateCompanyInput, UpdateCompanyInput } from '../schemas/company.schema';
-import { AppError } from '../utils/app-error';
-import { PaginatedResult } from './purchase-order.service';
-import { createAuditLog } from './audit.service';
+import { BaseService } from './base.service';
+import { PaginatedResult } from '@/types/common.types';
 
-export class CompanyService {
+export class CompanyService extends BaseService<
+  Company,
+  CreateCompanyInput,
+  UpdateCompanyInput['body']
+> {
+  protected modelName = 'Company';
+  protected tableName = 'Company';
+  protected prismaModel = prisma.company;
+
   static async createCompany(data: CreateCompanyInput, userId: string): Promise<Company> {
-    try {
+    const service = new CompanyService();
+    
+    const preprocessData = (data: CreateCompanyInput, userId: string) => {
       const { createdBy, updatedBy, ...companyData } = data;
-      
-      const company = await prisma.company.create({
-        data: {
-          ...companyData,
-          createdBy: userId,
-          updatedBy: userId,
-        },
-      });
+      return {
+        ...companyData,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+    };
 
-      await createAuditLog('Company', company.id, 'CREATE', userId, company);
-      
-      return company;
-    } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('kode_company')) {
-        throw new AppError('Company with this code already exists', 409);
-      }
-      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-        throw new AppError('Company with this email already exists', 409);
-      }
-      throw error;
-    }
+    return service.createEntity(data, userId, preprocessData);
   }
 
   static async getAllCompanies(page: number = 1, limit: number = 10): Promise<PaginatedResult<Company>> {
-    const skip = (page - 1) * limit;
-    
-    const [data, totalItems] = await Promise.all([
-      prisma.company.findMany({
-        skip,
-        take: parseInt(limit.toString()),
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.company.count(),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
-    };
+    const service = new CompanyService();
+    return service.getAllEntities(page, limit);
   }
 
   static async getCompanyById(id: string) {
-    const company = await prisma.company.findUnique({
-      where: { id },
-    });
-
-    if (!company) {
-      throw new AppError('Company not found', 404);
-    }
-
-    const auditTrails = await prisma.auditTrail.findMany({
-      where: {
-        tableName: 'Company',
-        recordId: id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        timestamp: 'desc',
-      },
-    });
-
-    return {
-      ...company,
-      auditTrails,
-    };
+    const service = new CompanyService();
+    return service.getEntityById(id);
   }
 
   static async updateCompany(id: string, data: UpdateCompanyInput['body'], userId: string): Promise<Company> {
-    const existingCompany = await prisma.company.findUnique({
-      where: { id },
-    });
-
-    if (!existingCompany) {
-      throw new AppError('Company not found', 404);
-    }
-
-    const { updatedBy, ...companyData } = data;
-
-    const updatedCompany = await prisma.company.update({
-      where: { id },
-      data: {
+    const service = new CompanyService();
+    
+    const preprocessData = (data: UpdateCompanyInput['body'], userId: string) => {
+      const { updatedBy, ...companyData } = data;
+      return {
         ...companyData,
         updatedBy: userId,
-      },
-    });
+      };
+    };
 
-    await createAuditLog('Company', updatedCompany.id, 'UPDATE', userId, {
-      before: existingCompany,
-      after: updatedCompany,
-    });
-
-    return updatedCompany;
+    return service.updateEntity(id, data, userId, preprocessData);
   }
 
   static async deleteCompany(id: string, userId: string): Promise<Company> {
-    const existingCompany = await prisma.company.findUnique({
-      where: { id },
-    });
-
-    if (!existingCompany) {
-      throw new AppError('Company not found', 404);
-    }
-
-    await createAuditLog('Company', id, 'DELETE', userId, existingCompany);
-
-    return await prisma.company.delete({
-      where: { id },
-    });
+    const service = new CompanyService();
+    return service.deleteEntity(id, userId);
   }
 
   static async searchCompanies(query?: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<Company>> {
-    const skip = (page - 1) * limit;
+    const service = new CompanyService();
     
     if (!query) {
-      return this.getAllCompanies(page, limit);
+      return service.getAllEntities(page, limit);
     }
 
     const filters: Prisma.CompanyWhereInput[] = [
@@ -171,34 +91,6 @@ export class CompanyService {
       },
     ];
 
-    const [data, totalItems] = await Promise.all([
-      prisma.company.findMany({
-        where: {
-          OR: filters,
-        },
-        skip,
-        take: parseInt(limit.toString()),
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.company.count({
-        where: {
-          OR: filters,
-        },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        itemsPerPage: limit,
-      },
-    };
+    return service.searchEntities(filters, page, limit);
   }
 }
