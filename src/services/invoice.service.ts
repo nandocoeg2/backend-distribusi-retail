@@ -7,16 +7,7 @@ import {
 } from '@/schemas/invoice.schema';
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-}
+import { PaginatedResult } from '@/types/common.types';
 
 export class InvoiceService {
   static async createInvoice(invoiceData: CreateInvoiceInput, userId: string): Promise<Invoice> {

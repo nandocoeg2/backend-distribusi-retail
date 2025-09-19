@@ -2,7 +2,7 @@ import { Customer, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import { CreateCustomerInput, UpdateCustomerInput } from '@/schemas/customer.schema';
 import { AppError } from '@/utils/app-error';
-import { PaginatedResult } from './purchase-order.service';
+import { PaginatedResult } from '@/types/common.types';
 
 export class CustomerService {
   static async createCustomer(data: CreateCustomerInput): Promise<Customer> {

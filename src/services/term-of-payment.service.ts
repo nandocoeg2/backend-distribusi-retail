@@ -2,7 +2,7 @@ import { TermOfPayment, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { CreateTermOfPaymentInput, UpdateTermOfPaymentInput } from '@/schemas/term-of-payment.schema';
 import { AppError } from '../utils/app-error';
-import { PaginatedResult } from './purchase-order.service';
+import { PaginatedResult } from '@/types/common.types';
 import { createAuditLog } from './audit.service';
 
 export class TermOfPaymentService {

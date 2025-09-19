@@ -3,7 +3,7 @@ import { prisma } from '@/config/database';
 import { CacheService } from '@/services/cache.service';
 import { AppError } from '@/utils/app-error';
 import { CreateUserInput, UpdateUserInput } from '@/schemas/user.schema';
-import { PaginatedResult } from './purchase-order.service';
+import { PaginatedResult } from '@/types/common.types';
 import { createAuditLog } from './audit.service';
 import bcrypt from 'bcrypt';
 

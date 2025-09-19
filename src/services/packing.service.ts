@@ -3,16 +3,7 @@ import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/sc
 import { AppError } from '@/utils/app-error';
 import { generateUniquePackingNumber } from '@/utils/random.utils';
 import { createAuditLog } from './audit.service';
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-}
+import { PaginatedResult } from '@/types/common.types';
 
 export class PackingService {
   static async createPacking(packingData: CreatePackingInput, userId: string): Promise<any> {
