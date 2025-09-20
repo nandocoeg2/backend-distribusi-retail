@@ -4,6 +4,7 @@ import {
   CreatePackingInput,
   UpdatePackingInput,
   SearchPackingInput,
+  ProcessPackingInput,
 } from '@/schemas/packing.schema';
 import { ResponseUtil } from '@/utils/response.util';
 
@@ -61,6 +62,15 @@ export class PackingController {
     reply: FastifyReply
   ) {
     const result = await PackingService.searchPackings(request.query);
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async processPacking(
+    request: FastifyRequest<{ Body: ProcessPackingInput }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+    const result = await PackingService.processPacking(request.body.ids, userId);
     return reply.send(ResponseUtil.success(result));
   }
 }

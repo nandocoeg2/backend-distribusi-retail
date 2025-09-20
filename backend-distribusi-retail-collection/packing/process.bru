@@ -1,0 +1,45 @@
+meta {
+  name: Process Packing
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:5050/api/v1/packing/process
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "ids": ["packing_id_1", "packing_id_2"]
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has success structure", function() {
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('object');
+  });
+  
+  test("Response contains processed count", function() {
+    expect(res.getBody().data.processedCount).to.be.a('number');
+    expect(res.getBody().data.processedPackingItemsCount).to.be.a('number');
+  });
+  
+  test("Response contains packings array", function() {
+    expect(res.getBody().data.packings).to.be.an('array');
+  });
+}

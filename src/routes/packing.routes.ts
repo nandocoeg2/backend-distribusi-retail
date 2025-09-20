@@ -10,6 +10,8 @@ import {
   UpdatePackingInput,
   SearchPackingInput,
   searchPackingSchema,
+  processPackingSchema,
+  ProcessPackingInput,
 } from '@/schemas/packing.schema';
 
 export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -99,6 +101,22 @@ export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
       ],
     },
     PackingController.deletePacking
+  );
+
+  fastify.post<{ Body: ProcessPackingInput }>(
+    '/process',
+    {
+      schema: {
+        tags: ['Packing'],
+        body: processPackingSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(processPackingSchema),
+      ],
+    },
+    PackingController.processPacking
   );
 
   done();

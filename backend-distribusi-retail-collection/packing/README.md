@@ -269,6 +269,115 @@ Mencari packing berdasarkan berbagai filter dengan pagination.
 
 ---
 
+### 7. Process Packing
+Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan mengubah status semua packing item menjadi "PROCESSING ITEM".
+
+**Endpoint:** `POST /process`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Request Body:**
+```json
+{
+  "ids": ["packing_id_1", "packing_id_2", "packing_id_3"]
+}
+```
+
+**Validation Rules:**
+- `ids`: **Required** - Array ID packing yang akan diproses (minimal 1 ID)
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Packing berhasil diproses",
+    "processedCount": 2,
+    "processedPackingItemsCount": 4,
+    "packings": [
+      {
+        "id": "packing-uuid-1",
+        "packing_number": "PKG-2024-001",
+        "tanggal_packing": "2025-09-06T00:00:00.000Z",
+        "statusId": "processing-packing-status-uuid",
+        "purchaseOrderId": "purchase-order-uuid",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T12:00:00.000Z",
+        "createdBy": "user-uuid",
+        "updatedBy": "user-uuid",
+        "status": {
+          "id": "processing-packing-status-uuid",
+          "status_code": "PROCESSING PACKING",
+          "status_name": "Processing Packing",
+          "status_description": "Packing is currently being processed"
+        },
+        "purchaseOrder": {...},
+        "packingItems": [
+          {
+            "id": "packing-item-uuid",
+            "nama_barang": "Product Name",
+            "total_qty": 100,
+            "jumlah_carton": 10,
+            "isi_per_carton": 10,
+            "no_box": "BOX001",
+            "packingId": "packing-uuid-1",
+            "inventoryId": "inventory-uuid",
+            "statusId": "processing-item-status-uuid",
+            "status": {
+              "id": "processing-item-status-uuid",
+              "status_code": "PROCESSING ITEM",
+              "status_name": "Processing Item",
+              "status_description": "Packing detail item is currently being processed."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Error Responses:**
+
+**400 Bad Request - Invalid Status:**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Packing dengan ID packing_id_1 tidak memiliki status PENDING PACKING"
+  }
+}
+```
+
+**404 Not Found - Packing Not Found:**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Packing not found: packing_id_1, packing_id_2"
+  }
+}
+```
+
+**404 Not Found - Status Not Found:**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "PENDING PACKING status not found"
+  }
+}
+```
+
+---
+
 ## Error Handling
 
 Semua endpoint menggunakan format error response yang konsisten:
