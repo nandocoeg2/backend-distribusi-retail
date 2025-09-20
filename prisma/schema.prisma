@@ -115,10 +115,6 @@ model Supplier {
 
 model PurchaseOrder {
   id                   String                @id @default(cuid())
-  suratJalan           String?
-  invoicePengiriman    String?
-  suratPO              String?
-  suratPenagihan       String?
   customerId           String
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -126,7 +122,9 @@ model PurchaseOrder {
   updatedBy            String
   po_number            String
   statusId             String?
-  tanggal_order        DateTime?
+  tanggal_masuk_po     DateTime?
+  tanggal_batas_kirim  DateTime?
+  termin_bayar         String?
   total_items          Int?
   supplierId           String?
   po_type              POType                @default(SINGLE)

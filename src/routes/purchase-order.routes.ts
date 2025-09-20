@@ -38,7 +38,7 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
     {
       schema: {
         tags: ['Purchase Order'],
-        body: createPurchaseOrderSchema.shape.body,
+        consumes: ['multipart/form-data'],
         security: [{ Bearer: [] }],
       },
       preHandler: [fastify.authenticate],
@@ -117,14 +117,14 @@ export const purchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions> = 
     PurchaseOrderController.deletePurchaseOrder
   );
 
-  fastify.patch<{ Params: { id: string }; Body: ProcessPurchaseOrderInput['body'] }>(
-    '/process/:id',
+  fastify.patch<{ Body: ProcessPurchaseOrderInput['body'] }>(
+    '/process',
     {
       schema: {
         tags: ['Purchase Order'],
-        params: processPurchaseOrderSchema.shape.params,
         body: processPurchaseOrderSchema.shape.body,
         security: [{ Bearer: [] }],
+        description: 'Process purchase orders by providing array of IDs in body'
       },
       preHandler: [
         fastify.authenticate,

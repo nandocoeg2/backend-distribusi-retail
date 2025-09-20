@@ -32,9 +32,32 @@ export class PurchaseOrderService {
         throw new AppError('Customer not found', 404);
       }
 
+      // Get status by status_code or use default
+      let statusId: string | undefined;
+      if (poData.status_code) {
+        const status = await prisma.status.findUnique({
+          where: { status_code: poData.status_code },
+        });
+        if (!status) {
+          throw new AppError(`Status with code '${poData.status_code}' not found`, 404);
+        }
+        statusId = status.id;
+      } else {
+        // Use default status 'PENDING PURCHASE ORDER'
+        const defaultStatus = await prisma.status.findUnique({
+          where: { status_code: 'PENDING PURCHASE ORDER' },
+        });
+        if (defaultStatus) {
+          statusId = defaultStatus.id;
+        }
+      }
+
+      const { status_code, ...poDataWithoutStatus } = poData;
       const dataForDb = {
-        ...poData,
-        tanggal_order: poData.tanggal_order ? new Date(poData.tanggal_order) : new Date(),
+        ...poDataWithoutStatus,
+        statusId,
+        tanggal_masuk_po: poData.tanggal_masuk_po ? new Date(poData.tanggal_masuk_po) : new Date(),
+        tanggal_batas_kirim: poData.tanggal_batas_kirim ? new Date(poData.tanggal_batas_kirim) : undefined,
         files: {
           create: fileInfos,
         },
@@ -186,7 +209,7 @@ export class PurchaseOrderService {
     data: UpdatePurchaseOrderInput['body'],
     userId: string
   ): Promise<PurchaseOrder | null> {
-    const { purchaseOrderDetails, ...poData } = data;
+    const { purchaseOrderDetails, status_code, ...poData } = data;
 
     try {
       const updatedPurchaseOrder = await prisma.$transaction(async (tx) => {
@@ -196,6 +219,18 @@ export class PurchaseOrderService {
 
         if (!existingPO) {
           throw new AppError('Purchase Order not found', 404);
+        }
+
+        // Handle status_code if provided
+        let statusId: string | undefined;
+        if (status_code) {
+          const status = await tx.status.findUnique({
+            where: { status_code },
+          });
+          if (!status) {
+            throw new AppError(`Status with code '${status_code}' not found`, 404);
+          }
+          statusId = status.id;
         }
 
         if (purchaseOrderDetails) {
@@ -243,7 +278,11 @@ export class PurchaseOrderService {
 
         const purchaseOrder = await tx.purchaseOrder.update({
           where: { id },
-          data: { ...poData, updatedBy: userId },
+          data: { 
+            ...poData, 
+            ...(statusId && { statusId }),
+            updatedBy: userId 
+          },
           include: {
             purchaseOrderDetails: true,
             customer: true,
@@ -382,14 +421,12 @@ export class PurchaseOrderService {
 
   static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PaginatedResult<PurchaseOrder>> {
     const { 
-      tanggal_order, 
+      tanggal_masuk_po, 
       customer_name, 
       customerId, 
-      suratPO, 
-      invoicePengiriman, 
       po_number, 
       supplierId, 
-      statusId,
+      status_code,
       page = 1,
       limit = 10
     } = query;
@@ -397,11 +434,11 @@ export class PurchaseOrderService {
     const skip = (page - 1) * limit;
 
     const filters: Prisma.PurchaseOrderWhereInput[] = [];
-    if (tanggal_order) {
-      const date = new Date(tanggal_order);
+    if (tanggal_masuk_po) {
+      const date = new Date(tanggal_masuk_po);
       try {
         filters.push({
-          tanggal_order: {
+          tanggal_masuk_po: {
             gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
             lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
           }
@@ -416,20 +453,14 @@ export class PurchaseOrderService {
     if (customerId) {
       filters.push({ customerId });
     }
-    if (suratPO) {
-      filters.push({ suratPO: { contains: suratPO, mode: 'insensitive' } });
-    }
-    if (invoicePengiriman) {
-      filters.push({ invoicePengiriman: { contains: invoicePengiriman, mode: 'insensitive' } });
-    }
     if (po_number) {
       filters.push({ po_number: { contains: po_number, mode: 'insensitive' } });
     }
     if (supplierId) {
       filters.push({ supplierId });
     }
-    if (statusId) {
-      filters.push({ statusId });
+    if (status_code) {
+      filters.push({ status: { status_code } });
     }
 
     const [data, totalItems] = await Promise.all([
@@ -470,6 +501,32 @@ export class PurchaseOrderService {
   }
 
   static async processPurchaseOrder(
+    ids: string[],
+    status_code: string,
+    userId: string
+  ): Promise<{ success: PurchaseOrder[]; failed: { id: string; error: string }[] }> {
+    const results = {
+      success: [] as PurchaseOrder[],
+      failed: [] as { id: string; error: string }[]
+    };
+
+    // Process each purchase order individually
+    for (const id of ids) {
+      try {
+        const purchaseOrder = await this.processSinglePurchaseOrder(id, status_code, userId);
+        results.success.push(purchaseOrder);
+      } catch (error: any) {
+        results.failed.push({
+          id,
+          error: error.message || 'Unknown error occurred'
+        });
+      }
+    }
+
+    return results;
+  }
+
+  private static async processSinglePurchaseOrder(
     id: string,
     status_code: string,
     userId: string
@@ -727,8 +784,6 @@ export class PurchaseOrderService {
           updatedPurchaseOrder = await tx.purchaseOrder.update({
             where: { id },
             data: {
-              ...(createdInvoiceId && { invoicePengiriman: createdInvoiceId }),
-              ...(createdSuratJalanId && { suratJalan: createdSuratJalanId }),
               updatedBy: userId,
             },
             include: {
@@ -757,4 +812,5 @@ export class PurchaseOrderService {
       return updatedPurchaseOrder;
     });
   }
+
 }

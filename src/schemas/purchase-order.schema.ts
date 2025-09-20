@@ -7,13 +7,11 @@ export const createPurchaseOrderSchema = z.object({
     customerId: z.string().describe('The ID of the customer'),
     po_number: z.string().describe('The purchase order number'),
     total_items: z.coerce.number().int().optional().describe('Total number of items in the PO'),
-    tanggal_order: z.coerce.date().optional().describe('The date of the order'),
+    tanggal_masuk_po: z.coerce.date().optional().describe('The date when PO was received'),
+    tanggal_batas_kirim: z.coerce.date().optional().describe('The delivery deadline date'),
+    termin_bayar: z.string().optional().describe('Payment terms'),
     po_type: z.nativeEnum(POType).describe('The type of the purchase order'),
-    statusId: z.string().optional().describe('The ID of the status'),
-    suratJalan: z.string().optional().describe('Delivery order document'),
-    invoicePengiriman: z.string().optional().describe('Shipping invoice document'),
-    suratPO: z.string().optional().describe('Purchase order document'),
-    suratPenagihan: z.string().optional().describe('Billing document'),
+    status_code: z.string().optional().describe('The status code of the purchase order'),
   }),
 });
 
@@ -47,13 +45,11 @@ export const updatePurchaseOrderSchema = z.object({
     customerId: z.string().optional().describe('The ID of the customer'),
     po_number: z.string().optional().describe('The purchase order number'),
     total_items: z.number().int().optional().describe('Total number of items in the PO'),
-    tanggal_order: z.coerce.date().optional().describe('The date of the order'),
+    tanggal_masuk_po: z.coerce.date().optional().describe('The date when PO was received'),
+    tanggal_batas_kirim: z.coerce.date().optional().describe('The delivery deadline date'),
+    termin_bayar: z.string().optional().describe('Payment terms'),
     po_type: z.nativeEnum(POType).optional().describe('The type of the purchase order'),
-    statusId: z.string().optional().describe('The ID of the status'),
-    suratJalan: z.string().optional().describe('Delivery order document'),
-    invoicePengiriman: z.string().optional().describe('Shipping invoice document'),
-    suratPO: z.string().optional().describe('Purchase order document'),
-    suratPenagihan: z.string().optional().describe('Billing document'),
+    status_code: z.string().optional().describe('The status code of the purchase order'),
     purchaseOrderDetails: z.array(purchaseOrderDetailSchema).optional().describe('The details of the purchase order'),
   }),
 });
@@ -66,24 +62,22 @@ export const deletePurchaseOrderSchema = z.object({
 
 export const searchPurchaseOrderSchema = z.object({
   query: z.object({
-    tanggal_order: z.string().optional().describe('Search by order date'),
+    tanggal_masuk_po: z.string().optional().describe('Search by PO received date'),
     customer_name: z.string().optional().describe('Search by customer name'),
     customerId: z.string().optional().describe('Search by customer ID'),
-    suratPO: z.string().optional().describe('Search by PO document'),
-    invoicePengiriman: z.string().optional().describe('Search by shipping invoice'),
     po_number: z.string().optional().describe('Search by PO number'),
     supplierId: z.string().optional().describe('Search by supplier ID'),
-    statusId: z.string().optional().describe('Search by status ID'),
+    status_code: z.string().optional().describe('Search by status code'),
   }).merge(paginationSchema),
 });
 
 export const processPurchaseOrderSchema = z.object({
-  params: z.object({
-    id: z.string().describe('The ID of the purchase order'),
-  }),
   body: z.object({
-    status_code: z.string().describe('The status code to process the purchase order'),
+    status_code: z.string().describe('The status code to process the purchase order(s)'),
+    ids: z.array(z.string()).min(1).describe('Array of purchase order IDs to process'),
   }),
+  query: z.object({}).optional(),
+  params: z.object({}).optional(),
 });
 
 

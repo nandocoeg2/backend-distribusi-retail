@@ -23,13 +23,11 @@ body:json {
     "customerId": "{{customerId}}",
     "po_number": "PO-2025-08-18-0012323",
     "total_items": 10,
-    "tanggal_order": "2025-08-18T10:00:00.000Z",
+    "tanggal_masuk_po": "2025-08-18T10:00:00.000Z",
+    "tanggal_batas_kirim": "2025-08-25T10:00:00.000Z",
+    "termin_bayar": "30 hari",
     "po_type": "SINGLE",
-    "statusId": "{{statusId}}",
-    "suratJalan": "SJ/2025/08/18/001",
-    "invoicePengiriman": "INV/2025/08/18/001",
-    "suratPO": "SPO/2025/08/18/001",
-    "suratPenagihan": "SPN/2025/08/18/001"
+    "status_code": "{{status_code}}"
   }
 }
 
@@ -37,18 +35,14 @@ body:multipart-form {
   customerId: {{customerId}}
   po_number: PO-2025-08-18-0033123323
   total_items: 10
-  tanggal_order: 2025-08-18T10:00:00.000Z
+  tanggal_masuk_po: 2025-08-18T10:00:00.000Z
+  tanggal_batas_kirim: 2025-08-25T10:00:00.000Z
+  termin_bayar: 30 hari
   po_type: SINGLE
-  statusId: {{statusId}}
-  suratJalan: SJ/2025/08/18/001
-  invoicePengiriman: SJ/2025/08/18/001
-  suratPO: SJ/2025/08/18/001
-  suratPenagihan: SJ/2025/08/18/001
-  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_PO.pdf)
-  file: @file(D:\Project\sampledata-pt-doven\1. Purchase Order\ERP_POPO.pdf)
+  status_code: {{status_code}}
 }
 
 vars:pre-request {
-  customerId: cmefvhhvs000010vnooob5yrn
-  statusId: cmegql5sq000qsmj3g6v8y4gw
+  customerId: cmfr2d87p0009dmcyhv0ch4m7
+  status_code: PENDING PURCHASE ORDER
 }

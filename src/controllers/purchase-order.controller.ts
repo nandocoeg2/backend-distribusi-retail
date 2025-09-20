@@ -56,13 +56,11 @@ export class PurchaseOrderController {
         customerId: fields.customerId,
         po_number: fields.po_number,
         total_items: parseInt(fields.total_items, 10),  
-        tanggal_order: fields.tanggal_order,
+        tanggal_masuk_po: fields.tanggal_masuk_po,
+        tanggal_batas_kirim: fields.tanggal_batas_kirim,
+        termin_bayar: fields.termin_bayar,
         po_type: fields.po_type as 'BULK' | 'SINGLE',
-        statusId: fields.statusId,
-        suratJalan: fields.suratJalan,
-        invoicePengiriman: fields.invoicePengiriman,
-        suratPO: fields.suratPO,
-        suratPenagihan: fields.suratPenagihan,
+        status_code: fields.status_code,
       };
 
       const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(
@@ -145,17 +143,17 @@ export class PurchaseOrderController {
 
   static async processPurchaseOrder(
     request: FastifyRequest<{
-      Params: { id: string };
       Body: ProcessPurchaseOrderInput['body'];
     }>,
     reply: FastifyReply
   ) {
     const userId = request.user?.id || 'system';
-    const purchaseOrder = await PurchaseOrderService.processPurchaseOrder(
-      request.params.id,
+    
+    const result = await PurchaseOrderService.processPurchaseOrder(
+      request.body.ids,
       request.body.status_code,
       userId
     );
-    return reply.send(ResponseUtil.success(purchaseOrder));
+    return reply.send(ResponseUtil.success(result));
   }
 }

@@ -1,29 +1,34 @@
 meta {
-  name: Process Purchase Order
+  name: Process Purchase Order (Single)
   type: http
   seq: 5
 }
 
 patch {
-  url: http://localhost:5050/api/v1/purchase-orders/process/{{purchaseOrderId}}
+  url: {{base_url}}/purchase-orders/process
   body: json
   auth: bearer
-}
-
-headers {
-  accept: application/json
-}
-
-auth:bearer {
-  token: {{access_token}}
-}
-
-body:json {
-  {
-    "statusId": "cmf7row5z000u1vkxlo5mimm2"
+  body:json {
+    "ids": ["{{po_id}}"],
+    "status_code": "PROCESSED PURCHASE ORDER"
   }
 }
 
+headers {
+  Authorization: Bearer {{auth_token}}
+  Content-Type: application/json
+}
+
 vars:pre-request {
-  purchaseOrderId: cmf7t4pbk00397lsxp8cnp18m
+  base_url: http://localhost:5050/api/v1
+  auth_token: your_jwt_token_here
+  po_id: purchase_order_id_here
+}
+
+vars:post-response {
+  success_count: {{res.body.data.success.length}}
+  failed_count: {{res.body.data.failed.length}}
+  po_id: {{res.body.data.success[0].id}}
+  po_number: {{res.body.data.success[0].po_number}}
+  status: {{res.body.data.success[0].status.status_code}}
 }

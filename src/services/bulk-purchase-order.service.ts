@@ -107,7 +107,7 @@ export class BulkPurchaseOrderService {
               customerId: customer.id,
               supplierId: supplier?.id,
               total_items: jsonResult.items?.length || 0,
-              tanggal_order: parsedOrderDate,
+              tanggal_masuk_po: parsedOrderDate,
               po_type: POType.BULK,
               statusId: poPendingStatus.id,
               createdBy: userId,

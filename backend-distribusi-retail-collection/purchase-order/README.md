@@ -1,165 +1,345 @@
-# Purchase Order API Documentation
+# Purchase Order API Collection
 
-Dokumentasi lengkap untuk endpoint Purchase Order API pada sistem Backend Distribusi Retail.
+## Base Configuration
+- **Base URL**: `http://localhost:5050/api/v1`
+- **Authentication**: Bearer Token
+- **Content-Type**: `application/json` (kecuali multipart untuk upload file)
 
-## Base URL
+---
+
+## 1. Create Purchase Order
+
+### Endpoint Details
+- **Method**: `POST`
+- **URL**: `/purchase-orders/`
+- **Description**: Membuat purchase order baru dengan file upload
+- **File**: `create.bru`
+
+### Headers
 ```
-http://localhost:5050/api/v1/purchase-orders
-```
-
-## Authentication
-Semua endpoint memerlukan Bearer Token yang valid di header Authorization.
-
-## Endpoints
-
-### 1. Create Purchase Order
-Membuat data purchase order baru dengan file upload.
-
-**Endpoint:** `POST /`
-
-**Headers:**
-```json
-{
-  "Content-Type": "multipart/form-data",
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
 ```
 
-**Request Body (Multipart Form):**
+### Request Body (Form Data)
 ```
-customerId: cmefvhhvs000010vnooob5yrn
-po_number: PO-2025-08-18-0033123323
-total_items: 10
-tanggal_order: 2025-08-18T10:00:00.000Z
-po_type: SINGLE
-statusId: cmegql5sq000qsmj3g6v8y4gw
-suratJalan: SJ/2025/08/18/001
-invoicePengiriman: INV/2025/08/18/001
-suratPO: SPO/2025/08/18/001
-suratPenagihan: SPN/2025/08/18/001
-file: [FILE] (PDF files)
+customerId: string (required)
+po_number: string (required)
+total_items: number (optional)
+tanggal_masuk_po: string (optional, ISO date)
+tanggal_batas_kirim: string (optional, ISO date)
+termin_bayar: string (optional)
+po_type: "BULK" | "SINGLE" (required)
+status_code: string (optional, default: "PENDING PURCHASE ORDER")
+files: File[] (optional, untuk BULK type)
 ```
 
-**Validation Rules:**
-- `customerId`: **Required** - ID customer
-- `po_number`: **Required** - Nomor purchase order
-- `total_items`: Optional - Total jumlah item (integer)
-- `tanggal_order`: Optional - Tanggal order (default: current date)
-- `po_type`: **Required** - Tipe PO (SINGLE/BULK)
-- `statusId`: Optional - ID status
-- `suratJalan`: Optional - Nomor surat jalan
-- `invoicePengiriman`: Optional - Nomor invoice pengiriman
-- `suratPO`: Optional - Nomor surat PO
-- `suratPenagihan`: Optional - Nomor surat penagihan
-- `file`: Optional - File PDF (multiple files allowed)
+### Sample Request
+```bash
+curl -X POST http://localhost:5050/api/v1/purchase-orders/ \
+  -H "Authorization: Bearer your_token_here" \
+  -F "customerId=customer_123" \
+  -F "po_number=PO-001" \
+  -F "po_type=BULK" \
+  -F "files=@document.pdf"
+```
 
-**Response Success (201 Created):**
+### Sample Response
 ```json
 {
   "success": true,
   "data": {
-    "id": "purchase-order-uuid",
-    "customerId": "cmefvhhvs000010vnooob5yrn",
-    "po_number": "PO-2025-08-18-0033123323",
-    "total_items": 10,
-    "tanggal_order": "2025-08-18T10:00:00.000Z",
-    "po_type": "SINGLE",
-    "statusId": "cmegql5sq000qsmj3g6v8y4gw",
-    "suratJalan": "SJ/2025/08/18/001",
-    "invoicePengiriman": "INV/2025/08/18/001",
-    "suratPO": "SPO/2025/08/18/001",
-    "suratPenagihan": "SPN/2025/08/18/001",
+    "id": "po_123",
+    "po_number": "PO-001",
+    "customerId": "customer_123",
+    "po_type": "BULK",
+    "statusId": "status_123",
     "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z",
-    "createdBy": "user-uuid",
-    "updatedBy": "user-uuid",
-    "customer": {
-      "id": "cmefvhhvs000010vnooob5yrn",
-      "namaCustomer": "Customer Name",
-      "kodeCustomer": "CUST001"
-    },
-    "status": {
-      "id": "cmegql5sq000qsmj3g6v8y4gw",
-      "status_code": "PENDING",
-      "status_name": "Pending",
-      "status_description": "Purchase order is pending"
-    },
-    "purchaseOrderDetails": [],
-    "files": [
-      {
-        "id": "file-uuid",
-        "filename": "ERP_PO.pdf",
-        "path": "/fileuploaded/2024-01-01/PO_1234567890_ERP_PO.pdf",
-        "mimetype": "application/pdf",
-        "size": 1024000,
-        "createdAt": "2024-01-01T00:00:00.000Z"
-      }
-    ]
-  }
-}
-```
-
-**Response Error (400 Bad Request):**
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Request is not multipart"
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   }
 }
 ```
 
 ---
 
-### 2. Get All Purchase Orders
-Mengambil daftar semua purchase order dengan pagination.
+## 2. Get All Purchase Orders
 
-**Endpoint:** `GET /`
+### Endpoint Details
+- **Method**: `GET`
+- **URL**: `/purchase-orders/`
+- **Description**: Mendapatkan daftar semua purchase orders dengan pagination
+- **File**: `get-all.bru`
 
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+### Headers
+```
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `page` (optional): Nomor halaman (default: 1)
-- `limit` (optional): Jumlah data per halaman (default: 10)
-
-**Example Request:**
+### Query Parameters
 ```
-GET /api/v1/purchase-orders?page=1&limit=1
+page: number (optional, default: 1)
+limit: number (optional, default: 10)
 ```
 
-**Response Success (200 OK):**
+### Sample Request
+```bash
+curl -X GET "http://localhost:5050/api/v1/purchase-orders/?page=1&limit=10" \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Sample Response
 ```json
 {
   "success": true,
   "data": {
     "data": [
       {
-        "id": "purchase-order-uuid",
-        "customerId": "cmefvhhvs000010vnooob5yrn",
-        "po_number": "PO-2025-08-18-0033123323",
-        "total_items": 10,
-        "tanggal_order": "2025-08-18T10:00:00.000Z",
-        "po_type": "SINGLE",
-        "statusId": "cmegql5sq000qsmj3g6v8y4gw",
-        "suratJalan": "SJ/2025/08/18/001",
-        "invoicePengiriman": "INV/2025/08/18/001",
-        "suratPO": "SPO/2025/08/18/001",
-        "suratPenagihan": "SPN/2025/08/18/001",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z",
-        "createdBy": "user-uuid",
-        "updatedBy": "user-uuid",
-        "customer": {...},
-        "status": {...},
-        "purchaseOrderDetails": [...],
-        "files": [...]
+        "id": "po_123",
+        "po_number": "PO-001",
+        "customer": {
+          "id": "customer_123",
+          "namaCustomer": "PT Example"
+        },
+        "status": {
+          "id": "status_123",
+          "status_code": "PENDING PURCHASE ORDER"
+        }
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalItems": 50,
+      "itemsPerPage": 10
+    }
+  }
+}
+```
+
+---
+
+## 3. Get Purchase Order by ID
+
+### Endpoint Details
+- **Method**: `GET`
+- **URL**: `/api/purchase-orders/:id`
+- **Description**: Mendapatkan detail purchase order berdasarkan ID
+- **File**: `get-by-id.bru`
+
+### Headers
+```
+Authorization: Bearer {token}
+```
+
+### Path Parameters
+```
+id: string (required) - Purchase Order ID
+```
+
+### Sample Request
+```bash
+curl -X GET http://localhost:5050/api/v1/purchase-orders/po_123 \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Sample Response
+```json
+{
+  "success": true,
+  "data": {
+    "id": "po_123",
+    "po_number": "PO-001",
+    "customer": {
+      "id": "customer_123",
+      "namaCustomer": "PT Example"
+    },
+    "purchaseOrderDetails": [
+      {
+        "id": "detail_123",
+        "plu": "PLU001",
+        "nama_barang": "Product Name",
+        "quantity": 100,
+        "harga": 50000
+      }
+    ],
+    "files": [
+      {
+        "id": "file_123",
+        "filename": "document.pdf",
+        "path": "/uploads/document.pdf"
+      }
+    ],
+    "status": {
+      "id": "status_123",
+      "status_code": "PENDING PURCHASE ORDER"
+    }
+  }
+}
+```
+
+---
+
+## 4. Update Purchase Order
+
+### Endpoint Details
+- **Method**: `PUT`
+- **URL**: `/api/purchase-orders/:id`
+- **Description**: Mengupdate purchase order
+- **File**: `update.bru`
+
+### Headers
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+### Path Parameters
+```
+id: string (required) - Purchase Order ID
+```
+
+### Request Body
+```json
+{
+  "customerId": "string (optional)",
+  "po_number": "string (optional)",
+  "total_items": "number (optional)",
+  "tanggal_masuk_po": "string (optional, ISO date)",
+  "tanggal_batas_kirim": "string (optional, ISO date)",
+  "termin_bayar": "string (optional)",
+  "po_type": "BULK | SINGLE (optional)",
+  "status_code": "string (optional)",
+  "purchaseOrderDetails": [
+    {
+      "plu": "string (required)",
+      "nama_barang": "string (required)",
+      "quantity": "number (required)",
+      "isi": "number (required)",
+      "harga": "number (required)",
+      "harga_netto": "number (required)",
+      "total_pembelian": "number (required)"
+    }
+  ]
+}
+```
+
+### Sample Request
+```bash
+curl -X PUT http://localhost:5050/api/v1/purchase-orders/po_123 \
+  -H "Authorization: Bearer your_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "po_number": "PO-001-UPDATED",
+    "purchaseOrderDetails": [
+      {
+        "plu": "PLU001",
+        "nama_barang": "Updated Product",
+        "quantity": 150,
+        "isi": 12,
+        "harga": 55000,
+        "harga_netto": 55000,
+        "total_pembelian": 8250000
+      }
+    ]
+  }'
+```
+
+### Sample Response
+```json
+{
+  "success": true,
+  "data": {
+    "id": "po_123",
+    "po_number": "PO-001-UPDATED",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "purchaseOrderDetails": [
+      {
+        "id": "detail_123",
+        "plu": "PLU001",
+        "nama_barang": "Updated Product",
+        "quantity": 150
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. Delete Purchase Order
+
+### Endpoint Details
+- **Method**: `DELETE`
+- **URL**: `/api/purchase-orders/:id`
+- **Description**: Menghapus purchase order
+- **File**: `delete.bru`
+
+### Headers
+```
+Authorization: Bearer {token}
+```
+
+### Path Parameters
+```
+id: string (required) - Purchase Order ID
+```
+
+### Sample Request
+```bash
+curl -X DELETE http://localhost:5050/api/v1/purchase-orders/po_123 \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Sample Response
+```
+HTTP 204 No Content
+```
+
+---
+
+## 6. Search Purchase Orders
+
+### Endpoint Details
+- **Method**: `GET`
+- **URL**: `/api/purchase-orders/search`
+- **Description**: Mencari purchase orders berdasarkan kriteria tertentu
+- **File**: `search.bru`
+
+### Headers
+```
+Authorization: Bearer {token}
+```
+
+### Query Parameters
+```
+tanggal_masuk_po: string (optional, ISO date)
+customer_name: string (optional)
+customerId: string (optional)
+po_number: string (optional)
+supplierId: string (optional)
+status_code: string (optional)
+page: number (optional, default: 1)
+limit: number (optional, default: 10)
+```
+
+### Sample Request
+```bash
+curl -X GET "http://localhost:5050/api/v1/purchase-orders/search?customer_name=PT%20Example&page=1&limit=10" \
+  -H "Authorization: Bearer your_token_here"
+```
+
+### Sample Response
+```json
+{
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": "po_123",
+        "po_number": "PO-001",
+        "customer": {
+          "namaCustomer": "PT Example"
+        }
       }
     ],
     "pagination": {
@@ -174,219 +354,45 @@ GET /api/v1/purchase-orders?page=1&limit=1
 
 ---
 
-### 3. Get Purchase Order By ID
-Mengambil data purchase order berdasarkan ID.
+## 7. Get History Purchase Orders
 
-**Endpoint:** `GET /:id`
+### Endpoint Details
+- **Method**: `GET`
+- **URL**: `/api/purchase-orders/history`
+- **Description**: Mendapatkan riwayat purchase orders yang sudah approved/failed
+- **File**: `history.bru`
 
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+### Headers
+```
+Authorization: Bearer {token}
 ```
 
-**Path Parameters:**
-- `id` (required): ID purchase order
-
-**Example Request:**
+### Query Parameters
 ```
-GET /api/v1/purchase-orders/cmflbqg2t000mxxm6h0loisni
+page: number (optional, default: 1)
+limit: number (optional, default: 10)
 ```
 
-**Response Success (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "purchase-order-uuid",
-    "customerId": "cmefvhhvs000010vnooob5yrn",
-    "po_number": "PO-2025-08-18-0033123323",
-    "total_items": 10,
-    "tanggal_order": "2025-08-18T10:00:00.000Z",
-    "po_type": "SINGLE",
-    "statusId": "cmegql5sq000qsmj3g6v8y4gw",
-    "suratJalan": "SJ/2025/08/18/001",
-    "invoicePengiriman": "INV/2025/08/18/001",
-    "suratPO": "SPO/2025/08/18/001",
-    "suratPenagihan": "SPN/2025/08/18/001",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z",
-    "createdBy": "user-uuid",
-    "updatedBy": "user-uuid",
-    "customer": {...},
-    "status": {...},
-    "purchaseOrderDetails": [...],
-    "files": [...]
-  }
-}
+### Sample Request
+```bash
+curl -X GET "http://localhost:5050/api/v1/purchase-orders/history?page=1&limit=10" \
+  -H "Authorization: Bearer your_token_here"
 ```
 
-**Response Error (404 Not Found):**
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Purchase order not found"
-  }
-}
-```
-
----
-
-### 4. Update Purchase Order
-Memperbarui data purchase order berdasarkan ID.
-
-**Endpoint:** `PUT /:id`
-
-**Headers:**
-```json
-{
-  "Content-Type": "application/json",
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Path Parameters:**
-- `id` (required): ID purchase order
-
-**Request Body:**
-```json
-{
-  "total_items": 15,
-  "po_number": "2PZ1POC2500302312312311"
-}
-```
-
-**Validation Rules:**
-Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikirim:
-- `customerId`: Optional - ID customer
-- `po_number`: Optional - Nomor purchase order
-- `total_items`: Optional - Total jumlah item
-- `tanggal_order`: Optional - Tanggal order
-- `po_type`: Optional - Tipe PO (SINGLE/BULK)
-- `statusId`: Optional - ID status
-- `suratJalan`: Optional - Nomor surat jalan
-- `invoicePengiriman`: Optional - Nomor invoice pengiriman
-- `suratPO`: Optional - Nomor surat PO
-- `suratPenagihan`: Optional - Nomor surat penagihan
-- `purchaseOrderDetails`: Optional - Array detail purchase order
-
-**Response Success (200 OK):**
+### Sample Response
 ```json
 {
   "success": true,
   "data": {
-    "id": "purchase-order-uuid",
-    "customerId": "cmefvhhvs000010vnooob5yrn",
-    "po_number": "2PZ1POC2500302312312311",
-    "total_items": 15,
-    "tanggal_order": "2025-08-18T10:00:00.000Z",
-    "po_type": "SINGLE",
-    "statusId": "cmegql5sq000qsmj3g6v8y4gw",
-    "suratJalan": "SJ/2025/08/18/001",
-    "invoicePengiriman": "INV/2025/08/18/001",
-    "suratPO": "SPO/2025/08/18/001",
-    "suratPenagihan": "SPN/2025/08/18/001",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T12:00:00.000Z",
-    "createdBy": "user-uuid",
-    "updatedBy": "user-uuid",
-    "customer": {...},
-    "status": {...},
-    "purchaseOrderDetails": [...],
-    "files": [...]
-  }
-}
-```
-
-**Response Error (404 Not Found):**
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Purchase order not found"
-  }
-}
-```
-
----
-
-### 5. Delete Purchase Order
-Menghapus data purchase order berdasarkan ID.
-
-**Endpoint:** `DELETE /:id`
-
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Path Parameters:**
-- `id` (required): ID purchase order
-
-**Request Body:**
-Tidak ada body yang diperlukan.
-
-**Response Success (204 No Content):**
-```
-Status: 204 No Content
-Body: (empty)
-```
-
-**Response Error (404 Not Found):**
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Purchase order not found"
-  }
-}
-```
-
----
-
-### 6. Search Purchase Orders
-Mencari purchase order berdasarkan berbagai filter dengan pagination.
-
-**Endpoint:** `GET /search`
-
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Query Parameters:**
-- `tanggal_order` (optional): Pencarian berdasarkan tanggal order
-- `customer_name` (optional): Pencarian berdasarkan nama customer
-- `customerId` (optional): Pencarian berdasarkan customer ID
-- `suratPO` (optional): Pencarian berdasarkan surat PO
-- `invoicePengiriman` (optional): Pencarian berdasarkan invoice pengiriman
-- `po_number` (optional): Pencarian berdasarkan nomor PO
-- `supplierId` (optional): Pencarian berdasarkan supplier ID
-- `statusId` (optional): Pencarian berdasarkan status ID
-- `page` (optional): Nomor halaman (default: 1)
-- `limit` (optional): Jumlah data per halaman (default: 10)
-
-**Example Request:**
-```
-GET /api/v1/purchase-orders/search?customer_name=Customer One&page=1&limit=10
-```
-
-**Response Success (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "data": [...],
+    "data": [
+      {
+        "id": "po_123",
+        "po_number": "PO-001",
+        "status": {
+          "status_code": "APPROVED PURCHASE ORDER"
+        }
+      }
+    ],
     "pagination": {
       "currentPage": 1,
       "totalPages": 1,
@@ -399,281 +405,209 @@ GET /api/v1/purchase-orders/search?customer_name=Customer One&page=1&limit=10
 
 ---
 
-### 7. Get History Purchase Orders
-Mengambil history purchase order dengan pagination.
+## 8. Process Purchase Order
 
-**Endpoint:** `GET /history`
+### Endpoint Details
+- **Method**: `PATCH`
+- **URL**: `/purchase-orders/process`
+- **Description**: Memproses single atau multiple purchase orders dengan mengirimkan array ID dalam body
+- **Files**: `process.bru` (single), `bulk-process.bru` (bulk)
 
-**Headers:**
+### Headers
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+### Request Body
 ```json
 {
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "ids": ["string[] (required, min: 1)"],
+  "status_code": "string (required)"
 }
 ```
 
-**Query Parameters:**
-- `page` (optional): Nomor halaman (default: 1)
-- `limit` (optional): Jumlah data per halaman (default: 10)
+### Sample Requests
 
-**Response Success (200 OK):**
+#### Single Processing (1 ID)
+```bash
+curl --request PATCH \
+  --url http://localhost:5050/api/v1/purchase-orders/process \
+  --header 'accept: application/json' \
+  --header 'authorization: Bearer YOUR_ACCESS_TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+    "ids": ["po_123"],
+    "status_code": "PROCESSED PURCHASE ORDER"
+  }'
+```
+
+#### Bulk Processing (Multiple IDs)
+```bash
+curl --request PATCH \
+  --url http://localhost:5050/api/v1/purchase-orders/process \
+  --header 'accept: application/json' \
+  --header 'authorization: Bearer YOUR_ACCESS_TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+    "ids": [
+      "po_123",
+      "po_124",
+      "po_125"
+    ],
+    "status_code": "PROCESSED PURCHASE ORDER"
+  }'
+```
+
+### Sample Response
 ```json
 {
   "success": true,
   "data": {
-    "data": [...],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 1,
-      "totalItems": 1,
-      "itemsPerPage": 10
-    }
+    "success": [
+      {
+        "id": "po_123",
+        "po_number": "PO-001",
+        "status": {
+          "status_code": "PROCESSED PURCHASE ORDER"
+        },
+        "packings": [
+          {
+            "id": "packing_123",
+            "packing_number": "PKG-PO-001-001"
+          }
+        ],
+        "invoices": [
+          {
+            "id": "invoice_123",
+            "no_invoice": "INV-PO-001-001"
+          }
+        ]
+      },
+      {
+        "id": "po_124",
+        "po_number": "PO-002",
+        "status": {
+          "status_code": "PROCESSED PURCHASE ORDER"
+        }
+      }
+    ],
+    "failed": [
+      {
+        "id": "po_125",
+        "error": "Purchase Order not found"
+      }
+    ]
   }
 }
 ```
 
 ---
 
-### 8. Process Purchase Order
-Memproses purchase order dengan mengubah status.
+## Status Codes yang Didukung
 
-**Endpoint:** `PATCH /process/:id`
+### Purchase Order Status
+- `PENDING_PURCHASE_ORDER` - Menunggu proses (default)
+- `PROCESSING_PURCHASE_ORDER` - Sedang diproses
+- `PROCESSED_PURCHASE_ORDER` - Sudah diproses
+- `APPROVED_PURCHASE_ORDER` - Disetujui
+- `FAILED_PURCHASE_ORDER` - Gagal
 
-**Headers:**
-```json
-{
-  "Content-Type": "application/json",
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
+### Status Code Usage
+- Gunakan `status_code` dalam request body/form data
+- Jika tidak disediakan, akan menggunakan default `PENDING_PURCHASE_ORDER`
+- Status code harus valid dan ada di database
+- Case sensitive - gunakan format yang tepat
 
-**Path Parameters:**
-- `id` (required): ID purchase order
-
-**Request Body:**
-```json
-{
-  "status_code": "PROCESSED"
-}
-```
-
-**Validation Rules:**
-- `status_code`: **Required** - Kode status untuk memproses PO
-
-**Response Success (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "purchase-order-uuid",
-    "customerId": "cmefvhhvs000010vnooob5yrn",
-    "po_number": "PO-2025-08-18-0033123323",
-    "total_items": 10,
-    "tanggal_order": "2025-08-18T10:00:00.000Z",
-    "po_type": "SINGLE",
-    "statusId": "new-status-uuid",
-    "suratJalan": "SJ/2025/08/18/001",
-    "invoicePengiriman": "INV/2025/08/18/001",
-    "suratPO": "SPO/2025/08/18/001",
-    "suratPenagihan": "SPN/2025/08/18/001",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T12:00:00.000Z",
-    "createdBy": "user-uuid",
-    "updatedBy": "user-uuid",
-    "customer": {...},
-    "status": {...},
-    "purchaseOrderDetails": [...],
-    "files": [...]
-  }
-}
-```
+### HTTP Status Codes
+- `200` - Success
+- `201` - Created
+- `204` - No Content
+- `400` - Bad Request
+- `401` - Unauthorized
+- `404` - Not Found
+- `409` - Conflict
+- `500` - Internal Server Error
 
 ---
 
-## Bulk Purchase Order Endpoints
-
-### 9. Bulk Create Purchase Order
-Membuat purchase order secara bulk dengan file upload.
-
-**Endpoint:** `POST /bulk`
-
-**Headers:**
-```json
-{
-  "Content-Type": "multipart/form-data",
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Request Body (Multipart Form):**
-```
-file: [FILE] (PDF files for bulk processing)
-```
-
-**Response Success (201 Created):**
-```json
-{
-  "success": true,
-  "data": {
-    "fileId": "bulk-file-uuid",
-    "message": "Bulk upload initiated",
-    "status": "PENDING",
-    "totalFiles": 2,
-    "processedFiles": 0
-  }
-}
-```
-
----
-
-### 10. Get Bulk Upload Status
-Mengambil status upload bulk berdasarkan file ID.
-
-**Endpoint:** `GET /bulk/status/:id`
-
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Path Parameters:**
-- `id` (required): ID file bulk upload
-
-**Response Success (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "fileId": "bulk-file-uuid",
-    "status": "PROCESSING",
-    "totalFiles": 2,
-    "processedFiles": 1,
-    "successCount": 1,
-    "errorCount": 0,
-    "errors": [],
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
----
-
-### 11. Get All Bulk Uploads
-Mengambil daftar semua bulk upload dengan filter status.
-
-**Endpoint:** `GET /bulk/all`
-
-**Headers:**
-```json
-{
-  "Accept": "application/json",
-  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Query Parameters:**
-- `status` (optional): Filter berdasarkan status (PENDING, PROCESSING, COMPLETED, FAILED)
-
-**Example Request:**
-```
-GET /api/v1/purchase-orders/bulk/all?status=PENDING
-```
-
-**Response Success (200 OK):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "fileId": "bulk-file-uuid",
-      "status": "PENDING",
-      "totalFiles": 2,
-      "processedFiles": 0,
-      "successCount": 0,
-      "errorCount": 0,
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }
-  ]
-}
-```
-
----
-
-## Error Handling
-
-Semua endpoint menggunakan format error response yang konsisten:
+## Error Response Format
 
 ```json
 {
   "success": false,
   "error": {
-    "message": "Error description"
+    "message": "Error description",
+    "code": "ERROR_CODE",
+    "details": {}
   }
 }
 ```
 
-## Status Codes
+---
 
-- `200 OK`: Request berhasil
-- `201 Created`: Resource berhasil dibuat
-- `204 No Content`: Resource berhasil dihapus
-- `400 Bad Request`: Request tidak valid
-- `401 Unauthorized`: Tidak terautentikasi atau token tidak valid
-- `404 Not Found`: Resource tidak ditemukan
-- `500 Internal Server Error`: Error server internal
+## Catatan Penting
 
-## Pagination
+### Process Purchase Order
+- Endpoint ini menggunakan **array ID** dalam body untuk semua processing (single maupun bulk)
+- **Single Processing**: Kirim array dengan 1 ID: `"ids": ["po_123"]`
+- **Bulk Processing**: Kirim array dengan multiple ID: `"ids": ["po_123", "po_124", "po_125"]`
+- Setiap purchase order akan diproses secara individual
+- Jika ada error pada salah satu purchase order, yang lainnya tetap akan diproses
+- Response akan menampilkan array `success` untuk yang berhasil dan array `failed` untuk yang gagal
+- Setiap purchase order yang berhasil diproses akan otomatis membuat:
+  - Packing dengan status `PENDING PACKING`
+  - Invoice dengan status `PENDING INVOICE`
+  - Surat Jalan dengan status `PENDING SURAT JALAN`
 
-Endpoint yang mendukung pagination mengembalikan data dalam format:
-
-```json
-{
-  "success": true,
-  "data": {
-    "data": [...],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 10,
-      "totalItems": 100,
-      "itemsPerPage": 10
-    }
-  }
-}
-```
-
-## PO Types
-
-- `SINGLE`: Purchase order tunggal
-- `BULK`: Purchase order bulk/mass
-
-## File Upload
-
+### File Upload
+- Hanya untuk purchase order dengan `po_type: "BULK"`
 - Mendukung multiple file upload
-- File akan disimpan dengan prefix "PO_" dan timestamp
-- File disimpan dalam folder berdasarkan tanggal upload
-- Mendukung file PDF untuk dokumen purchase order
+- File akan disimpan di folder `fileuploaded/{date}/`
+- Format file yang didukung: PDF, Excel, Word
 
-## Bulk Processing
+### Authentication
+- Semua endpoint memerlukan Bearer token
+- Token harus valid dan tidak expired
+- User harus memiliki permission yang sesuai
 
-- Upload file untuk processing bulk
-- Status tracking untuk monitoring progress
-- Error handling untuk file yang gagal diproses
-- Support untuk multiple file dalam satu bulk upload
+---
 
-## Notes
+## Testing Status Codes
 
-- Semua endpoint memerlukan autentikasi Bearer Token
-- Field `createdBy` dan `updatedBy` akan otomatis diisi berdasarkan user yang sedang login
-- Timestamp `createdAt` dan `updatedAt` akan otomatis diatur oleh sistem
-- Untuk update, hanya field yang ingin diubah yang perlu dikirim dalam request body
-- File upload menggunakan multipart/form-data
-- Bulk processing berjalan secara asynchronous
-- Search mendukung multiple filter yang dapat dikombinasikan
-- Purchase order terintegrasi dengan customer, status, dan file management
+### Collection Files untuk Testing
+- `test-status-codes.bru` - Test create dengan berbagai status codes
+- `search-by-status.bru` - Test search berdasarkan status code
+- `update-status.bru` - Test update status purchase order
+
+### Contoh Testing Status Codes
+
+#### Create dengan Status Code Spesifik
+```bash
+curl --request POST \
+  --url http://localhost:5050/api/v1/purchase-orders/ \
+  --header 'authorization: Bearer YOUR_TOKEN' \
+  --header 'content-type: multipart/form-data' \
+  --form 'customerId=YOUR_CUSTOMER_ID' \
+  --form po_number=PO-TEST-001 \
+  --form po_type=SINGLE \
+  --form status_code=PROCESSING_PURCHASE_ORDER
+```
+
+#### Search berdasarkan Status Code
+```bash
+curl --request GET \
+  --url "http://localhost:5050/api/v1/purchase-orders/search?status_code=PENDING_PURCHASE_ORDER" \
+  --header 'authorization: Bearer YOUR_TOKEN'
+```
+
+#### Update Status Code
+```bash
+curl --request PUT \
+  --url http://localhost:5050/api/v1/purchase-orders/PO_ID \
+  --header 'authorization: Bearer YOUR_TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+    "status_code": "APPROVED_PURCHASE_ORDER"
+  }'
+```
