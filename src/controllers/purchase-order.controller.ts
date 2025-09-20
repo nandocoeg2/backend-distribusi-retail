@@ -52,6 +52,16 @@ export class PurchaseOrderController {
         }
       }
 
+      // Parse purchase order details if provided
+      let purchaseOrderDetails = undefined;
+      if (fields.purchaseOrderDetails) {
+        try {
+          purchaseOrderDetails = JSON.parse(fields.purchaseOrderDetails);
+        } catch (error) {
+          throw new AppError('Invalid purchaseOrderDetails JSON format', 400);
+        }
+      }
+
       const poData: CreatePurchaseOrderInput = {
         customerId: fields.customerId,
         po_number: fields.po_number,
@@ -61,6 +71,7 @@ export class PurchaseOrderController {
         termin_bayar: fields.termin_bayar,
         po_type: fields.po_type as 'BULK' | 'SINGLE',
         status_code: fields.status_code,
+        purchaseOrderDetails,
       };
 
       const purchaseOrder = await PurchaseOrderService.createPurchaseOrder(

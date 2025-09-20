@@ -52,7 +52,7 @@ export class PurchaseOrderService {
         }
       }
 
-      const { status_code, ...poDataWithoutStatus } = poData;
+      const { status_code, purchaseOrderDetails, ...poDataWithoutStatus } = poData;
       const dataForDb = {
         ...poDataWithoutStatus,
         statusId,
@@ -65,8 +65,52 @@ export class PurchaseOrderService {
         updatedBy: userId,
       };
 
-      const purchaseOrder = await prisma.purchaseOrder.create({
-        data: dataForDb,
+      const purchaseOrder = await prisma.$transaction(async (tx) => {
+        const createdPO = await tx.purchaseOrder.create({
+          data: dataForDb,
+        });
+
+        // Process purchase order details if provided
+        if (purchaseOrderDetails && purchaseOrderDetails.length > 0) {
+          const processedDetails = await Promise.all(
+            purchaseOrderDetails.map(async (detail) => {
+              let inventoryId = detail.inventoryId;
+              if (!inventoryId) {
+                const inventoryItem = await tx.inventory.upsert({
+                  where: { plu: detail.plu },
+                  create: {
+                    plu: detail.plu,
+                    nama_barang: detail.nama_barang,
+                    stok_c: detail.quantity || 0, // Assuming quantity is in cartons
+                    stok_q: 0, // Assuming 0 for pcs stock
+                    harga_barang: detail.harga || 0,
+                    createdBy: userId,
+                    updatedBy: userId,
+                  },
+                  update: {
+                    nama_barang: detail.nama_barang,
+                    harga_barang: detail.harga || 0,
+                    updatedBy: userId,
+                  },
+                });
+                inventoryId = inventoryItem.id;
+              }
+              return {
+                ...detail,
+                inventoryId,
+                purchaseOrderId: createdPO.id,
+                createdBy: userId,
+                updatedBy: userId,
+              };
+            })
+          );
+
+          await tx.purchaseOrderDetail.createMany({
+            data: processedDetails.map(({ id, ...rest }) => rest),
+          });
+        }
+
+        return createdPO;
       });
 
       await createAuditLog(

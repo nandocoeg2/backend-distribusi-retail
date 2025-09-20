@@ -31,10 +31,33 @@ tanggal_batas_kirim: string (optional, ISO date)
 termin_bayar: string (optional)
 po_type: "BULK" | "SINGLE" (required)
 status_code: string (optional, default: "PENDING PURCHASE ORDER")
+purchaseOrderDetails: string (optional, JSON string array)
 files: File[] (optional, untuk BULK type)
 ```
 
+### Purchase Order Details Structure
+```json
+[
+  {
+    "plu": "string (required)",
+    "nama_barang": "string (required)",
+    "quantity": "number (required)",
+    "isi": "number (required)",
+    "harga": "number (required)",
+    "potongan_a": "number (optional, nullable)",
+    "harga_after_potongan_a": "number (optional, nullable)",
+    "harga_netto": "number (required)",
+    "total_pembelian": "number (required)",
+    "potongan_b": "number (optional, nullable)",
+    "harga_after_potongan_b": "number (optional, nullable)",
+    "inventoryId": "string (optional)"
+  }
+]
+```
+
 ### Sample Request
+
+#### Basic Request (tanpa details)
 ```bash
 curl -X POST http://localhost:5050/api/v1/purchase-orders/ \
   -H "Authorization: Bearer your_token_here" \
@@ -42,6 +65,17 @@ curl -X POST http://localhost:5050/api/v1/purchase-orders/ \
   -F "po_number=PO-001" \
   -F "po_type=BULK" \
   -F "files=@document.pdf"
+```
+
+#### Request dengan Purchase Order Details
+```bash
+curl -X POST http://localhost:5050/api/v1/purchase-orders/ \
+  -H "Authorization: Bearer your_token_here" \
+  -F "customerId=customer_123" \
+  -F "po_number=PO-001" \
+  -F "po_type=SINGLE" \
+  -F "status_code=PENDING PURCHASE ORDER" \
+  -F 'purchaseOrderDetails=[{"plu":"PLU001","nama_barang":"Produk A","quantity":100,"isi":10,"harga":50000,"harga_netto":50000,"total_pembelian":5000000}]'
 ```
 
 ### Sample Response
@@ -52,8 +86,21 @@ curl -X POST http://localhost:5050/api/v1/purchase-orders/ \
     "id": "po_123",
     "po_number": "PO-001",
     "customerId": "customer_123",
-    "po_type": "BULK",
+    "po_type": "SINGLE",
     "statusId": "status_123",
+    "purchaseOrderDetails": [
+      {
+        "id": "detail_123",
+        "plu": "PLU001",
+        "nama_barang": "Produk A",
+        "quantity": 100,
+        "isi": 10,
+        "harga": 50000,
+        "harga_netto": 50000,
+        "total_pembelian": 5000000,
+        "inventoryId": "inventory_123"
+      }
+    ],
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   }
@@ -560,6 +607,14 @@ curl --request PATCH \
   - Invoice dengan status `PENDING INVOICE`
   - Surat Jalan dengan status `PENDING SURAT JALAN`
 
+### Purchase Order Details
+- Field `purchaseOrderDetails` harus berupa JSON string array
+- Jika `inventoryId` tidak disediakan, sistem akan otomatis membuat inventory item baru berdasarkan PLU
+- Jika inventory dengan PLU yang sama sudah ada, akan diupdate dengan data terbaru
+- Semua operasi dilakukan dalam database transaction untuk memastikan konsistensi data
+- Field yang required: `plu`, `nama_barang`, `quantity`, `isi`, `harga`, `harga_netto`, `total_pembelian`
+- Field yang optional: `potongan_a`, `harga_after_potongan_a`, `potongan_b`, `harga_after_potongan_b`, `inventoryId`
+
 ### File Upload
 - Hanya untuk purchase order dengan `po_type: "BULK"`
 - Mendukung multiple file upload
@@ -592,6 +647,19 @@ curl --request POST \
   --form po_number=PO-TEST-001 \
   --form po_type=SINGLE \
   --form status_code=PROCESSING_PURCHASE_ORDER
+```
+
+#### Create dengan Purchase Order Details
+```bash
+curl --request POST \
+  --url http://localhost:5050/api/v1/purchase-orders/ \
+  --header 'authorization: Bearer YOUR_TOKEN' \
+  --header 'content-type: multipart/form-data' \
+  --form 'customerId=YOUR_CUSTOMER_ID' \
+  --form po_number=PO-TEST-002 \
+  --form po_type=SINGLE \
+  --form status_code=PENDING PURCHASE ORDER \
+  --form 'purchaseOrderDetails=[{"plu":"PLU001","nama_barang":"Test Product","quantity":50,"isi":5,"harga":25000,"potongan_a":0,"harga_after_potongan_a":25000,"harga_netto":25000,"total_pembelian":1250000,"potongan_b":0,"harga_after_potongan_b":25000}]'
 ```
 
 #### Search berdasarkan Status Code

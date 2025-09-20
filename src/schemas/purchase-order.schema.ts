@@ -2,25 +2,6 @@ import { z } from 'zod';
 import { POType } from '@prisma/client';
 import { paginationSchema } from './pagination.schema';
 
-export const createPurchaseOrderSchema = z.object({
-  body: z.object({
-    customerId: z.string().describe('The ID of the customer'),
-    po_number: z.string().describe('The purchase order number'),
-    total_items: z.coerce.number().int().optional().describe('Total number of items in the PO'),
-    tanggal_masuk_po: z.coerce.date().optional().describe('The date when PO was received'),
-    tanggal_batas_kirim: z.coerce.date().optional().describe('The delivery deadline date'),
-    termin_bayar: z.string().optional().describe('Payment terms'),
-    po_type: z.nativeEnum(POType).describe('The type of the purchase order'),
-    status_code: z.string().optional().describe('The status code of the purchase order'),
-  }),
-});
-
-export const getPurchaseOrderSchema = z.object({
-  params: z.object({
-    id: z.string().describe('The ID of the purchase order'),
-  }),
-});
-
 const purchaseOrderDetailSchema = z.object({
   id: z.string().optional().describe('The ID of the purchase order detail'),
   plu: z.string().describe('Price Look-Up code'),
@@ -35,6 +16,26 @@ const purchaseOrderDetailSchema = z.object({
   potongan_b: z.coerce.number().nullable().optional().describe('Discount B'),
   harga_after_potongan_b: z.coerce.number().nullable().optional().describe('Price after discount B'),
   inventoryId: z.string().optional().describe('The ID of the inventory item'),
+});
+
+export const createPurchaseOrderSchema = z.object({
+  body: z.object({
+    customerId: z.string().describe('The ID of the customer'),
+    po_number: z.string().describe('The purchase order number'),
+    total_items: z.coerce.number().int().optional().describe('Total number of items in the PO'),
+    tanggal_masuk_po: z.coerce.date().optional().describe('The date when PO was received'),
+    tanggal_batas_kirim: z.coerce.date().optional().describe('The delivery deadline date'),
+    termin_bayar: z.string().optional().describe('Payment terms'),
+    po_type: z.nativeEnum(POType).describe('The type of the purchase order'),
+    status_code: z.string().optional().describe('The status code of the purchase order'),
+    purchaseOrderDetails: z.array(purchaseOrderDetailSchema).optional().describe('The details of the purchase order'),
+  }),
+});
+
+export const getPurchaseOrderSchema = z.object({
+  params: z.object({
+    id: z.string().describe('The ID of the purchase order'),
+  }),
 });
 
 export const updatePurchaseOrderSchema = z.object({
