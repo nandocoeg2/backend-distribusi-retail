@@ -173,121 +173,126 @@ npm test -- --coverage
 
 Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/docs` ketika aplikasi berjalan.
 
+> **Catatan format respons**
+>
+> * Semua endpoint sukses mengembalikan struktur `{"success": true, "data": ...}`.
+> * Ketika terjadi kesalahan, respons akan mengikuti struktur `{"success": false, "error": { "message": "..." } }`.
+
 ### 🔐 Autentikasi & Otorisasi
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/auth/register` | `POST` | Registrasi pengguna baru | - | `{ "username": "john_doe", "email": "john@example.com", "password": "password123", "fullName": "John Doe", "roleId": 1 }` | `{ "id": 1, "username": "john_doe", "email": "john@example.com", "fullName": "John Doe" }` |
-| `/api/auth/login` | `POST` | Login dan mendapatkan access token | - | `{ "email": "john@example.com", "password": "password123" }` | `{ "accessToken": "...", "refreshToken": "...", "user": { ... } }` |
-| `/api/auth/logout` | `POST` | Logout pengguna | `Authorization: Bearer <token>` | - | `{ "message": "Logout successful" }` |
+| `/api/auth/register` | `POST` | Registrasi pengguna baru | - | `{ "email": "john@example.com", "username": "john_doe", "firstName": "John", "lastName": "Doe", "password": "password123" }` | `{ "success": true, "data": { "id": "uuid", "email": "john@example.com", "username": "john_doe", "firstName": "John", "lastName": "Doe", "roleId": "..." } }` |
+| `/api/auth/login` | `POST` | Login dan mendapatkan access token | - | `{ "email": "john@example.com", "password": "password123" }` | `{ "success": true, "data": { "user": { "id": "uuid", "email": "john@example.com", "username": "john_doe", "role": { "id": "...", "name": "admin" }, "menus": [{ "id": "...", "name": "Dashboard", "children": [] }] }, "accessToken": "<JWT>" } }` |
+| `/api/auth/logout` | `POST` | Logout pengguna | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Logged out successfully" } }` |
 
 ### 👥 Manajemen Pengguna
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/users` | `GET` | Mendapatkan semua pengguna | `Authorization: Bearer <token>` | - | `[{ "id": 1, "username": "john_doe", ... }]` |
-| `/api/users/:id` | `GET` | Mendapatkan pengguna berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "username": "john_doe", ... }` |
+| `/api/users` | `GET` | Mendapatkan semua pengguna | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": "uuid", "email": "john@example.com", "username": "john_doe", ... }] }` |
+| `/api/users/:id` | `GET` | Mendapatkan pengguna berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": "uuid", "email": "john@example.com", "username": "john_doe", ... } }` |
 
 ### 🏢 Manajemen Role & Menu
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/roles` | `GET` | Mendapatkan semua role | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "admin", ... }]` |
-| `/api/roles` | `POST` | Membuat role baru | `Authorization: Bearer <token>` | `{ "name": "new_role" }` | `{ "id": 2, "name": "new_role" }` |
-| `/api/roles/:roleId/menus` | `PUT` | Update menu untuk role tertentu | `Authorization: Bearer <token>` | `{ "menuIds": [1, 2, 3] }` | `{ "id": 1, "name": "admin", "menus": [...] }` |
-| `/api/roles/:roleId` | `DELETE` | Menghapus role | `Authorization: Bearer <token>` | - | `{ "message": "Role deleted" }` |
-| `/api/menus` | `GET` | Mendapatkan semua menu | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Dashboard", ... }]` |
+| `/api/roles` | `GET` | Mendapatkan semua role | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": "1", "name": "admin", ... }] }` |
+| `/api/roles` | `POST` | Membuat role baru | `Authorization: Bearer <token>` | `{ "name": "new_role" }` | `{ "success": true, "data": { "id": "2", "name": "new_role" } }` |
+| `/api/roles/:roleId/menus` | `PUT` | Update menu untuk role tertentu | `Authorization: Bearer <token>` | `{ "menuIds": ["menu_dashboard", "menu_reports"] }` | `{ "success": true, "data": { "id": "1", "name": "admin", "menus": [{ "id": "menu_dashboard", "name": "Dashboard", ... }] } }` |
+| `/api/roles/:roleId` | `DELETE` | Menghapus role | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Role deleted" } }` |
+| `/api/menus` | `GET` | Mendapatkan semua menu | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": "menu_dashboard", "name": "Dashboard", ... }] }` |
 
 ### 🛒 Manajemen Pelanggan
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/customers` | `GET` | Mendapatkan semua pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Customer A", ... }]` |
-| `/api/customers/:id` | `GET` | Mendapatkan pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Customer A", ... }` |
-| `/api/customers` | `POST` | Membuat pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Customer B", ... }` | `{ "id": 2, "name": "Customer B", ... }` |
-| `/api/customers/:id` | `PUT` | Update data pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Customer A", ... }` | `{ "id": 1, "name": "Updated Customer A", ... }` |
-| `/api/customers/:id` | `DELETE` | Menghapus pelanggan | `Authorization: Bearer <token>` | - | `{ "message": "Customer deleted" }` |
-| `/api/customers/search` | `GET` | Pencarian pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Customer A", ... }]` |
+| `/api/customers` | `GET` | Mendapatkan semua pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Customer A", ... }] }` |
+| `/api/customers/:id` | `GET` | Mendapatkan pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Customer A", ... } }` |
+| `/api/customers` | `POST` | Membuat pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Customer B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Customer B", ... } }` |
+| `/api/customers/:id` | `PUT` | Update data pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Customer A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Customer A", ... } }` |
+| `/api/customers/:id` | `DELETE` | Menghapus pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Customer deleted" } }` |
+| `/api/customers/search` | `GET` | Pencarian pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Customer A", ... }] }` |
 
 ### 🚚 Manajemen Supplier
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/suppliers` | `GET` | Mendapatkan semua supplier | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Supplier A", ... }]` |
-| `/api/suppliers/:id` | `GET` | Mendapatkan supplier berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Supplier A", ... }` |
-| `/api/suppliers` | `POST` | Membuat supplier baru | `Authorization: Bearer <token>` | `{ "name": "Supplier B", ... }` | `{ "id": 2, "name": "Supplier B", ... }` |
-| `/api/suppliers/:id` | `PUT` | Update data supplier | `Authorization: Bearer <token>` | `{ "name": "Updated Supplier A", ... }` | `{ "id": 1, "name": "Updated Supplier A", ... }` |
-| `/api/suppliers/:id` | `DELETE` | Menghapus supplier | `Authorization: Bearer <token>` | - | `{ "message": "Supplier deleted" }` |
-| `/api/suppliers/search` | `GET` | Pencarian supplier | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Supplier A", ... }]` |
+| `/api/suppliers` | `GET` | Mendapatkan semua supplier | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Supplier A", ... }] }` |
+| `/api/suppliers/:id` | `GET` | Mendapatkan supplier berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Supplier A", ... } }` |
+| `/api/suppliers` | `POST` | Membuat supplier baru | `Authorization: Bearer <token>` | `{ "name": "Supplier B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Supplier B", ... } }` |
+| `/api/suppliers/:id` | `PUT` | Update data supplier | `Authorization: Bearer <token>` | `{ "name": "Updated Supplier A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Supplier A", ... } }` |
+| `/api/suppliers/:id` | `DELETE` | Menghapus supplier | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Supplier deleted" } }` |
+| `/api/suppliers/search` | `GET` | Pencarian supplier | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Supplier A", ... }] }` |
 
 ### 📦 Manajemen Inventory
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/inventories` | `GET` | Mendapatkan semua inventory | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Product A", ... }]` |
-| `/api/inventories/:id` | `GET` | Mendapatkan inventory berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Product A", ... }` |
-| `/api/inventories` | `POST` | Membuat inventory baru | `Authorization: Bearer <token>` | `{ "name": "Product B", ... }` | `{ "id": 2, "name": "Product B", ... }` |
-| `/api/inventories/:id` | `PUT` | Update data inventory | `Authorization: Bearer <token>` | `{ "name": "Updated Product A", ... }` | `{ "id": 1, "name": "Updated Product A", ... }` |
-| `/api/inventories/:id` | `DELETE` | Menghapus inventory | `Authorization: Bearer <token>` | - | `{ "message": "Inventory deleted" }` |
-| `/api/inventories/search` | `GET` | Pencarian inventory | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Product A", ... }]` |
+| `/api/inventories` | `GET` | Mendapatkan semua inventory | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Product A", ... }] }` |
+| `/api/inventories/:id` | `GET` | Mendapatkan inventory berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Product A", ... } }` |
+| `/api/inventories` | `POST` | Membuat inventory baru | `Authorization: Bearer <token>` | `{ "name": "Product B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Product B", ... } }` |
+| `/api/inventories/:id` | `PUT` | Update data inventory | `Authorization: Bearer <token>` | `{ "name": "Updated Product A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Product A", ... } }` |
+| `/api/inventories/:id` | `DELETE` | Menghapus inventory | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Inventory deleted" } }` |
+| `/api/inventories/search` | `GET` | Pencarian inventory | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Product A", ... }] }` |
 
 ### 📋 Purchase Order Management
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/purchase-orders` | `GET` | Mendapatkan semua purchase order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "poNumber": "PO-001", ... }]` |
-| `/api/purchase-orders/:id` | `GET` | Mendapatkan PO berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "poNumber": "PO-001", ... }` |
-| `/api/purchase-orders` | `POST` | Membuat purchase order baru | `Authorization: Bearer <token>` | `{ "supplierId": 1, "items": [...] }` | `{ "id": 2, "poNumber": "PO-002", ... }` |
-| `/api/purchase-orders/:id` | `PUT` | Update purchase order | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "id": 1, "notes": "Updated notes", ... }` |
-| `/api/purchase-orders/:id` | `DELETE` | Menghapus purchase order | `Authorization: Bearer <token>` | - | `{ "message": "Purchase Order deleted" }` |
-| `/api/purchase-orders/search` | `GET` | Pencarian purchase order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "poNumber": "PO-001", ... }]` |
-| `/api/purchase-orders/:id/history` | `GET` | History perubahan PO | `Authorization: Bearer <token>` | - | `[{ "change": "Status updated", ... }]` |
-| `/api/purchase-orders/:id/process` | `POST` | Process purchase order | `Authorization: Bearer <token>` | - | `{ "message": "Purchase Order processed" }` |
-| `/api/purchase-orders/bulk` | `POST` | Bulk upload purchase order | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "jobId": "..." }` |
-| `/api/purchase-orders/bulk/status/:id`| `GET` | Status bulk upload | `Authorization: Bearer <token>` | - | `{ "status": "COMPLETED" }` |
-| `/api/purchase-orders/bulk/all` | `GET` | Mendapatkan semua bulk uploads | `Authorization: Bearer <token>` | - | `[{ "id": 1, "fileName": "...", ... }]` |
+| `/api/purchase-orders` | `GET` | Mendapatkan semua purchase order | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "poNumber": "PO-001", ... }] }` |
+| `/api/purchase-orders/:id` | `GET` | Mendapatkan PO berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "poNumber": "PO-001", ... } }` |
+| `/api/purchase-orders` | `POST` | Membuat purchase order baru | `Authorization: Bearer <token>` | `{ "supplierId": 1, "items": [...] }` | `{ "success": true, "data": { "id": 2, "poNumber": "PO-002", ... } }` |
+| `/api/purchase-orders/:id` | `PUT` | Update purchase order | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "success": true, "data": { "id": 1, "notes": "Updated notes", ... } }` |
+| `/api/purchase-orders/:id` | `DELETE` | Menghapus purchase order | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Purchase Order deleted" } }` |
+| `/api/purchase-orders/search` | `GET` | Pencarian purchase order | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "poNumber": "PO-001", ... }] }` |
+| `/api/purchase-orders/:id/history` | `GET` | History perubahan PO | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "change": "Status updated", ... }] }` |
+| `/api/purchase-orders/:id/process` | `POST` | Process purchase order | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Purchase Order processed" } }` |
+| `/api/purchase-orders/bulk` | `POST` | Bulk upload purchase order | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "success": true, "data": { "jobId": "..." } }` |
+| `/api/purchase-orders/bulk/status/:id`| `GET` | Status bulk upload | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "status": "COMPLETED" } }` |
+| `/api/purchase-orders/bulk/all` | `GET` | Mendapatkan semua bulk uploads | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "fileName": "...", ... }] }` |
 
 ### 📦 Manajemen Packing
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/packings` | `GET` | Mendapatkan semua packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "packingNumber": "PACK-001", ... }]` |
-| `/api/packings/:id` | `GET` | Mendapatkan packing berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "packingNumber": "PACK-001", ... }` |
-| `/api/packings` | `POST` | Membuat packing baru | `Authorization: Bearer <token>` | `{ "purchaseOrderId": 1, "items": [...] }` | `{ "id": 2, "packingNumber": "PACK-002", ... }` |
-| `/api/packings/:id` | `PUT` | Update data packing | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "id": 1, "notes": "Updated notes", ... }` |
-| `/api/packings/:id` | `DELETE` | Menghapus packing | `Authorization: Bearer <token>` | - | `{ "message": "Packing deleted" }` |
-| `/api/packings/search` | `GET` | Pencarian packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "packingNumber": "PACK-001", ... }]` |
+| `/api/packings` | `GET` | Mendapatkan semua packing | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "packingNumber": "PACK-001", ... }] }` |
+| `/api/packings/:id` | `GET` | Mendapatkan packing berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "packingNumber": "PACK-001", ... } }` |
+| `/api/packings` | `POST` | Membuat packing baru | `Authorization: Bearer <token>` | `{ "purchaseOrderId": 1, "items": [...] }` | `{ "success": true, "data": { "id": 2, "packingNumber": "PACK-002", ... } }` |
+| `/api/packings/:id` | `PUT` | Update data packing | `Authorization: Bearer <token>` | `{ "notes": "Updated notes" }` | `{ "success": true, "data": { "id": 1, "notes": "Updated notes", ... } }` |
+| `/api/packings/:id` | `DELETE` | Menghapus packing | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Packing deleted" } }` |
+| `/api/packings/search` | `GET` | Pencarian packing | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "packingNumber": "PACK-001", ... }] }` |
 
 ### 📄 Manajemen Surat Jalan
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/surat-jalan` | `GET` | Mendapatkan semua surat jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "suratJalanNumber": "SJ-001", ... }]` |
-| `/api/surat-jalan/:id` | `GET` | Mendapatkan surat jalan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "suratJalanNumber": "SJ-001", ... }` |
-| `/api/surat-jalan` | `POST` | Membuat surat jalan baru | `Authorization: Bearer <token>` | `{ "packingId": 1, "customerId": 1, ... }` | `{ "id": 2, "suratJalanNumber": "SJ-002", ... }` |
-| `/api/surat-jalan/:id` | `PUT` | Update data surat jalan | `Authorization: Bearer <token>` | `{ "driverName": "New Driver" }` | `{ "id": 1, "driverName": "New Driver", ... }` |
-| `/api/surat-jalan/:id` | `DELETE` | Menghapus surat jalan | `Authorization: Bearer <token>` | - | `{ "message": "Surat Jalan deleted" }` |
-| `/api/surat-jalan/search` | `GET` | Pencarian surat jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "suratJalanNumber": "SJ-001", ... }]` |
+| `/api/surat-jalan` | `GET` | Mendapatkan semua surat jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "suratJalanNumber": "SJ-001", ... }] }` |
+| `/api/surat-jalan/:id` | `GET` | Mendapatkan surat jalan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "suratJalanNumber": "SJ-001", ... } }` |
+| `/api/surat-jalan` | `POST` | Membuat surat jalan baru | `Authorization: Bearer <token>` | `{ "packingId": 1, "customerId": 1, ... }` | `{ "success": true, "data": { "id": 2, "suratJalanNumber": "SJ-002", ... } }` |
+| `/api/surat-jalan/:id` | `PUT` | Update data surat jalan | `Authorization: Bearer <token>` | `{ "driverName": "New Driver" }` | `{ "success": true, "data": { "id": 1, "driverName": "New Driver", ... } }` |
+| `/api/surat-jalan/:id` | `DELETE` | Menghapus surat jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Surat Jalan deleted" } }` |
+| `/api/surat-jalan/search` | `GET` | Pencarian surat jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "suratJalanNumber": "SJ-001", ... }] }` |
 
 ### 🧾 Manajemen Invoice
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/invoices` | `GET` | Mendapatkan semua invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "invoiceNumber": "INV-001", ... }]` |
-| `/api/invoices/:id` | `GET` | Mendapatkan invoice berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "invoiceNumber": "INV-001", ... }` |
-| `/api/invoices` | `POST` | Membuat invoice baru | `Authorization: Bearer <token>` | `{ "suratJalanId": 1, ... }` | `{ "id": 2, "invoiceNumber": "INV-002", ... }` |
-| `/api/invoices/:id` | `PUT` | Update data invoice | `Authorization: Bearer <token>` | `{ "dueDate": "..." }` | `{ "id": 1, "dueDate": "...", ... }` |
-| `/api/invoices/:id` | `DELETE` | Menghapus invoice | `Authorization: Bearer <token>` | - | `{ "message": "Invoice deleted" }` |
-| `/api/invoices/search` | `GET` | Pencarian invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "invoiceNumber": "INV-001", ... }]` |
+| `/api/invoices` | `GET` | Mendapatkan semua invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "invoiceNumber": "INV-001", ... }] }` |
+| `/api/invoices/:id` | `GET` | Mendapatkan invoice berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "invoiceNumber": "INV-001", ... } }` |
+| `/api/invoices` | `POST` | Membuat invoice baru | `Authorization: Bearer <token>` | `{ "suratJalanId": 1, ... }` | `{ "success": true, "data": { "id": 2, "invoiceNumber": "INV-002", ... } }` |
+| `/api/invoices/:id` | `PUT` | Update data invoice | `Authorization: Bearer <token>` | `{ "dueDate": "..." }` | `{ "success": true, "data": { "id": 1, "dueDate": "...", ... } }` |
+| `/api/invoices/:id` | `DELETE` | Menghapus invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Invoice deleted" } }` |
+| `/api/invoices/search` | `GET` | Pencarian invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "invoiceNumber": "INV-001", ... }] }` |
 
 ### 📊 History Pengiriman
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/history-pengiriman` | `GET` | Mendapatkan semua history pengiriman | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
-| `/api/history-pengiriman/status/:statusCode` | `GET` | History berdasarkan status code | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
-| `/api/history-pengiriman/surat-jalan/:suratJalanId` | `GET` | History berdasarkan surat jalan ID | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
-| `/api/history-pengiriman/tanggal/:tanggalKirim` | `GET` | History berdasarkan tanggal kirim | `Authorization: Bearer <token>` | - | `[{ "id": 1, "status": "DELIVERED", ... }]` |
+| `/api/history-pengiriman` | `GET` | Mendapatkan semua history pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "status": "DELIVERED", ... }] }` |
+| `/api/history-pengiriman/status/:statusCode` | `GET` | History berdasarkan status code | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "status": "DELIVERED", ... }] }` |
+| `/api/history-pengiriman/surat-jalan/:suratJalanId` | `GET` | History berdasarkan surat jalan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "status": "DELIVERED", ... }] }` |
+| `/api/history-pengiriman/tanggal/:tanggalKirim` | `GET` | History berdasarkan tanggal kirim | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "status": "DELIVERED", ... }] }` |
 
 ### 📁 Manajemen File
 
@@ -299,98 +304,96 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/conversions/upload` | `POST` | Upload dan konversi data | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "message": "File converted" }` |
+| `/api/conversions/upload` | `POST` | Upload dan konversi data | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "success": true, "data": { "message": "File converted" } }` |
 
 ### 🔔 Sistem Notifikasi
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/notifications` | `GET` | Mendapatkan semua notifikasi | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
-| `/api/notifications/unread` | `GET` | Mendapatkan notifikasi belum dibaca | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
-| `/api/notifications/count` | `GET` | Jumlah notifikasi | `Authorization: Bearer <token>` | - | `{ "count": 5 }` |
-| `/api/notifications/read-all` | `PATCH` | Tandai semua sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "message": "All marked as read" }` |
-| `/api/notifications/:id/read` | `PATCH` | Tandai notifikasi tertentu sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "message": "Marked as read" }` |
-| `/api/notifications/alerts` | `GET` | Periksa alert sistem | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
-| `/api/notifications/price-differences` | `GET` | Notifikasi perbedaan harga | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
-| `/api/notifications/type/:type` | `GET` | Mendapatkan notifikasi berdasarkan tipe | `Authorization: Bearer <token>` | - | `[{ "id": 1, "message": "...", ... }]` |
+| `/api/notifications` | `GET` | Mendapatkan semua notifikasi | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "message": "...", ... }] }` |
+| `/api/notifications/unread` | `GET` | Mendapatkan notifikasi belum dibaca | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "message": "...", ... }] }` |
+| `/api/notifications/count` | `GET` | Jumlah notifikasi | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "count": 5 } }` |
+| `/api/notifications/read-all` | `PATCH` | Tandai semua sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "All marked as read" } }` |
+| `/api/notifications/:id/read` | `PATCH` | Tandai notifikasi tertentu sebagai dibaca | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Marked as read" } }` |
+| `/api/notifications/alerts` | `GET` | Periksa alert sistem | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "message": "...", ... }] }` |
+| `/api/notifications/price-differences` | `GET` | Notifikasi perbedaan harga | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "message": "...", ... }] }` |
+| `/api/notifications/type/:type` | `GET` | Mendapatkan notifikasi berdasarkan tipe | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "message": "...", ... }] }` |
 
 ### 📊 Status Management
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/statuses` | `GET` | Mendapatkan semua status | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/purchase_order` | `GET` | Mendapatkan status untuk Purchase Order | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/bulk_file` | `GET` | Mendapatkan status untuk Bulk File | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/packing` | `GET` | Mendapatkan status untuk Packing | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/packing_item`| `GET` | Mendapatkan status untuk Packing Item | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/invoice` | `GET` | Mendapatkan status untuk Invoice | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
-| `/api/statuses/surat_jalan`| `GET` | Mendapatkan status untuk Surat Jalan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "PENDING", ... }]` |
+| `/api/statuses` | `GET` | Mendapatkan semua status | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/purchase_order` | `GET` | Mendapatkan status untuk Purchase Order | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/bulk_file` | `GET` | Mendapatkan status untuk Bulk File | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/packing` | `GET` | Mendapatkan status untuk Packing | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/packing_item`| `GET` | Mendapatkan status untuk Packing Item | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/invoice` | `GET` | Mendapatkan status untuk Invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/surat_jalan`| `GET` | Mendapatkan status untuk Surat Jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
 
 ### 🏢 Manajemen Perusahaan
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/companies` | `GET` | Mendapatkan semua perusahaan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Company A", ... }]` |
-| `/api/companies/:id` | `GET` | Mendapatkan perusahaan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Company A", ... }` |
-| `/api/companies` | `POST` | Membuat perusahaan baru | `Authorization: Bearer <token>` | `{ "name": "Company B", ... }` | `{ "id": 2, "name": "Company B", ... }` |
-| `/api/companies/:id` | `PUT` | Update data perusahaan | `Authorization: Bearer <token>` | `{ "name": "Updated Company A", ... }` | `{ "id": 1, "name": "Updated Company A", ... }` |
-| `/api/companies/:id` | `DELETE` | Menghapus perusahaan | `Authorization: Bearer <token>` | - | `{ "message": "Company deleted" }` |
-| `/api/companies/search` | `GET` | Pencarian perusahaan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Company A", ... }]` |
+| `/api/companies` | `GET` | Mendapatkan semua perusahaan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Company A", ... }] }` |
+| `/api/companies/:id` | `GET` | Mendapatkan perusahaan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Company A", ... } }` |
+| `/api/companies` | `POST` | Membuat perusahaan baru | `Authorization: Bearer <token>` | `{ "name": "Company B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Company B", ... } }` |
+| `/api/companies/:id` | `PUT` | Update data perusahaan | `Authorization: Bearer <token>` | `{ "name": "Updated Company A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Company A", ... } }` |
+| `/api/companies/:id` | `DELETE` | Menghapus perusahaan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Company deleted" } }` |
+| `/api/companies/search` | `GET` | Pencarian perusahaan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Company A", ... }] }` |
 
 ### 👥 Manajemen Grup Pelanggan
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/group-customers` | `GET` | Mendapatkan semua grup pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Group A", ... }]` |
-| `/api/group-customers/:id` | `GET` | Mendapatkan grup pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Group A", ... }` |
-| `/api/group-customers` | `POST` | Membuat grup pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Group B", ... }` | `{ "id": 2, "name": "Group B", ... }` |
-| `/api/group-customers/:id`| `PUT` | Update data grup pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Group A", ... }` | `{ "id": 1, "name": "Updated Group A", ... }` |
-| `/api/group-customers/:id`| `DELETE`| Menghapus grup pelanggan | `Authorization: Bearer <token>` | - | `{ "message": "Group Customer deleted" }` |
-| `/api/group-customers/search`| `GET` | Pencarian grup pelanggan | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Group A", ... }]` |
+| `/api/group-customers` | `GET` | Mendapatkan semua grup pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Group A", ... }] }` |
+| `/api/group-customers/:id` | `GET` | Mendapatkan grup pelanggan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Group A", ... } }` |
+| `/api/group-customers` | `POST` | Membuat grup pelanggan baru | `Authorization: Bearer <token>` | `{ "name": "Group B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Group B", ... } }` |
+| `/api/group-customers/:id`| `PUT` | Update data grup pelanggan | `Authorization: Bearer <token>` | `{ "name": "Updated Group A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Group A", ... } }` |
+| `/api/group-customers/:id`| `DELETE`| Menghapus grup pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Group Customer deleted" } }` |
+| `/api/group-customers/search`| `GET` | Pencarian grup pelanggan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Group A", ... }] }` |
 
 ### 💲 Manajemen Harga Barang
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/item-prices` | `GET` | Mendapatkan semua harga barang | `Authorization: Bearer <token>` | - | `[{ "id": 1, "price": 10000, ... }]` |
-| `/api/item-prices/:id` | `GET` | Mendapatkan harga barang berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "price": 10000, ... }` |
-| `/api/item-prices` | `POST` | Membuat harga barang baru | `Authorization: Bearer <token>` | `{ "itemId": 1, "price": 12000, ... }` | `{ "id": 2, "price": 12000, ... }` |
-| `/api/item-prices/:id`| `PUT` | Update data harga barang | `Authorization: Bearer <token>` | `{ "price": 11000, ... }` | `{ "id": 1, "price": 11000, ... }` |
-| `/api/item-prices/:id`| `DELETE`| Menghapus harga barang | `Authorization: Bearer <token>` | - | `{ "message": "Item Price deleted" }` |
-| `/api/item-prices/search`| `GET` | Pencarian harga barang | `Authorization: Bearer <token>` | - | `[{ "id": 1, "price": 10000, ... }]` |
+| `/api/item-prices` | `GET` | Mendapatkan semua harga barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "price": 10000, ... }] }` |
+| `/api/item-prices/:id` | `GET` | Mendapatkan harga barang berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "price": 10000, ... } }` |
+| `/api/item-prices` | `POST` | Membuat harga barang baru | `Authorization: Bearer <token>` | `{ "itemId": 1, "price": 12000, ... }` | `{ "success": true, "data": { "id": 2, "price": 12000, ... } }` |
+| `/api/item-prices/:id`| `PUT` | Update data harga barang | `Authorization: Bearer <token>` | `{ "price": 11000, ... }` | `{ "success": true, "data": { "id": 1, "price": 11000, ... } }` |
+| `/api/item-prices/:id`| `DELETE`| Menghapus harga barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Item Price deleted" } }` |
+| `/api/item-prices/search`| `GET` | Pencarian harga barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "price": 10000, ... }] }` |
 
 ### 🌍 Manajemen Wilayah
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/regions` | `GET` | Mendapatkan semua wilayah | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Region A", ... }]` |
-| `/api/regions/:id` | `GET` | Mendapatkan wilayah berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "Region A", ... }` |
-| `/api/regions` | `POST` | Membuat wilayah baru | `Authorization: Bearer <token>` | `{ "name": "Region B", ... }` | `{ "id": 2, "name": "Region B", ... }` |
-| `/api/regions/:id`| `PUT` | Update data wilayah | `Authorization: Bearer <token>` | `{ "name": "Updated Region A", ... }` | `{ "id": 1, "name": "Updated Region A", ... }` |
-| `/api/regions/:id`| `DELETE`| Menghapus wilayah | `Authorization: Bearer <token>` | - | `{ "message": "Region deleted" }` |
-| `/api/regions/search`| `GET` | Pencarian wilayah | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "Region A", ... }]` |
+| `/api/regions` | `GET` | Mendapatkan semua wilayah | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Region A", ... }] }` |
+| `/api/regions/:id` | `GET` | Mendapatkan wilayah berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "Region A", ... } }` |
+| `/api/regions` | `POST` | Membuat wilayah baru | `Authorization: Bearer <token>` | `{ "name": "Region B", ... }` | `{ "success": true, "data": { "id": 2, "name": "Region B", ... } }` |
+| `/api/regions/:id`| `PUT` | Update data wilayah | `Authorization: Bearer <token>` | `{ "name": "Updated Region A", ... }` | `{ "success": true, "data": { "id": 1, "name": "Updated Region A", ... } }` |
+| `/api/regions/:id`| `DELETE`| Menghapus wilayah | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Region deleted" } }` |
+| `/api/regions/search`| `GET` | Pencarian wilayah | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "Region A", ... }] }` |
 
 ### 💳 Manajemen Termin Pembayaran
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/term-of-payments` | `GET` | Mendapatkan semua termin pembayaran | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "30 Days", ... }]` |
-| `/api/term-of-payments/:id` | `GET` | Mendapatkan termin pembayaran berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "id": 1, "name": "30 Days", ... }` |
-| `/api/term-of-payments` | `POST` | Membuat termin pembayaran baru | `Authorization: Bearer <token>` | `{ "name": "60 Days", ... }` | `{ "id": 2, "name": "60 Days", ... }` |
-| `/api/term-of-payments/:id`| `PUT` | Update data termin pembayaran | `Authorization: Bearer <token>` | `{ "name": "90 Days", ... }` | `{ "id": 1, "name": "90 Days", ... }` |
-| `/api/term-of-payments/:id`| `DELETE`| Menghapus termin pembayaran | `Authorization: Bearer <token>` | - | `{ "message": "Term of Payment deleted" }` |
-| `/api/term-of-payments/search`| `GET` | Pencarian termin pembayaran | `Authorization: Bearer <token>` | - | `[{ "id": 1, "name": "30 Days", ... }]` |
+| `/api/term-of-payments` | `GET` | Mendapatkan semua termin pembayaran | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "30 Days", ... }] }` |
+| `/api/term-of-payments/:id` | `GET` | Mendapatkan termin pembayaran berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "name": "30 Days", ... } }` |
+| `/api/term-of-payments` | `POST` | Membuat termin pembayaran baru | `Authorization: Bearer <token>` | `{ "name": "60 Days", ... }` | `{ "success": true, "data": { "id": 2, "name": "60 Days", ... } }` |
+| `/api/term-of-payments/:id`| `PUT` | Update data termin pembayaran | `Authorization: Bearer <token>` | `{ "name": "90 Days", ... }` | `{ "success": true, "data": { "id": 1, "name": "90 Days", ... } }` |
+| `/api/term-of-payments/:id`| `DELETE`| Menghapus termin pembayaran | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Term of Payment deleted" } }` |
+| `/api/term-of-payments/search`| `GET` | Pencarian termin pembayaran | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "30 Days", ... }] }` |
 
 ## 🚨 Error Handling
 
 ### Format Error Response
 ```json
 {
-  "error": true,
-  "message": "Error description",
-  "code": "ERROR_CODE",
-  "details": {
-    "field": "Specific field error"
+  "success": false,
+  "error": {
+    "message": "Error description"
   }
 }
 ```
