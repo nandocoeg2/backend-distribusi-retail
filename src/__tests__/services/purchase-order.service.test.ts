@@ -1,5 +1,6 @@
 import { PurchaseOrderService } from '@/services/purchase-order.service';
 import { AppError } from '@/utils/app-error';
+import { UpdatePurchaseOrderInput } from '@/schemas/purchase-order.schema';
 
 // Mock audit.service.ts
 jest.mock('@/services/audit.service', () => ({
@@ -111,7 +112,7 @@ describe('PurchaseOrderService', () => {
       purchaseOrderDetails: [
         {
           id: 'existing-detail-1',
-          kode_barang: '4324992',
+          plu: '4324992',
           nama_barang: 'TAS BELANJA',
           quantity: 4,
           isi: 1,
@@ -129,19 +130,19 @@ describe('PurchaseOrderService', () => {
 
     const mockInventoryItem = {
       id: 'new-inventory-1',
-      kode_barang: '123123',
+      plu: '123123',
       nama_barang: '213123',
       stok_barang: 1,
       harga_barang: 123123,
     };
 
     it('should update purchase order with existing inventory', async () => {
-      const updateData = {
+      const updateData: UpdatePurchaseOrderInput['body'] = {
         po_number: 'PO-001-UPDATED',
         purchaseOrderDetails: [
           {
             id: 'existing-detail-1',
-            kode_barang: '4324992',
+            plu: '4324992',
             nama_barang: 'TAS BELANJA',
             quantity: 4,
             isi: 1,
@@ -171,18 +172,18 @@ describe('PurchaseOrderService', () => {
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.updatePurchaseOrder('po1', { ...updateData, purchaseOrderDetails: updateData.purchaseOrderDetails as any }, 'user1');
+      const result = await PurchaseOrderService.updatePurchaseOrder('po1', updateData, 'user1');
 
       expect(result).toEqual(mockUpdatedPO);
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it('should create new inventory for items without inventoryId', async () => {
-      const updateData = {
+      const updateData: UpdatePurchaseOrderInput['body'] = {
         po_number: 'PO-001-UPDATED',
         purchaseOrderDetails: [
           {
-            kode_barang: '123123',
+            plu: '123123',
             nama_barang: '213123',
             quantity: 1,
             isi: 1,
@@ -203,7 +204,7 @@ describe('PurchaseOrderService', () => {
               ...mockUpdatedPO,
               purchaseOrderDetails: [
                 {
-                  ...updateData.purchaseOrderDetails[0],
+                  ...updateData.purchaseOrderDetails![0],
                   inventoryId: mockInventoryItem.id,
                 },
               ],
@@ -259,7 +260,7 @@ describe('PurchaseOrderService', () => {
       purchaseOrderDetails: [
         {
           id: 'detail1',
-          kode_barang: 'ITM001',
+          plu: 'ITM001',
           nama_barang: 'Test Item',
           quantity: 10,
           isi: 5,
@@ -302,6 +303,9 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce(mockStatuses.pendingSuratJalan); // PENDING SURAT JALAN
 
       // Mock the transaction
+      const invoiceCreateMock = jest.fn().mockResolvedValue(mockCreatedInvoice);
+      const suratJalanCreateMock = jest.fn().mockResolvedValue(mockCreatedSuratJalan);
+
       (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
         const mockTx = {
           purchaseOrder: {
@@ -334,20 +338,23 @@ describe('PurchaseOrderService', () => {
           invoice: {
             findFirst: jest.fn().mockResolvedValue(null),
             findUnique: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockResolvedValue(mockCreatedInvoice)
+            create: invoiceCreateMock,
           },
           suratJalan: {
             findFirst: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockResolvedValue(mockCreatedSuratJalan)
+            create: suratJalanCreateMock,
           }
         };
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER', 'user1');
+      const result = await PurchaseOrderService.processPurchaseOrder(['po1'], 'PROCESSED PURCHASE ORDER', 'user1');
 
-      expect(result.invoicePengiriman).toBe(mockCreatedInvoice.id);
-      expect(result.suratJalan).toBe(mockCreatedSuratJalan.id);
+      expect(result.success).toHaveLength(1);
+      expect(result.failed).toEqual([]);
+      expect(result.success[0]).toMatchObject({ id: 'po1', statusId: mockStatus.id });
+      expect(invoiceCreateMock).toHaveBeenCalled();
+      expect(suratJalanCreateMock).toHaveBeenCalled();
     });
 
     it('should update purchase order with existing document IDs when documents already exist', async () => {
@@ -364,6 +371,9 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce(mockStatuses.pendingSuratJalan);
 
       // Mock the transaction
+      const invoiceFindFirstMock = jest.fn().mockResolvedValue(existingInvoice);
+      const suratJalanFindFirstMock = jest.fn().mockResolvedValue(existingSuratJalan);
+
       (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
         const mockTx = {
           purchaseOrder: {
@@ -394,20 +404,23 @@ describe('PurchaseOrderService', () => {
               .mockResolvedValueOnce(mockStatuses.pendingSuratJalan)
           },
           invoice: {
-            findFirst: jest.fn().mockResolvedValue(existingInvoice), // Existing invoice found
+            findFirst: invoiceFindFirstMock,
             findUnique: jest.fn().mockResolvedValue(null)
           },
           suratJalan: {
-            findFirst: jest.fn().mockResolvedValue(existingSuratJalan) // Existing surat jalan found
+            findFirst: suratJalanFindFirstMock
           }
         };
         return callback(mockTx);
       });
 
-      const result = await PurchaseOrderService.processPurchaseOrder('po1', 'PROCESSED PURCHASE ORDER', 'user1');
+      const result = await PurchaseOrderService.processPurchaseOrder(['po1'], 'PROCESSED PURCHASE ORDER', 'user1');
 
-      expect(result.invoicePengiriman).toBe(existingInvoice.id);
-      expect(result.suratJalan).toBe(existingSuratJalan.id);
+      expect(result.success).toHaveLength(1);
+      expect(result.failed).toEqual([]);
+      expect(result.success[0]).toMatchObject({ id: 'po1', statusId: mockStatus.id });
+      expect(invoiceFindFirstMock).toHaveBeenCalled();
+      expect(suratJalanFindFirstMock).toHaveBeenCalled();
     });
   });
 

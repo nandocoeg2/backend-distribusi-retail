@@ -40,7 +40,7 @@ describe('Inventory Service', () => {
         harga_barang: 10000,
         min_stok: 10,
       };
-      const mockInventory = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date(), createdBy: 'user1', updatedBy: 'user1' };
+      const mockInventory = { id: '1', ...input, createdAt: new Date(), updatedAt: new Date(), createdBy: 'system', updatedBy: 'system' };
 
       (prisma.inventory.create as jest.Mock).mockResolvedValue(mockInventory);
 
@@ -49,8 +49,8 @@ describe('Inventory Service', () => {
       expect(prisma.inventory.create).toHaveBeenCalledWith({
         data: {
           ...input,
-          createdBy: 'user1',
-          updatedBy: 'user1',
+          createdBy: 'system',
+          updatedBy: 'system',
         }
       });
     });
@@ -254,7 +254,7 @@ describe('Inventory Service', () => {
         where: { id: '1' },
         data: {
           ...data,
-          updatedBy: 'user1',
+          updatedBy: 'system',
         }
       });
     });

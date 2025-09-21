@@ -26,7 +26,7 @@ describe('PurchaseOrderController', () => {
         yield { type: 'field', fieldname: 'tanggal_batas_kirim', value: new Date().toISOString() };
         yield { type: 'field', fieldname: 'termin_bayar', value: '30 hari' };
         yield { type: 'field', fieldname: 'po_type', value: 'SINGLE' };
-        yield { type: 'field', fieldname: 'statusId', value: 'status1' };
+        yield { type: 'field', fieldname: 'status_code', value: 'PENDING PURCHASE ORDER' };
       }),
     };
     reply = {
@@ -41,7 +41,16 @@ describe('PurchaseOrderController', () => {
 
   describe('createPurchaseOrder', () => {
     it('should create a purchase order and return 201', async () => {
-      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', po_number: 'PO123', total_items: 1, tanggal_masuk_po: new Date(), tanggal_batas_kirim: new Date(), termin_bayar: '30 hari', po_type: 'SINGLE', statusId: 'status1' };
+      const createInput: CreatePurchaseOrderInput = {
+        customerId: 'cust1',
+        po_number: 'PO123',
+        total_items: 1,
+        tanggal_masuk_po: new Date(),
+        tanggal_batas_kirim: new Date(),
+        termin_bayar: '30 hari',
+        po_type: 'SINGLE',
+        status_code: 'PENDING PURCHASE ORDER',
+      };
       const po = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
       (PurchaseOrderService.createPurchaseOrder as jest.Mock).mockResolvedValue(po);
 
@@ -53,7 +62,16 @@ describe('PurchaseOrderController', () => {
     });
 
     it('should create a purchase order with system user if no user is authenticated', async () => {
-      const createInput: CreatePurchaseOrderInput = { customerId: 'cust1', po_number: 'PO123', total_items: 1, tanggal_masuk_po: new Date(), tanggal_batas_kirim: new Date(), termin_bayar: '30 hari', po_type: 'SINGLE', statusId: 'status1' };
+      const createInput: CreatePurchaseOrderInput = {
+        customerId: 'cust1',
+        po_number: 'PO123',
+        total_items: 1,
+        tanggal_masuk_po: new Date(),
+        tanggal_batas_kirim: new Date(),
+        termin_bayar: '30 hari',
+        po_type: 'SINGLE',
+        status_code: 'PENDING PURCHASE ORDER',
+      };
       const po = { id: '1', ...createInput };
       (PurchaseOrderService.createPurchaseOrder as jest.Mock).mockResolvedValue(po);
       request.user = undefined;

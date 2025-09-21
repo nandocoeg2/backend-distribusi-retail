@@ -1,14 +1,14 @@
 import { ConversionService } from '@/services/conversion.service';
 import { AppError } from '@/utils/app-error';
 
-let mockGenerateContent: jest.Mock;
+var mockGenerateContent: jest.Mock = jest.fn();
 jest.mock('@google/generative-ai', () => {
     return {
         GoogleGenerativeAI: jest.fn().mockImplementation(() => {
             return {
                 getGenerativeModel: jest.fn().mockImplementation(() => {
                     return {
-                        generateContent: mockGenerateContent,
+                        generateContent: (...args: any[]) => mockGenerateContent(...args),
                     };
                 }),
             };
@@ -25,7 +25,7 @@ jest.mock('@google/generative-ai', () => {
 
 describe.skip('ConversionService', () => {
   beforeEach(() => {
-    mockGenerateContent = jest.fn();
+    mockGenerateContent.mockReset();
   });
 
   afterEach(() => {

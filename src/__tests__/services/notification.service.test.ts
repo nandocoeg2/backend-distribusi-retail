@@ -19,6 +19,7 @@ jest.mock('@/config/database', () => ({
     },
     inventory: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       fields: {
         min_stok: 'min_stok'
       }
