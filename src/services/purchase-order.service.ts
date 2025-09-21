@@ -672,7 +672,7 @@ export class PurchaseOrderService {
           });
 
           const pendingSuratJalanStatus = await tx.status.findUnique({
-            where: { status_code: 'PENDING SURAT JALAN' },
+            where: { status_code: 'DRAFT SURAT JALAN' },
           });
 
           if (!pendingInvoiceStatus) {
@@ -680,7 +680,7 @@ export class PurchaseOrderService {
           }
 
           if (!pendingSuratJalanStatus) {
-            throw new AppError('PENDING SURAT JALAN status not found', 404);
+            throw new AppError('DRAFT SURAT JALAN status not found', 404);
           }
 
           let createdInvoice = await tx.invoice.findFirst({

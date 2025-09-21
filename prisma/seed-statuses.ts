@@ -129,27 +129,33 @@ const ALL_STATUSES: StatusData[] = [
 
   // Surat Jalan Status
   {
-    status_code: 'PENDING SURAT JALAN',
-    status_name: 'Pending Surat Jalan',
-    status_description: 'Surat jalan is pending processing',
+    status_code: 'DRAFT SURAT JALAN',
+    status_name: 'Draft Surat Jalan',
+    status_description: 'Surat jalan dalam status draft',
     category: 'Surat Jalan'
   },
   {
-    status_code: 'SENT SURAT JALAN',
-    status_name: 'Sent Surat Jalan',
-    status_description: 'Surat jalan has been sent',
+    status_code: 'READY TO SHIP SURAT JALAN',
+    status_name: 'Ready To Ship Surat Jalan',
+    status_description: 'Surat jalan siap untuk dikirim',
+    category: 'Surat Jalan'
+  },
+  {
+    status_code: 'SHIPPED SURAT JALAN',
+    status_name: 'Shipped Surat Jalan',
+    status_description: 'Surat jalan telah dikirim',
     category: 'Surat Jalan'
   },
   {
     status_code: 'DELIVERED SURAT JALAN',
     status_name: 'Delivered Surat Jalan',
-    status_description: 'Surat jalan has been delivered',
+    status_description: 'Surat jalan telah diterima',
     category: 'Surat Jalan'
   },
   {
-    status_code: 'RETURNED SURAT JALAN',
-    status_name: 'Returned Surat Jalan',
-    status_description: 'Surat jalan has been returned',
+    status_code: 'CANCELLED SURAT JALAN',
+    status_name: 'Cancelled Surat Jalan',
+    status_description: 'Surat jalan dibatalkan',
     category: 'Surat Jalan'
   },
   // Packing Detail Item status
