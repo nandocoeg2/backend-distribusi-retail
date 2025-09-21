@@ -1,0 +1,23 @@
+meta {
+  name: Update Laporan Benerimaan Barang
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:5050/api/v1/laporan-benerimaan-barang/{{laporan_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "tanggal_po": "2024-09-25",
+    "alamat_customer": "Jl. Contoh Raya No. 456, Bandung",
+    "file_path": "/uploads/laporan-benerimaan-barang/sample-update.pdf"
+  }
+}
