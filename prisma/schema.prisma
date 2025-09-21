@@ -159,7 +159,8 @@ model FileUploaded {
 
 model Status {
   id                      String              @id @default(cuid())
-  status_code             String              @unique
+  status_code             String
+  category                String
   status_name             String
   status_description      String?
   createdAt               DateTime            @default(now())
@@ -172,6 +173,7 @@ model Status {
   suratJalanStatus        SuratJalan[]        @relation("SuratJalanStatus")
   packingItemStatus       PackingItem[]       @relation("PackingItemStatus")
 
+  @@unique([status_code, category])
   @@map("statuses")
 }
 

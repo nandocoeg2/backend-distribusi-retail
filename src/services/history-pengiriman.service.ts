@@ -31,9 +31,15 @@ export class HistoryPengirimanService {
     });
   }
 
-  static async getByStatusCode(statusCode: string): Promise<HistoryPengiriman[]> {
+  static async getByStatusCode(statusCode: string, category?: string): Promise<HistoryPengiriman[]> {
+    const whereCondition: any = { status: { status_code: statusCode } };
+    
+    if (category) {
+      whereCondition.status.category = category;
+    }
+    
     return prisma.historyPengiriman.findMany({
-      where: { status: { status_code: statusCode } },
+      where: whereCondition,
       include: {
         suratJalan: true,
         status: true,

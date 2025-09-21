@@ -190,13 +190,19 @@ const ALL_STATUSES: StatusData[] = [
  */
 export async function upsertStatus(statusData: StatusData) {
   return await prisma.status.upsert({
-    where: { status_code: statusData.status_code },
+    where: { 
+      status_code_category: {
+        status_code: statusData.status_code,
+        category: statusData.category
+      }
+    },
     update: {
       status_name: statusData.status_name,
       status_description: statusData.status_description,
     },
     create: {
       status_code: statusData.status_code,
+      category: statusData.category,
       status_name: statusData.status_name,
       status_description: statusData.status_description,
     },
@@ -272,7 +278,7 @@ export async function deleteStatusesByCategory(category: string) {
     await prisma.status.delete({
       where: { id: status.id }
     });
-    console.log(`🗑️ Deleted status: ${status.status_code}`);
+    console.log(`🗑️ Deleted status: ${status.status_code} (${status.category})`);
   }
   
   return statuses.length;

@@ -13,6 +13,7 @@ export class BulkPurchaseOrderService {
       where: {
         status: {
           status_code: { in: ['PENDING BULK FILE', 'FAILED BULK FILE'] },
+          category: 'Bulk File Processing'
         },
         purchaseOrderId: null,
       },
@@ -22,10 +23,38 @@ export class BulkPurchaseOrderService {
       return;
     }
 
-    const poPendingStatus = await prisma.status.findUnique({ where: { status_code: 'PENDING PURCHASE ORDER' } });
-    const fileProcessingStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSING BULK FILE' } });
-    const fileProcessedStatus = await prisma.status.findUnique({ where: { status_code: 'PROCESSED BULK FILE' } });
-    const fileFailedStatus = await prisma.status.findUnique({ where: { status_code: 'FAILED BULK FILE' } });
+    const poPendingStatus = await prisma.status.findUnique({ 
+      where: { 
+        status_code_category: {
+          status_code: 'PENDING PURCHASE ORDER',
+          category: 'Purchase Order'
+        }
+      } 
+    });
+    const fileProcessingStatus = await prisma.status.findUnique({ 
+      where: { 
+        status_code_category: {
+          status_code: 'PROCESSING BULK FILE',
+          category: 'Bulk File Processing'
+        }
+      } 
+    });
+    const fileProcessedStatus = await prisma.status.findUnique({ 
+      where: { 
+        status_code_category: {
+          status_code: 'PROCESSED BULK FILE',
+          category: 'Bulk File Processing'
+        }
+      } 
+    });
+    const fileFailedStatus = await prisma.status.findUnique({ 
+      where: { 
+        status_code_category: {
+          status_code: 'FAILED BULK FILE',
+          category: 'Bulk File Processing'
+        }
+      } 
+    });
 
     if (!poPendingStatus || !fileProcessingStatus || !fileProcessedStatus || !fileFailedStatus) {
       logger.error('Core statuses for bulk processing not found. Aborting.');

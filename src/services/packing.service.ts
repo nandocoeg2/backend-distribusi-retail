@@ -413,7 +413,12 @@ export class PackingService {
 
         // Validasi bahwa semua packing memiliki status "PENDING PACKING"
         const pendingPackingStatus = await tx.status.findUnique({
-          where: { status_code: 'PENDING PACKING' }
+          where: { 
+            status_code_category: {
+              status_code: 'PENDING PACKING',
+              category: 'Packing'
+            }
+          }
         });
 
         if (!pendingPackingStatus) {
@@ -428,8 +433,22 @@ export class PackingService {
 
         // Ambil status "PROCESSING PACKING" dan "PROCESSING ITEM"
         const [processingPackingStatus, processingItemStatus] = await Promise.all([
-          tx.status.findUnique({ where: { status_code: 'PROCESSING PACKING' } }),
-          tx.status.findUnique({ where: { status_code: 'PROCESSING ITEM' } })
+          tx.status.findUnique({ 
+            where: { 
+              status_code_category: {
+                status_code: 'PROCESSING PACKING',
+                category: 'Packing'
+              }
+            } 
+          }),
+          tx.status.findUnique({ 
+            where: { 
+              status_code_category: {
+                status_code: 'PROCESSING ITEM',
+                category: 'Packing Detail Item'
+              }
+            } 
+          })
         ]);
 
         if (!processingPackingStatus || !processingItemStatus) {

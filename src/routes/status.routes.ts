@@ -13,6 +13,20 @@ export const statusRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
     StatusController.getStatuses
   );
 
+  // Get all categories
+  fastify.get(
+    '/categories',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getAllCategories
+  );
+
+  // Get statuses by category
+  fastify.get<{ Params: { category: string } }>(
+    '/category/:category',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByCategory
+  );
+
   // Get statuses by Purchase Order
   fastify.get(
     '/purchase_order',

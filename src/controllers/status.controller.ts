@@ -8,6 +8,20 @@ export class StatusController {
     return reply.send(ResponseUtil.success(statuses));
   }
 
+  static async getStatusesByCategory(
+    request: FastifyRequest<{ Params: { category: string } }>, 
+    reply: FastifyReply
+  ) {
+    const { category } = request.params;
+    const statuses = await StatusService.getStatusesByCategory(category);
+    return reply.send(ResponseUtil.success(statuses));
+  }
+
+  static async getAllCategories(request: FastifyRequest, reply: FastifyReply) {
+    const categories = await StatusService.getAllCategories();
+    return reply.send(ResponseUtil.success(categories));
+  }
+
   static async getStatusesByPurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
     const statuses = await StatusService.getStatusesByPurchaseOrder();
     return reply.send(ResponseUtil.success(statuses));

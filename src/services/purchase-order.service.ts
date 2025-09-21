@@ -36,7 +36,12 @@ export class PurchaseOrderService {
       let statusId: string | undefined;
       if (poData.status_code) {
         const status = await prisma.status.findUnique({
-          where: { status_code: poData.status_code },
+          where: { 
+            status_code_category: {
+              status_code: poData.status_code,
+              category: 'Purchase Order'
+            }
+          },
         });
         if (!status) {
           throw new AppError(`Status with code '${poData.status_code}' not found`, 404);
@@ -45,7 +50,12 @@ export class PurchaseOrderService {
       } else {
         // Use default status 'PENDING PURCHASE ORDER'
         const defaultStatus = await prisma.status.findUnique({
-          where: { status_code: 'PENDING PURCHASE ORDER' },
+          where: { 
+            status_code_category: {
+              status_code: 'PENDING PURCHASE ORDER',
+              category: 'Purchase Order'
+            }
+          },
         });
         if (defaultStatus) {
           statusId = defaultStatus.id;
@@ -269,7 +279,12 @@ export class PurchaseOrderService {
         let statusId: string | undefined;
         if (status_code) {
           const status = await tx.status.findUnique({
-            where: { status_code },
+            where: { 
+              status_code_category: {
+                status_code: status_code,
+                category: 'Purchase Order'
+              }
+            },
           });
           if (!status) {
             throw new AppError(`Status with code '${status_code}' not found`, 404);
@@ -414,8 +429,22 @@ export class PurchaseOrderService {
     const skip = (page - 1) * limit;
 
     const [approvedStatus, failedStatus] = await Promise.all([
-      prisma.status.findUnique({ where: { status_code: 'APPROVED PURCHASE ORDER' } }),
-      prisma.status.findUnique({ where: { status_code: 'FAILED PURCHASE ORDER' } }),
+      prisma.status.findUnique({ 
+        where: { 
+          status_code_category: {
+            status_code: 'APPROVED PURCHASE ORDER',
+            category: 'Purchase Order'
+          }
+        } 
+      }),
+      prisma.status.findUnique({ 
+        where: { 
+          status_code_category: {
+            status_code: 'FAILED PURCHASE ORDER',
+            category: 'Purchase Order'
+          }
+        } 
+      }),
     ]);
 
     const statusIds: string[] = [];
@@ -588,7 +617,12 @@ export class PurchaseOrderService {
     }
 
     const status = await prisma.status.findUnique({
-      where: { status_code: status_code },
+      where: { 
+        status_code_category: {
+          status_code: status_code,
+          category: 'Purchase Order'
+        }
+      },
     });
 
     if (!status) {
@@ -596,7 +630,12 @@ export class PurchaseOrderService {
     }
 
     const pendingPackingStatus = await prisma.status.findUnique({
-      where: { status_code: 'PENDING PACKING' },
+      where: { 
+        status_code_category: {
+          status_code: 'PENDING PACKING',
+          category: 'Packing'
+        }
+      },
     });
 
     if (!pendingPackingStatus) {
@@ -604,7 +643,12 @@ export class PurchaseOrderService {
     }
 
     const pendingItemStatus = await prisma.status.findUnique({
-      where: { status_code: 'PENDING ITEM' },
+      where: { 
+        status_code_category: {
+          status_code: 'PENDING ITEM',
+          category: 'Packing Detail Item'
+        }
+      },
     });
 
     if (!pendingItemStatus) {
@@ -668,11 +712,21 @@ export class PurchaseOrderService {
           });
 
           const pendingInvoiceStatus = await tx.status.findUnique({
-            where: { status_code: 'PENDING INVOICE' },
+            where: { 
+              status_code_category: {
+                status_code: 'PENDING INVOICE',
+                category: 'Invoice'
+              }
+            },
           });
 
           const pendingSuratJalanStatus = await tx.status.findUnique({
-            where: { status_code: 'DRAFT SURAT JALAN' },
+            where: { 
+              status_code_category: {
+                status_code: 'DRAFT SURAT JALAN',
+                category: 'Surat Jalan'
+              }
+            },
           });
 
           if (!pendingInvoiceStatus) {
