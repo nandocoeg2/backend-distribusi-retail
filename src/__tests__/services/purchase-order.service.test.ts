@@ -58,6 +58,8 @@ jest.mock('@/utils/random.utils', () => ({
 const { prisma } = require('@/config/database');
 
 describe('PurchaseOrderService', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   const mockPaginatedResult = {
     data: [
       {
@@ -83,6 +85,9 @@ describe('PurchaseOrderService', () => {
   };
 
   beforeEach(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {
+      // Silence expected error logging during failure scenario assertions
+    });
     jest.spyOn(prisma.status, 'findMany').mockResolvedValue([
       { id: 'status1', status_code: 'PENDING PURCHASE ORDER' },
       { id: 'status2', status_code: 'PROCESSED PURCHASE ORDER' },
@@ -93,6 +98,7 @@ describe('PurchaseOrderService', () => {
   });
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore();
     jest.restoreAllMocks();
   });
 
