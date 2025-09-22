@@ -99,6 +99,37 @@ export class BulkPurchaseOrderService {
 
           let customer = await tx.customer.findFirst({ where: { namaCustomer: { contains: customerName, mode: 'insensitive' } } });
           if (!customer) {
+            // Find or create default group customer
+            let defaultGroupCustomer = await tx.groupCustomer.findFirst({
+              where: { kode_group: 'DEFAULT' }
+            });
+            if (!defaultGroupCustomer) {
+              defaultGroupCustomer = await tx.groupCustomer.create({
+                data: {
+                  kode_group: 'DEFAULT',
+                  nama_group: 'Default Group',
+                  alamat: 'Default Address',
+                  createdBy: userId,
+                  updatedBy: userId,
+                },
+              });
+            }
+
+            // Find or create default region
+            let defaultRegion = await tx.region.findFirst({
+              where: { kode_region: 'DEFAULT' }
+            });
+            if (!defaultRegion) {
+              defaultRegion = await tx.region.create({
+                data: {
+                  kode_region: 'DEFAULT',
+                  nama_region: 'Default Region',
+                  createdBy: userId,
+                  updatedBy: userId,
+                },
+              });
+            }
+
             // This is a simplified customer creation. In a real-world scenario, you might need more data.
             customer = await tx.customer.create({
               data: {
@@ -106,8 +137,8 @@ export class BulkPurchaseOrderService {
                 kodeCustomer: `CUST-${customerName.toUpperCase().replace(/\s/g, '-')}`,
                 alamatPengiriman: 'N/A',
                 phoneNumber: 'N/A',
-                groupCustomerId: 'a2cbe890-1c19-4586-9c16-9f15031b2649', // Default Group Customer
-                regionId: 'f7c8b4b0-1c19-4586-9c16-9f15031b2649', // Default Region
+                groupCustomerId: defaultGroupCustomer.id,
+                regionId: defaultRegion.id,
                 createdBy: userId,
                 updatedBy: userId,
               },
@@ -149,14 +180,21 @@ export class BulkPurchaseOrderService {
           }
 
           for (const item of jsonResult.items) {
+            // Generate PLU from product name if not provided
+            const plu = item.plu || `PLU-${item.productName.toUpperCase().replace(/\s+/g, '-').substring(0, 10)}`;
+            
+            // Calculate price from totalLine_net and qtyOrdered_carton if available
+            const harga_barang = item.price_perCarton || item.netPrice_perPcs || 
+              (item.totalLine_net && item.qtyOrdered_carton ? item.totalLine_net / item.qtyOrdered_carton : 0);
+
             const inventoryItem = await tx.inventory.upsert({
-              where: { plu: item.plu },
+              where: { plu: plu },
               create: {
-                plu: item.plu,
+                plu: plu,
                 nama_barang: item.productName,
                 stok_c: item.qtyOrdered_carton || 0,
                 stok_q: 0, // NOTE: stok_q (pcs) is not available in bulk upload, so default to 0
-                harga_barang: item.price_perCarton || item.netPrice_perPcs || 0,
+                harga_barang: harga_barang,
                 createdBy: userId,
                 updatedBy: userId,
               },
@@ -170,13 +208,13 @@ export class BulkPurchaseOrderService {
               data: {
                 purchaseOrderId: newPurchaseOrder.id,
                 inventoryId: inventoryItem.id,
-                plu: item.plu,
+                plu: plu,
                 nama_barang: item.productName,
                 quantity: item.qtyOrdered_carton || 0,
                 isi: 1,
-                harga: item.price_perCarton || 0,
-                harga_netto: item.netPrice_perPcs || 0,
-                total_pembelian: item.totalLine_net || 0,
+                harga: harga_barang,
+                harga_netto: harga_barang,
+                total_pembelian: item.totalLine_net || (item.qtyOrdered_carton * harga_barang),
                 createdBy: userId,
                 updatedBy: userId,
               },
