@@ -1,0 +1,14 @@
+meta {
+  name: Get Laporan Penerimaan Barang By ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/{{laporan_id}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
