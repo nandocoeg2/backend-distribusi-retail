@@ -182,6 +182,32 @@ const ALL_STATUSES: StatusData[] = [
     status_name: 'Failed Item',
     status_description: 'Packing detail item has been failed.',
     category: 'Packing Detail Item'
+  },
+
+  // Laporan Penerimaan Barang Status
+  {
+    status_code: 'PENDING LAPORAN PENERIMAAN BARANG',
+    status_name: 'Pending Laporan Penerimaan Barang',
+    status_description: 'Laporan penerimaan barang menunggu diproses',
+    category: 'Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'PROCESSING LAPORAN PENERIMAAN BARANG',
+    status_name: 'Processing Laporan Penerimaan Barang',
+    status_description: 'Laporan penerimaan barang sedang diproses',
+    category: 'Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'COMPLETED LAPORAN PENERIMAAN BARANG',
+    status_name: 'Completed Laporan Penerimaan Barang',
+    status_description: 'Laporan penerimaan barang telah selesai diproses',
+    category: 'Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'FAILED LAPORAN PENERIMAAN BARANG',
+    status_name: 'Failed Laporan Penerimaan Barang',
+    status_description: 'Laporan penerimaan barang gagal diproses',
+    category: 'Laporan Penerimaan Barang'
   }
 ];
 

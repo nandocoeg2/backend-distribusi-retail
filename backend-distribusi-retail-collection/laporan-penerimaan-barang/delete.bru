@@ -1,0 +1,14 @@
+meta {
+  name: Delete Laporan Penerimaan Barang
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/{{laporan_id}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

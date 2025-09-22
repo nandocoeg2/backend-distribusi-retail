@@ -19,6 +19,17 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   profile       Profile?
+  id            String         @id @default(cuid())
+  email         String         @unique
+  username      String         @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  roleId        String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  profile       Profile?
   role          Role           @relation(fields: [roleId], references: [id])
   auditTrails   AuditTrail[]
   uploadedFiles FileUploaded[]
@@ -92,6 +103,26 @@ model Customer {
   region                  Region                    @relation(fields: [regionId], references: [id])
   itemPrices              ItemPrice[]
   laporanBenerimaanBarang LaporanBenerimaanBarang[]
+  id                      String                    @id @default(cuid())
+  namaCustomer            String
+  kodeCustomer            String                    @unique
+  groupCustomerId         String
+  NPWP                    String?
+  alamatNPWP              String?
+  regionId                String
+  alamatPengiriman        String
+  description             String?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  createdBy               String
+  updatedBy               String
+  email                   String?                   @unique
+  phoneNumber             String
+  purchaseOrders          PurchaseOrder[]
+  groupCustomer           GroupCustomer             @relation(fields: [groupCustomerId], references: [id])
+  region                  Region                    @relation(fields: [regionId], references: [id])
+  itemPrices              ItemPrice[]
+  laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("customers")
 }
@@ -137,6 +168,28 @@ model PurchaseOrder {
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
   laporanBenerimaanBarang LaporanBenerimaanBarang[]
+  id                      String                    @id @default(cuid())
+  customerId              String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  createdBy               String
+  updatedBy               String
+  po_number               String
+  statusId                String?
+  tanggal_masuk_po        DateTime?
+  tanggal_batas_kirim     DateTime?
+  termin_bayar            String?
+  total_items             Int?
+  supplierId              String?
+  po_type                 POType                    @default(SINGLE)
+  files                   FileUploaded[]
+  purchaseOrderDetails    PurchaseOrderDetail[]
+  packings                Packing[]
+  invoices                Invoice[]
+  customer                Customer                  @relation(fields: [customerId], references: [id])
+  status                  Status?                   @relation(fields: [statusId], references: [id])
+  supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
+  laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("purchase_orders")
 }
@@ -147,14 +200,16 @@ model FileUploaded {
   path            String
   mimetype        String
   size            Int
-  purchaseOrderId String?
+  purchaseOrderId           String?
+  laporanPenerimaanBarangId String? @map("laporan_penerimaan_barang_id")
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   createdBy       String?
   statusId        String?
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  status          Status?        @relation(fields: [statusId], references: [id])
-  user            User?          @relation(fields: [createdBy], references: [id])
+  purchaseOrder           PurchaseOrder?           @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  status                  Status?                  @relation(fields: [statusId], references: [id])
+  user                    User?                    @relation(fields: [createdBy], references: [id])
+  laporanPenerimaanBarang LaporanPenerimaanBarang? @relation(fields: [laporanPenerimaanBarangId], references: [id], onDelete: SetNull)
 
   @@map("file_uploaded")
 }
@@ -174,6 +229,7 @@ model Status {
   invoiceStatusPembayaran Invoice[]           @relation("InvoiceStatusPembayaran")
   suratJalanStatus        SuratJalan[]        @relation("SuratJalanStatus")
   packingItemStatus       PackingItem[]       @relation("PackingItemStatus")
+  laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@unique([status_code, category])
   @@map("statuses")
@@ -443,6 +499,14 @@ model Region {
   createdBy   String
   updatedBy   String
   customers   Customer[]
+  id          String     @id @default(cuid())
+  kode_region String     @unique
+  nama_region String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  createdBy   String
+  updatedBy   String
+  customers   Customer[]
 
   @@map("regions")
 }
@@ -456,6 +520,14 @@ model TermOfPayment {
   createdBy               String
   updatedBy               String
   laporanBenerimaanBarang LaporanBenerimaanBarang[]
+  id                      String                    @id @default(cuid())
+  kode_top                String                    @unique
+  batas_hari              Int
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  createdBy               String
+  updatedBy               String
+  laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("term_of_payment")
 }
@@ -477,6 +549,27 @@ model LaporanBenerimaanBarang {
   termOfPayment   TermOfPayment? @relation(fields: [termin_bayar], references: [id])
 
   @@map("laporan_benerimaan_barang")
+}
+
+model LaporanPenerimaanBarang {
+  id              String         @id @default(cuid())
+  purchaseOrderId String?        @map("purchase_order_id")
+  tanggal_po      DateTime?
+  customerId      String?        @map("customer_id")
+  alamat_customer String?
+  termin_bayar    String?        @map("termin_bayar")
+  statusId        String?        @map("status_id")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       String
+  updatedBy       String
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  termOfPayment   TermOfPayment? @relation(fields: [termin_bayar], references: [id])
+  status          Status?        @relation(fields: [statusId], references: [id])
+  files           FileUploaded[]
+
+  @@map("laporan_penerimaan_barang")
 }
 
 model Company {
@@ -512,11 +605,22 @@ model GroupCustomer {
   createdBy  String
   updatedBy  String
   customers  Customer[]
+  id         String     @id @default(cuid())
+  kode_group String     @unique
+  nama_group String
+  alamat     String?
+  npwp       String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  createdBy  String
+  updatedBy  String
+  customers  Customer[]
 
   @@map("group_customer")
 }
 
 model ItemPrice {
+  id          String    @id @default(cuid())
   id          String    @id @default(cuid())
   inventoryId String
   customerId  String
@@ -526,6 +630,8 @@ model ItemPrice {
   pot2        Float?
   harga2      Float?
   ppn         Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   createdBy   String
