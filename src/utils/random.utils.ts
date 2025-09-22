@@ -233,10 +233,10 @@ export function generateFilenameWithPrefix(
 ): string {
   const randomString = generateRandomString(randomBytesLength);
   const filenameParts = originalFilename.split('.');
-  
+
   if (filenameParts.length === 1) {
     // File without extension
-    return `${prefix}_${originalFilename}_${randomString}.${originalFilename}`;
+    return `${prefix}_${originalFilename}_${randomString}`;
   }
   
   const extension = filenameParts.pop();
