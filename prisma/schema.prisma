@@ -102,7 +102,6 @@ model Customer {
   groupCustomer           GroupCustomer             @relation(fields: [groupCustomerId], references: [id])
   region                  Region                    @relation(fields: [regionId], references: [id])
   itemPrices              ItemPrice[]
-  laporanBenerimaanBarang LaporanBenerimaanBarang[]
   id                      String                    @id @default(cuid())
   namaCustomer            String
   kodeCustomer            String                    @unique
@@ -167,7 +166,6 @@ model PurchaseOrder {
   customer                Customer                  @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
-  laporanBenerimaanBarang LaporanBenerimaanBarang[]
   id                      String                    @id @default(cuid())
   customerId              String
   createdAt               DateTime                  @default(now())
@@ -519,7 +517,6 @@ model TermOfPayment {
   updatedAt               DateTime                  @updatedAt
   createdBy               String
   updatedBy               String
-  laporanBenerimaanBarang LaporanBenerimaanBarang[]
   id                      String                    @id @default(cuid())
   kode_top                String                    @unique
   batas_hari              Int
@@ -530,25 +527,6 @@ model TermOfPayment {
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("term_of_payment")
-}
-
-model LaporanBenerimaanBarang {
-  id              String         @id @default(cuid())
-  purchaseOrderId String?        @map("purchase_order_id")
-  tanggal_po      DateTime?
-  customerId      String?        @map("customer_id")
-  alamat_customer String?
-  termin_bayar    String?        @map("termin_bayar")
-  file_path       String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  createdBy       String
-  updatedBy       String
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
-  customer        Customer?      @relation(fields: [customerId], references: [id])
-  termOfPayment   TermOfPayment? @relation(fields: [termin_bayar], references: [id])
-
-  @@map("laporan_benerimaan_barang")
 }
 
 model LaporanPenerimaanBarang {
