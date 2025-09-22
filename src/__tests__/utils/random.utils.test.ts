@@ -80,7 +80,7 @@ describe('random.utils', () => {
 
     it('should handle filename without extension', () => {
       const filename = generateFilenameWithPrefix('BULK', 'document');
-      expect(filename).toMatch(/^BULK_document_[0-9a-f]{4}\.document$/);
+      expect(filename).toMatch(/^BULK_document_[0-9a-f]{4}$/);
     });
 
     it('should handle filename with multiple dots', () => {
