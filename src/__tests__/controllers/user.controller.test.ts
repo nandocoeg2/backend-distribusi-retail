@@ -12,6 +12,7 @@ describe('UserController', () => {
   beforeEach(() => {
     request = {
       params: {},
+      query: {},
     };
     reply = {
       code: jest.fn().mockReturnThis(),
@@ -28,7 +29,10 @@ describe('UserController', () => {
       const users = [{ id: '1', email: 'test@example.com' }];
       (UserService.getAllUsers as jest.Mock).mockResolvedValue(users);
 
-      await UserController.getUsers(request as FastifyRequest, reply as FastifyReply);
+      await UserController.getUsers(
+        request as FastifyRequest<{ Querystring: { page?: string; limit?: string } }>,
+        reply as FastifyReply
+      );
 
       expect(UserService.getAllUsers).toHaveBeenCalled();
       expect(reply.send).toHaveBeenCalledWith(ResponseUtil.success(users));

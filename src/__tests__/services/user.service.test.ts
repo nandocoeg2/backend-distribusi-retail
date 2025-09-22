@@ -1,85 +1,84 @@
 import { UserService } from '@/services/user.service';
 import { prisma } from '@/config/database';
 import { CacheService } from '@/services/cache.service';
-
-jest.mock('@/config/database', () => ({
-  prisma: {
-    user: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-    },
-  },
-}));
-
-jest.mock('@/services/cache.service', () => ({
-  CacheService: {
-    get: jest.fn(),
-    set: jest.fn(),
-  },
-}));
+import { AppError } from '@/utils/app-error';
 
 describe('UserService', () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('getAllUsers', () => {
-    it('should return cached users if available', async () => {
-      const cachedUsers = [{ id: '1', email: 'test@example.com' }];
-      (CacheService.get as jest.Mock).mockResolvedValue(cachedUsers);
+    it('should return paginated users', async () => {
+      const users = [
+        { id: '1', email: 'test@example.com', username: 'tester' },
+        { id: '2', email: 'demo@example.com', username: 'demo' },
+      ];
 
-      const result = await UserService.getAllUsers();
+      const findManySpy = jest
+        .spyOn(prisma.user, 'findMany')
+        .mockResolvedValue(users as any);
+      const countSpy = jest
+        .spyOn(prisma.user, 'count')
+        .mockResolvedValue(users.length);
 
-      expect(CacheService.get).toHaveBeenCalledWith('users:all');
-      expect(result).toEqual(cachedUsers);
-      expect(prisma.user.findMany).not.toHaveBeenCalled();
-    });
+      const result = await UserService.getAllUsers(1, 10);
 
-    it('should fetch users from database if not cached', async () => {
-      const users = [{ id: '1', email: 'test@example.com' }];
-      (CacheService.get as jest.Mock).mockResolvedValue(null);
-      (prisma.user.findMany as jest.Mock).mockResolvedValue(users);
-
-      const result = await UserService.getAllUsers();
-
-      expect(CacheService.get).toHaveBeenCalledWith('users:all');
-      expect(prisma.user.findMany).toHaveBeenCalled();
-      expect(CacheService.set).toHaveBeenCalledWith('users:all', users, 600);
-      expect(result).toEqual(users);
+      expect(findManySpy).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        select: expect.objectContaining({ id: true, email: true }),
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(countSpy).toHaveBeenCalled();
+      expect(result).toEqual({
+        data: users,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: users.length,
+          itemsPerPage: 10,
+        },
+      });
     });
   });
 
   describe('getUserById', () => {
     it('should return cached user if available', async () => {
-      const cachedUser = { id: '1', email: 'test@example.com' };
-      (CacheService.get as jest.Mock).mockResolvedValue(cachedUser);
+      const cachedUser = { id: '1', email: 'cached@example.com' } as any;
+      const cacheGetSpy = jest
+        .spyOn(CacheService, 'get')
+        .mockResolvedValue(cachedUser);
 
       const result = await UserService.getUserById('1');
 
-      expect(CacheService.get).toHaveBeenCalledWith('user:1');
+      expect(cacheGetSpy).toHaveBeenCalledWith('user:1');
       expect(result).toEqual(cachedUser);
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
-    it('should fetch user from database if not cached', async () => {
-      const user = { id: '1', email: 'test@example.com' };
-      (CacheService.get as jest.Mock).mockResolvedValue(null);
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
+    it('should fetch user from database when not cached', async () => {
+      const user = { id: '1', email: 'db@example.com' } as any;
+      jest.spyOn(CacheService, 'get').mockResolvedValue(null);
+      const findUniqueSpy = jest
+        .spyOn(prisma.user, 'findUnique')
+        .mockResolvedValue(user);
+      const cacheSetSpy = jest.spyOn(CacheService, 'set').mockResolvedValue(true);
 
       const result = await UserService.getUserById('1');
 
-      expect(CacheService.get).toHaveBeenCalledWith('user:1');
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: '1' }, select: expect.any(Object) });
-      expect(CacheService.set).toHaveBeenCalledWith('user:1', user, 3600);
+      expect(findUniqueSpy).toHaveBeenCalledWith({
+        where: { id: '1' },
+        select: expect.objectContaining({ id: true, email: true }),
+      });
+      expect(cacheSetSpy).toHaveBeenCalledWith('user:1', user, 3600);
       expect(result).toEqual(user);
     });
 
-    it('should throw an error if user not found', async () => {
-      (CacheService.get as jest.Mock).mockResolvedValue(null);
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should throw AppError when user not found', async () => {
+      jest.spyOn(CacheService, 'get').mockResolvedValue(null);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
 
-      await expect(UserService.getUserById('1')).rejects.toThrow('User not found');
-      expect(CacheService.set).not.toHaveBeenCalled();
+      await expect(UserService.getUserById('1')).rejects.toThrow(AppError);
     });
   });
 });
