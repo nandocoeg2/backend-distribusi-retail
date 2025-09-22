@@ -1,0 +1,26 @@
+meta {
+  name: Create Laporan Benerimaan Barang
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5050/api/v1/laporan-benerimaan-barang
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "purchaseOrderId": "{{purchase_order_id}}",
+    "customerId": "{{customer_id}}",
+    "tanggal_po": "2024-09-24",
+    "alamat_customer": "Jl. Contoh No. 123, Jakarta",
+    "termin_bayar": "{{term_of_payment_id}}",
+    "file_path": "/uploads/laporan-benerimaan-barang/sample.pdf"
+  }
+}
