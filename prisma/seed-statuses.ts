@@ -101,30 +101,30 @@ const ALL_STATUSES: StatusData[] = [
     category: 'Packing'
   },
 
-  // Invoice Status
+  // Invoice Pengiriman Status
   {
     status_code: 'PENDING INVOICE',
     status_name: 'Pending Invoice',
     status_description: 'Invoice is pending processing',
-    category: 'Invoice'
+    category: 'Invoice Pengiriman'
   },
   {
     status_code: 'PAID INVOICE',
     status_name: 'Paid Invoice',
     status_description: 'Invoice has been paid',
-    category: 'Invoice'
+    category: 'Invoice Pengiriman'
   },
   {
     status_code: 'OVERDUE INVOICE',
     status_name: 'Overdue Invoice',
     status_description: 'Invoice payment is overdue',
-    category: 'Invoice'
+    category: 'Invoice Pengiriman'
   },
   {
     status_code: 'CANCELLED INVOICE',
     status_name: 'Cancelled Invoice',
     status_description: 'Invoice has been cancelled',
-    category: 'Invoice'
+    category: 'Invoice Pengiriman'
   },
 
   // Surat Jalan Status

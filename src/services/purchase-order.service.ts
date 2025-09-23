@@ -715,7 +715,7 @@ export class PurchaseOrderService {
             where: { 
               status_code_category: {
                 status_code: 'PENDING INVOICE',
-                category: 'Invoice'
+                category: 'Invoice Pengiriman'
               }
             },
           });
@@ -737,7 +737,7 @@ export class PurchaseOrderService {
             throw new AppError('DRAFT SURAT JALAN status not found', 404);
           }
 
-          let createdInvoice = await tx.invoice.findFirst({
+          let createdInvoice = await tx.invoicePengiriman.findFirst({
             where: { purchaseOrderId: id },
           });
 
@@ -769,14 +769,14 @@ export class PurchaseOrderService {
             const invoiceNumber = await generateUniqueInvoiceNumber(
               purchaseOrder.po_number,
               async (number: string) => {
-                const existingInvoice = await tx.invoice.findUnique({
+                const existingInvoice = await tx.invoicePengiriman.findUnique({
                   where: { no_invoice: number },
                 });
                 return !existingInvoice;
               }
             );
 
-            createdInvoice = await tx.invoice.create({
+            createdInvoice = await tx.invoicePengiriman.create({
               data: {
                 no_invoice: invoiceNumber,
                 tanggal: new Date(),
@@ -803,7 +803,7 @@ export class PurchaseOrderService {
             createdInvoiceId = createdInvoice.id;
 
             // Create audit log for invoice
-            await createAuditLog('Invoice', createdInvoice.id, 'CREATE', userId, {
+            await createAuditLog('InvoicePengiriman', createdInvoice.id, 'CREATE', userId, {
               action: 'AutoCreatedFromProcessPO',
               purchaseOrderId: id,
               poNumber: purchaseOrder.po_number,

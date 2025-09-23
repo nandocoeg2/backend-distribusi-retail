@@ -69,7 +69,7 @@ export class StatusService {
   static async getStatusesByInvoice(): Promise<Status[]> {
     return prisma.status.findMany({
       where: {
-        category: 'Invoice'
+        category: 'Invoice Pengiriman'
       },
       orderBy: {
         status_name: 'asc'

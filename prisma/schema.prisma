@@ -132,7 +132,7 @@ model PurchaseOrder {
   files                   FileUploaded[]
   purchaseOrderDetails    PurchaseOrderDetail[]
   packings                Packing[]
-  invoices                Invoice[]
+  invoices                InvoicePengiriman[]
   customer                Customer                  @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
@@ -173,7 +173,7 @@ model Status {
   purchaseOrders          PurchaseOrder[]
   packings                Packing[]
   historyPengiriman       HistoryPengiriman[]
-  invoiceStatusPembayaran Invoice[]           @relation("InvoiceStatusPembayaran")
+  invoiceStatusPembayaran InvoicePengiriman[]           @relation("InvoiceStatusPembayaran")
   suratJalanStatus        SuratJalan[]        @relation("SuratJalanStatus")
   packingItemStatus       PackingItem[]       @relation("PackingItemStatus")
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
@@ -298,7 +298,7 @@ model PackingItem {
   @@map("packing_items")
 }
 
-model Invoice {
+model InvoicePengiriman {
   id                 String          @id @default(cuid())
   no_invoice         String          @unique
   tanggal            DateTime        @default(now())
@@ -320,13 +320,13 @@ model Invoice {
   updatedBy          String
   purchaseOrderId    String?
   purchaseOrder      PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
-  invoiceDetails     InvoiceDetail[]
+  invoiceDetails     InvoicePengirimanDetail[]
   suratJalan         SuratJalan[]
 
   @@map("invoice")
 }
 
-model InvoiceDetail {
+model InvoicePengirimanDetail {
   id                  String   @id @default(cuid())
   invoiceId           String
   nama_barang         String
@@ -343,7 +343,7 @@ model InvoiceDetail {
   updatedAt           DateTime @updatedAt
   createdBy           String
   updatedBy           String
-  invoice             Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice             InvoicePengiriman  @relation(fields: [invoiceId], references: [id])
 
   @@map("invoice_detail")
 }
@@ -362,7 +362,7 @@ model SuratJalan {
   updatedAt         DateTime            @updatedAt
   createdBy         String
   updatedBy         String
-  invoice           Invoice?            @relation(fields: [invoiceId], references: [id])
+  invoice           InvoicePengiriman?            @relation(fields: [invoiceId], references: [id])
   status            Status?             @relation("SuratJalanStatus", fields: [statusId], references: [id])
   suratJalanDetails SuratJalanDetail[]
   historyPengiriman HistoryPengiriman[]

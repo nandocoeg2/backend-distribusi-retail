@@ -1,0 +1,17 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:5050/api/v1/invoice-pengiriman/search?no_invoice=INV&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+

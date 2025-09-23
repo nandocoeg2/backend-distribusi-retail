@@ -274,16 +274,16 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | `/api/surat-jalan/:id` | `DELETE` | Menghapus surat jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Surat Jalan deleted" } }` |
 | `/api/surat-jalan/search` | `GET` | Pencarian surat jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "suratJalanNumber": "SJ-001", ... }] }` |
 
-### 🧾 Manajemen Invoice
+### 🧾 Manajemen Invoice Pengiriman
 
 | Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
 | --- | --- | --- | --- | --- | --- |
-| `/api/invoices` | `GET` | Mendapatkan semua invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "invoiceNumber": "INV-001", ... }] }` |
-| `/api/invoices/:id` | `GET` | Mendapatkan invoice berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": 1, "invoiceNumber": "INV-001", ... } }` |
-| `/api/invoices` | `POST` | Membuat invoice baru | `Authorization: Bearer <token>` | `{ "suratJalanId": 1, ... }` | `{ "success": true, "data": { "id": 2, "invoiceNumber": "INV-002", ... } }` |
-| `/api/invoices/:id` | `PUT` | Update data invoice | `Authorization: Bearer <token>` | `{ "dueDate": "..." }` | `{ "success": true, "data": { "id": 1, "dueDate": "...", ... } }` |
-| `/api/invoices/:id` | `DELETE` | Menghapus invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Invoice deleted" } }` |
-| `/api/invoices/search` | `GET` | Pencarian invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "invoiceNumber": "INV-001", ... }] }` |
+| `/api/invoice-pengiriman` | `GET` | Mendapatkan semua invoice pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "no_invoice": "INV-001", ... }], "pagination": {...} } }` |
+| `/api/invoice-pengiriman/:id` | `GET` | Mendapatkan invoice pengiriman berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": "uuid", "no_invoice": "INV-001", ... } }` |
+| `/api/invoice-pengiriman` | `POST` | Membuat invoice pengiriman baru | `Authorization: Bearer <token>` | `{ "no_invoice": "INV-001", ... }` | `{ "success": true, "data": { "id": "uuid", "no_invoice": "INV-001", ... } }` |
+| `/api/invoice-pengiriman/:id` | `PUT` | Update data invoice pengiriman | `Authorization: Bearer <token>` | `{ "deliver_to": "..." }` | `{ "success": true, "data": { "id": "uuid", "deliver_to": "...", ... } }` |
+| `/api/invoice-pengiriman/:id` | `DELETE` | Menghapus invoice pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Deleted" } }` |
+| `/api/invoice-pengiriman/search` | `GET` | Pencarian invoice pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "no_invoice": "INV-001", ... }], "pagination": {...} } }` |
 
 ### 📊 History Pengiriman
 
@@ -328,7 +328,7 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | `/api/statuses/bulk_file` | `GET` | Mendapatkan status untuk Bulk File | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
 | `/api/statuses/packing` | `GET` | Mendapatkan status untuk Packing | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
 | `/api/statuses/packing_item`| `GET` | Mendapatkan status untuk Packing Item | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
-| `/api/statuses/invoice` | `GET` | Mendapatkan status untuk Invoice | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
+| `/api/statuses/invoice_pengiriman` | `GET` | Mendapatkan status untuk Invoice Pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
 | `/api/statuses/surat_jalan`| `GET` | Mendapatkan status untuk Surat Jalan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "PENDING", ... }] }` |
 
 ### 🏢 Manajemen Perusahaan

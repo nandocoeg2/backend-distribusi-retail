@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/invoices/:id
+  url: http://localhost:5050/api/v1/invoice-pengiriman/:id
   body: none
   auth: bearer
 }
@@ -13,3 +13,5 @@ get {
 auth:bearer {
   token: {{access_token}}
 }
+
+

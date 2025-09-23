@@ -32,7 +32,8 @@
       "@/services/*": ["services/*"],
       "@/middleware/*": ["middleware/*"],
       "@/types/*": ["types/*"],
-      "@/utils/*": ["utils/*"]
+      "@/utils/*": ["utils/*"],
+      "@/schemas/*": ["schemas/*"]
     }
   },
   "include": ["src/**/*"],

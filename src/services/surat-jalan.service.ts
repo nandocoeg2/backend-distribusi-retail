@@ -17,12 +17,12 @@ export class SuratJalanService {
       const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } = suratJalanData;
 
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
-        const invoice = await prisma.invoice.findUnique({
+        const invoice = await prisma.invoicePengiriman.findUnique({
           where: { id: suratJalanInfo.invoiceId },
         });
 
         if (!invoice) {
-          throw new AppError('Invoice not found', 404);
+          throw new AppError('InvoicePengiriman not found', 404);
         }
       }
 
@@ -84,7 +84,7 @@ export class SuratJalanService {
         throw new AppError('Surat jalan with this number already exists', 409);
       }
       if (error.code === 'P2003') {
-        throw new AppError('Foreign key constraint violation. Please check if the referenced invoice or status exists.', 400);
+        throw new AppError('Foreign key constraint violation. Please check if the referenced invoice pengiriman or status exists.', 400);
       }
       
       throw new AppError('Failed to create surat jalan', 500);

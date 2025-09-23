@@ -1,10 +1,10 @@
-# Invoice API Documentation
+# Invoice Pengiriman API Documentation
 
-Dokumentasi lengkap untuk endpoint Invoice API pada sistem Backend Distribusi Retail.
+Dokumentasi lengkap untuk endpoint Invoice Pengiriman pada sistem Backend Distribusi Retail.
 
 ## Base URL
 ```
-http://localhost:5050/api/v1/invoices
+http://localhost:5050/api/v1/invoice-pengiriman
 ```
 
 ## Authentication
@@ -12,8 +12,8 @@ Semua endpoint memerlukan Bearer Token yang valid di header Authorization.
 
 ## Endpoints
 
-### 1. Create Invoice
-Membuat data invoice baru.
+### 1. Create Invoice Pengiriman
+Membuat data invoice pengiriman baru.
 
 **Endpoint:** `POST /`
 
@@ -148,8 +148,8 @@ Membuat data invoice baru.
 
 ---
 
-### 2. Get All Invoices
-Mengambil daftar semua invoice dengan pagination.
+### 2. Get All Invoice Pengiriman
+Mengambil daftar semua invoice pengiriman dengan pagination.
 
 **Endpoint:** `GET /`
 
@@ -167,7 +167,7 @@ Mengambil daftar semua invoice dengan pagination.
 
 **Example Request:**
 ```
-GET /api/v1/invoices?page=1&limit=10
+GET /api/v1/invoice-pengiriman?page=1&limit=10
 ```
 
 **Response Success (200 OK):**
@@ -213,8 +213,8 @@ GET /api/v1/invoices?page=1&limit=10
 
 ---
 
-### 3. Get Invoice By ID
-Mengambil data invoice berdasarkan ID.
+### 3. Get Invoice Pengiriman By ID
+Mengambil data invoice pengiriman berdasarkan ID.
 
 **Endpoint:** `GET /:id`
 
@@ -227,11 +227,11 @@ Mengambil data invoice berdasarkan ID.
 ```
 
 **Path Parameters:**
-- `id` (required): ID invoice
+- `id` (required): ID invoice pengiriman
 
 **Example Request:**
 ```
-GET /api/v1/invoices/invoice-uuid
+GET /api/v1/invoice-pengiriman/invoice-uuid
 ```
 
 **Response Success (200 OK):**
@@ -270,15 +270,15 @@ GET /api/v1/invoices/invoice-uuid
 {
   "success": false,
   "error": {
-    "message": "Invoice not found"
+    "message": "InvoicePengiriman not found"
   }
 }
 ```
 
 ---
 
-### 4. Update Invoice
-Memperbarui data invoice berdasarkan ID.
+### 4. Update Invoice Pengiriman
+Memperbarui data invoice pengiriman berdasarkan ID.
 
 **Endpoint:** `PUT /:id`
 
@@ -292,7 +292,7 @@ Memperbarui data invoice berdasarkan ID.
 ```
 
 **Path Parameters:**
-- `id` (required): ID invoice
+- `id` (required): ID invoice pengiriman
 
 **Request Body:**
 ```json
@@ -361,15 +361,15 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
 {
   "success": false,
   "error": {
-    "message": "Invoice not found"
+    "message": "InvoicePengiriman not found"
   }
 }
 ```
 
 ---
 
-### 5. Delete Invoice
-Menghapus data invoice berdasarkan ID.
+### 5. Delete Invoice Pengiriman
+Menghapus data invoice pengiriman berdasarkan ID.
 
 **Endpoint:** `DELETE /:id`
 
@@ -382,10 +382,7 @@ Menghapus data invoice berdasarkan ID.
 ```
 
 **Path Parameters:**
-- `id` (required): ID invoice
-
-**Request Body:**
-Tidak ada body yang diperlukan.
+- `id` (required): ID invoice pengiriman
 
 **Response Success (204 No Content):**
 ```
@@ -398,15 +395,15 @@ Body: (empty)
 {
   "success": false,
   "error": {
-    "message": "Invoice not found"
+    "message": "InvoicePengiriman not found"
   }
 }
 ```
 
 ---
 
-### 6. Search Invoices
-Mencari invoice berdasarkan berbagai filter dengan pagination.
+### 6. Search Invoice Pengiriman
+Mencari invoice pengiriman berdasarkan berbagai filter dengan pagination.
 
 **Endpoint:** `GET /search`
 
@@ -431,7 +428,7 @@ Mencari invoice berdasarkan berbagai filter dengan pagination.
 
 **Example Request:**
 ```
-GET /api/v1/invoices/search?no_invoice=INV-2024&type=PEMBAYARAN&tanggal_start=2024-01-01&tanggal_end=2024-12-31&page=1&limit=10
+GET /api/v1/invoice-pengiriman/search?no_invoice=INV-2024&type=PEMBAYARAN&tanggal_start=2024-01-01&tanggal_end=2024-12-31&page=1&limit=10
 ```
 
 **Response Success (200 OK):**
@@ -534,7 +531,7 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 
 ## Data Structure
 
-### Invoice Object
+### Invoice Pengiriman Object
 ```json
 {
   "id": "string (UUID)",
@@ -556,13 +553,13 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "updatedAt": "DateTime (ISO 8601)",
   "createdBy": "string (UUID)",
   "updatedBy": "string (UUID)",
-  "invoiceDetails": "InvoiceDetail[]",
+  "invoiceDetails": "InvoicePengirimanDetail[]",
   "statusPembayaran": "Status Object (optional)",
   "purchaseOrder": "PurchaseOrder Object (optional)"
 }
 ```
 
-### Invoice Detail Object
+### Invoice Pengiriman Detail Object
 ```json
 {
   "id": "string (UUID)",
@@ -591,7 +588,7 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 - Timestamp `createdAt` dan `updatedAt` akan otomatis diatur oleh sistem
 - Untuk update, hanya field yang ingin diubah yang perlu dikirim dalam request body
 - Nomor invoice harus unik dalam sistem
-- Invoice details akan otomatis dibuat saat membuat invoice baru
+- Invoice details akan otomatis dibuat saat membuat invoice pengiriman baru
 - Sistem memiliki audit log untuk semua operasi CRUD
 - Pencarian mendukung multiple filter yang dapat dikombinasikan
 - Date format untuk search menggunakan YYYY-MM-DD

@@ -139,11 +139,11 @@ async function main() {
   });
 
   await prisma.menu.upsert({
-    where: { name: 'Invoices' },
+    where: { name: 'Invoice Pengiriman' },
     update: {},
     create: {
-      name: 'Invoices',
-      url: '/po/invoices',
+      name: 'Invoice Pengiriman',
+      url: '/po/invoice-pengiriman',
       parentId: purchaseOrderMenu.id,
     },
   });

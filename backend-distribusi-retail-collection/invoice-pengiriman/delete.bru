@@ -5,7 +5,7 @@ meta {
 }
 
 delete {
-  url: http://localhost:5050/api/v1/invoices/cmfi2c45z0000g5djxuvvu1fm
+  url: http://localhost:5050/api/v1/invoice-pengiriman/:id
   body: none
   auth: bearer
 }
@@ -13,3 +13,5 @@ delete {
 auth:bearer {
   token: {{access_token}}
 }
+
+

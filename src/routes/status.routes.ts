@@ -55,9 +55,9 @@ export const statusRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
     StatusController.getStatusesByPackingItem
   );
 
-  // Get statuses by Invoice
+  // Get statuses by Invoice Pengiriman
   fastify.get(
-    '/invoice',
+    '/invoice_pengiriman',
     { preHandler: [fastify.authenticate] },
     StatusController.getStatusesByInvoice
   );

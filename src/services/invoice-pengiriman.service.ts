@@ -1,33 +1,38 @@
-import { Invoice, Prisma } from '@prisma/client';
+import { InvoicePengiriman, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import {
-  CreateInvoiceInput,
-  UpdateInvoiceInput,
-  SearchInvoiceInput,
-} from '@/schemas/invoice.schema';
+  CreateInvoicePengirimanInput,
+  UpdateInvoicePengirimanInput,
+  SearchInvoicePengirimanInput,
+} from '@/schemas/invoice-pengiriman.schema';
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
 
-export class InvoiceService {
-  static async createInvoice(invoiceData: CreateInvoiceInput, userId: string): Promise<Invoice> {
+export class InvoicePengirimanService {
+  static async createInvoice(
+    invoiceData: CreateInvoicePengirimanInput,
+    userId: string
+  ): Promise<InvoicePengiriman> {
     try {
       const { invoiceDetails, ...invoiceInfo } = invoiceData;
 
-      const newInvoice = await prisma.invoice.create({
+      const newInvoice = await prisma.invoicePengiriman.create({
         data: {
           ...invoiceInfo,
           tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : new Date(),
           expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
           createdBy: userId,
           updatedBy: userId,
-          invoiceDetails: invoiceDetails ? {
-            create: invoiceDetails.map(detail => ({
-              ...detail,
-              createdBy: userId,
-              updatedBy: userId,
-            }))
-          } : undefined,
+          invoiceDetails: invoiceDetails
+            ? {
+                create: invoiceDetails.map((detail) => ({
+                  ...detail,
+                  createdBy: userId,
+                  updatedBy: userId,
+                })),
+              }
+            : undefined,
         },
         include: {
           invoiceDetails: true,
@@ -36,22 +41,25 @@ export class InvoiceService {
         },
       });
 
-      await createAuditLog('Invoice', newInvoice.id, 'CREATE', userId, newInvoice);
+      await createAuditLog('InvoicePengiriman', newInvoice.id, 'CREATE', userId, newInvoice);
 
       return newInvoice;
     } catch (error: any) {
       if (error.code === 'P2002' && error.meta?.target?.includes('no_invoice')) {
-        throw new AppError('Invoice with this number already exists', 409);
+        throw new AppError('InvoicePengiriman with this number already exists', 409);
       }
       throw error;
     }
   }
 
-  static async getAllInvoices(page: number = 1, limit: number = 10): Promise<PaginatedResult<Invoice>> {
+  static async getAllInvoices(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResult<InvoicePengiriman>> {
     const skip = (page - 1) * limit;
 
     const [data, totalItems] = await Promise.all([
-      prisma.invoice.findMany({
+      prisma.invoicePengiriman.findMany({
         skip,
         take: parseInt(limit.toString()),
         include: {
@@ -63,7 +71,7 @@ export class InvoiceService {
           createdAt: 'desc',
         },
       }),
-      prisma.invoice.count(),
+      prisma.invoicePengiriman.count(),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);
@@ -79,8 +87,8 @@ export class InvoiceService {
     };
   }
 
-  static async getInvoiceById(id: string): Promise<Invoice | null> {
-    const invoice = await prisma.invoice.findUnique({
+  static async getInvoiceById(id: string): Promise<InvoicePengiriman | null> {
+    const invoice = await prisma.invoicePengiriman.findUnique({
       where: { id },
       include: {
         invoiceDetails: true,
@@ -96,13 +104,12 @@ export class InvoiceService {
     });
 
     if (!invoice) {
-      throw new AppError('Invoice not found', 404);
+      throw new AppError('InvoicePengiriman not found', 404);
     }
 
-    // Get audit trail for this invoice
     const auditTrails = await prisma.auditTrail.findMany({
       where: {
-        tableName: 'Invoice',
+        tableName: 'InvoicePengiriman',
         recordId: id,
       },
       include: {
@@ -128,27 +135,27 @@ export class InvoiceService {
 
   static async updateInvoice(
     id: string,
-    data: UpdateInvoiceInput['body'],
+    data: UpdateInvoicePengirimanInput['body'],
     userId: string
-  ): Promise<Invoice | null> {
+  ): Promise<InvoicePengiriman | null> {
     const { invoiceDetails, ...invoiceInfo } = data;
 
     try {
       const updatedInvoice = await prisma.$transaction(async (tx) => {
-        const existingInvoice = await tx.invoice.findUnique({
+        const existingInvoice = await tx.invoicePengiriman.findUnique({
           where: { id },
         });
 
         if (!existingInvoice) {
-          throw new AppError('Invoice not found', 404);
+          throw new AppError('InvoicePengiriman not found', 404);
         }
 
         if (invoiceDetails) {
-          await tx.invoiceDetail.deleteMany({
+          await tx.invoicePengirimanDetail.deleteMany({
             where: { invoiceId: id },
           });
 
-          await tx.invoiceDetail.createMany({
+          await tx.invoicePengirimanDetail.createMany({
             data: invoiceDetails.map((detail) => ({
               ...detail,
               invoiceId: id,
@@ -158,7 +165,7 @@ export class InvoiceService {
           });
         }
 
-        const invoice = await tx.invoice.update({
+        const invoice = await tx.invoicePengiriman.update({
           where: { id },
           data: {
             ...invoiceInfo,
@@ -173,7 +180,7 @@ export class InvoiceService {
           },
         });
 
-        await createAuditLog('Invoice', invoice.id, 'UPDATE', userId, {
+        await createAuditLog('InvoicePengiriman', invoice.id, 'UPDATE', userId, {
           before: existingInvoice,
           after: invoice,
         });
@@ -186,29 +193,29 @@ export class InvoiceService {
       if (error instanceof AppError) {
         throw error;
       }
-      console.error('Error updating invoice:', error);
-      throw new AppError('Failed to update invoice', 500);
+      console.error('Error updating InvoicePengiriman:', error);
+      throw new AppError('Failed to update InvoicePengiriman', 500);
     }
   }
 
-  static async deleteInvoice(id: string, userId: string): Promise<Invoice | null> {
+  static async deleteInvoice(id: string, userId: string): Promise<InvoicePengiriman | null> {
     try {
       return await prisma.$transaction(async (tx) => {
-        const existingInvoice = await tx.invoice.findUnique({
+        const existingInvoice = await tx.invoicePengiriman.findUnique({
           where: { id },
         });
 
         if (!existingInvoice) {
-          throw new AppError('Invoice not found', 404);
+          throw new AppError('InvoicePengiriman not found', 404);
         }
 
-        await createAuditLog('Invoice', id, 'DELETE', userId, existingInvoice);
+        await createAuditLog('InvoicePengiriman', id, 'DELETE', userId, existingInvoice);
 
-        await tx.invoiceDetail.deleteMany({
+        await tx.invoicePengirimanDetail.deleteMany({
           where: { invoiceId: id },
         });
 
-        return await tx.invoice.delete({
+        return await tx.invoicePengiriman.delete({
           where: { id },
         });
       });
@@ -216,28 +223,30 @@ export class InvoiceService {
       if (error instanceof AppError) {
         throw error;
       }
-      console.error('Error deleting invoice:', error);
-      throw new AppError('Failed to delete invoice', 500);
+      console.error('Error deleting InvoicePengiriman:', error);
+      throw new AppError('Failed to delete InvoicePengiriman', 500);
     }
   }
 
-  static async searchInvoices(query: SearchInvoiceInput['query']): Promise<PaginatedResult<Invoice>> {
-    const { 
-      no_invoice, 
-      deliver_to, 
-      type, 
+  static async searchInvoices(
+    query: SearchInvoicePengirimanInput['query']
+  ): Promise<PaginatedResult<InvoicePengiriman>> {
+    const {
+      no_invoice,
+      deliver_to,
+      type,
       statusPembayaranId,
       purchaseOrderId,
       tanggal_start,
       tanggal_end,
       page = 1,
-      limit = 10
+      limit = 10,
     } = query;
 
     const skip = (page - 1) * limit;
 
-    const filters: Prisma.InvoiceWhereInput[] = [];
-    
+    const filters: Prisma.InvoicePengirimanWhereInput[] = [];
+
     if (no_invoice) {
       filters.push({ no_invoice: { contains: no_invoice, mode: 'insensitive' } });
     }
@@ -265,7 +274,7 @@ export class InvoiceService {
     }
 
     const [data, totalItems] = await Promise.all([
-      prisma.invoice.findMany({
+      prisma.invoicePengiriman.findMany({
         where: {
           AND: filters.length > 0 ? filters : undefined,
         },
@@ -284,7 +293,7 @@ export class InvoiceService {
           createdAt: 'desc',
         },
       }),
-      prisma.invoice.count({
+      prisma.invoicePengiriman.count({
         where: {
           AND: filters.length > 0 ? filters : undefined,
         },
@@ -304,3 +313,5 @@ export class InvoiceService {
     };
   }
 }
+
+
