@@ -69,5 +69,12 @@ export const statusRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
     StatusController.getStatusesBySuratJalan
   );
 
+  // Get statuses by Laporan Penerimaan Barang
+  fastify.get(
+    '/laporan_penerimaan_barang',
+    { preHandler: [fastify.authenticate] },
+    StatusController.getStatusesByLaporanPenerimaanBarang
+  );
+
   done();
 };

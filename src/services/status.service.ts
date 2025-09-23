@@ -88,6 +88,17 @@ export class StatusService {
     });
   }
 
+  static async getStatusesByLaporanPenerimaanBarang(): Promise<Status[]> {
+    return prisma.status.findMany({
+      where: {
+        category: 'Laporan Penerimaan Barang'
+      },
+      orderBy: {
+        status_name: 'asc'
+      }
+    });
+  }
+
   static async getStatusByCodeAndCategory(statusCode: string, category: string): Promise<Status | null> {
     return prisma.status.findUnique({
       where: {

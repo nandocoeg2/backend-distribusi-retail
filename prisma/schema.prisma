@@ -19,17 +19,6 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   profile       Profile?
-  id            String         @id @default(cuid())
-  email         String         @unique
-  username      String         @unique
-  password      String
-  firstName     String?
-  lastName      String?
-  roleId        String
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  profile       Profile?
   role          Role           @relation(fields: [roleId], references: [id])
   auditTrails   AuditTrail[]
   uploadedFiles FileUploaded[]
@@ -102,25 +91,6 @@ model Customer {
   groupCustomer           GroupCustomer             @relation(fields: [groupCustomerId], references: [id])
   region                  Region                    @relation(fields: [regionId], references: [id])
   itemPrices              ItemPrice[]
-  id                      String                    @id @default(cuid())
-  namaCustomer            String
-  kodeCustomer            String                    @unique
-  groupCustomerId         String
-  NPWP                    String?
-  alamatNPWP              String?
-  regionId                String
-  alamatPengiriman        String
-  description             String?
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  createdBy               String
-  updatedBy               String
-  email                   String?                   @unique
-  phoneNumber             String
-  purchaseOrders          PurchaseOrder[]
-  groupCustomer           GroupCustomer             @relation(fields: [groupCustomerId], references: [id])
-  region                  Region                    @relation(fields: [regionId], references: [id])
-  itemPrices              ItemPrice[]
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("customers")
@@ -145,27 +115,6 @@ model Supplier {
 }
 
 model PurchaseOrder {
-  id                      String                    @id @default(cuid())
-  customerId              String
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  createdBy               String
-  updatedBy               String
-  po_number               String
-  statusId                String?
-  tanggal_masuk_po        DateTime?
-  tanggal_batas_kirim     DateTime?
-  termin_bayar            String?
-  total_items             Int?
-  supplierId              String?
-  po_type                 POType                    @default(SINGLE)
-  files                   FileUploaded[]
-  purchaseOrderDetails    PurchaseOrderDetail[]
-  packings                Packing[]
-  invoices                Invoice[]
-  customer                Customer                  @relation(fields: [customerId], references: [id])
-  status                  Status?                   @relation(fields: [statusId], references: [id])
-  supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
   id                      String                    @id @default(cuid())
   customerId              String
   createdAt               DateTime                  @default(now())
@@ -497,26 +446,11 @@ model Region {
   createdBy   String
   updatedBy   String
   customers   Customer[]
-  id          String     @id @default(cuid())
-  kode_region String     @unique
-  nama_region String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  createdBy   String
-  updatedBy   String
-  customers   Customer[]
 
   @@map("regions")
 }
 
 model TermOfPayment {
-  id                      String                    @id @default(cuid())
-  kode_top                String                    @unique
-  batas_hari              Int
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  createdBy               String
-  updatedBy               String
   id                      String                    @id @default(cuid())
   kode_top                String                    @unique
   batas_hari              Int
@@ -583,22 +517,11 @@ model GroupCustomer {
   createdBy  String
   updatedBy  String
   customers  Customer[]
-  id         String     @id @default(cuid())
-  kode_group String     @unique
-  nama_group String
-  alamat     String?
-  npwp       String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  createdBy  String
-  updatedBy  String
-  customers  Customer[]
 
   @@map("group_customer")
 }
 
 model ItemPrice {
-  id          String    @id @default(cuid())
   id          String    @id @default(cuid())
   inventoryId String
   customerId  String
@@ -608,8 +531,6 @@ model ItemPrice {
   pot2        Float?
   harga2      Float?
   ppn         Float?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   createdBy   String

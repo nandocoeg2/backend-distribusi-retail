@@ -168,6 +168,16 @@ async function main() {
     },
   });
 
+  await prisma.menu.upsert({
+    where: { name: 'Laporan Penerimaan Barang' },
+    update: {},
+    create: {
+      name: 'Laporan Penerimaan Barang',
+      url: '/laporan-penerimaan-barang',
+      parentId: purchaseOrderMenu.id,
+    },
+  });
+
   // Ensure any parent with children has url '#'
   const parentsWithChildren = await prisma.menu.findMany({
     where: { children: { some: {} } },

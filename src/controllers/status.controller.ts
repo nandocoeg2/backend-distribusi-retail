@@ -51,4 +51,9 @@ export class StatusController {
     const statuses = await StatusService.getStatusesBySuratJalan();
     return reply.send(ResponseUtil.success(statuses));
   }
+
+  static async getStatusesByLaporanPenerimaanBarang(request: FastifyRequest, reply: FastifyReply) {
+    const statuses = await StatusService.getStatusesByLaporanPenerimaanBarang();
+    return reply.send(ResponseUtil.success(statuses));
+  }
 }
