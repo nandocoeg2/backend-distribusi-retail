@@ -402,8 +402,8 @@ export class PurchaseOrderService {
         await tx.suratJalanDetail.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
         await tx.historyPengiriman.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
         await tx.suratJalan.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
-        await tx.invoiceDetail.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
-        await tx.invoice.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.invoicePengirimanDetail.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
+        await tx.invoicePengiriman.deleteMany({ where: { purchaseOrderId: id } });
 
         return await tx.purchaseOrder.delete({
           where: { id },

@@ -1,0 +1,45 @@
+meta {
+  name: create
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:5050/api/v1/invoice-penagihan
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "purchaseOrderId": "purchase-order-id-here",
+    "kw": false,
+    "fp": true,
+    "tanggal": "2024-01-01",
+    "kepada": "Customer ABC",
+    "sub_total": 1000000,
+    "total_discount": 50000,
+    "total_price": 950000,
+    "ppn_percentage": 11,
+    "ppn_rupiah": 104500,
+    "grand_total": 1054500,
+    "termOfPaymentId": "term-of-payment-id-here",
+    "statusId": "status-id-here",
+    "invoicePenagihanDetails": [
+      {
+        "nama_barang": "Product A",
+        "PLU": "PLU001",
+        "quantity": 10,
+        "satuan": "pcs",
+        "harga": 100000,
+        "total": 1000000,
+        "discount_percentage": 5,
+        "discount_rupiah": 50000
+      }
+    ]
+  }
+}

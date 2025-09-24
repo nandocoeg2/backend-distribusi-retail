@@ -208,6 +208,44 @@ const ALL_STATUSES: StatusData[] = [
     status_name: 'Failed Laporan Penerimaan Barang',
     status_description: 'Laporan penerimaan barang gagal diproses',
     category: 'Laporan Penerimaan Barang'
+  },
+
+  // Invoice Penagihan Status
+  {
+    status_code: 'PENDING INVOICE PENAGIHAN',
+    status_name: 'Pending Invoice Penagihan',
+    status_description: 'Invoice penagihan menunggu diproses',
+    category: 'Invoice Penagihan'
+  },
+  {
+    status_code: 'PROCESSING INVOICE PENAGIHAN',
+    status_name: 'Processing Invoice Penagihan',
+    status_description: 'Invoice penagihan sedang diproses',
+    category: 'Invoice Penagihan'
+  },
+  {
+    status_code: 'PAID INVOICE PENAGIHAN',
+    status_name: 'Paid Invoice Penagihan',
+    status_description: 'Invoice penagihan telah dibayar',
+    category: 'Invoice Penagihan'
+  },
+  {
+    status_code: 'OVERDUE INVOICE PENAGIHAN',
+    status_name: 'Overdue Invoice Penagihan',
+    status_description: 'Invoice penagihan sudah melewati jatuh tempo',
+    category: 'Invoice Penagihan'
+  },
+  {
+    status_code: 'CANCELLED INVOICE PENAGIHAN',
+    status_name: 'Cancelled Invoice Penagihan',
+    status_description: 'Invoice penagihan dibatalkan',
+    category: 'Invoice Penagihan'
+  },
+  {
+    status_code: 'COMPLETED INVOICE PENAGIHAN',
+    status_name: 'Completed Invoice Penagihan',
+    status_description: 'Invoice penagihan telah selesai diproses',
+    category: 'Invoice Penagihan'
   }
 ];
 

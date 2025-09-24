@@ -1,0 +1,15 @@
+meta {
+  name: search
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:5050/api/v1/invoice-penagihan/search?no_invoice_penagihan=IPN&kepada=Customer&kw=true&fp=false&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

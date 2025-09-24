@@ -1,0 +1,15 @@
+meta {
+  name: getById
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:5050/api/v1/invoice-penagihan/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

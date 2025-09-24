@@ -133,6 +133,7 @@ model PurchaseOrder {
   purchaseOrderDetails    PurchaseOrderDetail[]
   packings                Packing[]
   invoices                InvoicePengiriman[]
+  invoicePenagihan        InvoicePenagihan[]
   customer                Customer                  @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
@@ -177,6 +178,7 @@ model Status {
   suratJalanStatus        SuratJalan[]        @relation("SuratJalanStatus")
   packingItemStatus       PackingItem[]       @relation("PackingItemStatus")
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
+  invoicePenagihanStatus  InvoicePenagihan[]  @relation("InvoicePenagihanStatus")
 
   @@unique([status_code, category])
   @@map("statuses")
@@ -459,6 +461,7 @@ model TermOfPayment {
   createdBy               String
   updatedBy               String
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
+  invoicePenagihan        InvoicePenagihan[]
 
   @@map("term_of_payment")
 }
@@ -539,4 +542,52 @@ model ItemPrice {
   customer    Customer  @relation(fields: [customerId], references: [id])
 
   @@map("item_prices")
+}
+
+model InvoicePenagihan {
+  id                    String                     @id @default(cuid())
+  purchaseOrderId       String
+  no_invoice_penagihan  String                     @unique
+  kw                    Boolean                    @default(false)
+  fp                    Boolean                    @default(false)
+  tanggal               DateTime                   @default(now())
+  kepada                String
+  sub_total             Decimal                    @db.Decimal(15, 2)
+  total_discount        Decimal                    @db.Decimal(15, 2)
+  total_price           Decimal                    @db.Decimal(15, 2)
+  ppn_percentage        Decimal                    @db.Decimal(5, 2)
+  ppn_rupiah            Decimal                    @db.Decimal(15, 2)
+  grand_total           Decimal                    @db.Decimal(15, 2)
+  termOfPaymentId       String
+  statusId              String
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  createdBy             String
+  updatedBy             String
+  purchaseOrder         PurchaseOrder              @relation(fields: [purchaseOrderId], references: [id])
+  termOfPayment         TermOfPayment              @relation(fields: [termOfPaymentId], references: [id])
+  status                Status                     @relation("InvoicePenagihanStatus", fields: [statusId], references: [id])
+  invoicePenagihanDetails InvoicePenagihanDetail[]
+
+  @@map("invoice_penagihan")
+}
+
+model InvoicePenagihanDetail {
+  id                     String            @id @default(cuid())
+  invoicePenagihanId     String
+  nama_barang            String
+  PLU                    String            @db.VarChar(50)
+  quantity               Int
+  satuan                 String            @db.VarChar(50)
+  harga                  Decimal           @db.Decimal(15, 2)
+  total                  Decimal           @db.Decimal(15, 2)
+  discount_percentage    Decimal           @db.Decimal(5, 2)
+  discount_rupiah        Decimal           @db.Decimal(15, 2)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  createdBy              String
+  updatedBy              String
+  invoicePenagihan       InvoicePenagihan  @relation(fields: [invoicePenagihanId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_penagihan_detail")
 }
