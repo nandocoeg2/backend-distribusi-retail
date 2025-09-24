@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/users/{{user_id}}
+  url: http://localhost:5050/api/v1/users/cmft6hejl000037h0x8496lro
   body: none
   auth: bearer
 }
 
-auth:bearer {
-  token: {{access_token}}
-}
-
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
 }

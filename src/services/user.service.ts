@@ -9,6 +9,40 @@ import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.u
 import bcrypt from 'bcrypt';
 
 export class UserService {
+  private static async getActorAudits(userId: string, take: number) {
+    return prisma.auditTrail.findMany({
+      where: { tableName: 'User', userId },
+      take,
+      orderBy: { timestamp: 'desc' as Prisma.SortOrder },
+      select: {
+        id: true,
+        tableName: true,
+        recordId: true,
+        action: true,
+        timestamp: true,
+        details: true,
+        userId: true,
+      },
+    });
+  }
+
+  private static baseUserSelect = {
+    id: true,
+    email: true,
+    username: true,
+    firstName: true,
+    lastName: true,
+    roleId: true,
+    role: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+  };
+
+  private static async withAudits<T extends { id: string }>(entity: T, take: number) {
+    const auditTrails = await this.getActorAudits(entity.id, take);
+    return { ...entity, auditTrails } as any;
+  }
   static async createUser(data: CreateUserInput, userId: string): Promise<Omit<User, 'password'>> {
     try {
       const { password, ...userData } = data;
@@ -48,26 +82,15 @@ export class UserService {
           ...userData,
           password: hashedPassword,
         },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: UserService.baseUserSelect,
       });
 
       await createAuditLog('User', user.id, 'CREATE', userId, user);
       
       // Clear cache
       await CacheService.del('users:all');
-      
-      return user;
+
+      return this.withAudits(user, 3);
     } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
@@ -90,18 +113,7 @@ export class UserService {
   static async getAllUsers(page: number = 1, limit: number = 10): Promise<PaginatedResult<Omit<User, 'password'>>> {
     const { skip, take } = calculatePagination(page, limit);
     
-    const userSelect = {
-      id: true,
-      email: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      roleId: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-    };
+    const userSelect = UserService.baseUserSelect;
     
     const dataQuery = prisma.user.findMany({
       skip,
@@ -114,38 +126,38 @@ export class UserService {
 
     const countQuery = prisma.user.count();
 
-    return executePaginatedQuery(dataQuery, countQuery, page, limit);
+    const pageResult = await executePaginatedQuery(dataQuery, countQuery, page, limit);
+    const dataWithAudits = await Promise.all(
+      pageResult.data.map((u: any) => this.withAudits(u, 3))
+    );
+    return { ...pageResult, data: dataWithAudits } as any;
   }
 
   static async getUserById(id: string): Promise<Omit<User, 'password'>> {
-    const cachedUser = await CacheService.get<Omit<User, 'password'>>(`user:${id}`);
-    if (cachedUser) {
-      return cachedUser;
+    const cachedUser = await CacheService.get<any>(`user:${id}`);
+    if (cachedUser && typeof cachedUser === 'object' && Array.isArray(cachedUser.auditTrails)) {
+      const hasAudits = cachedUser.auditTrails.length > 0;
+      const isValidAudit = cachedUser.auditTrails.every(
+        (a: any) => a?.tableName === 'User' && a?.userId === id
+      );
+      if (hasAudits && isValidAudit) {
+        return cachedUser as Omit<User, 'password'>;
+      }
     }
 
     const user = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        roleId: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: UserService.baseUserSelect,
     });
 
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
-    await CacheService.set(`user:${id}`, user, 3600);
+    const result: any = await this.withAudits(user, 10);
+    await CacheService.set(`user:${id}`, result, 3600);
 
-    return user;
+    return result;
   }
 
   static async updateUser(id: string, data: UpdateUserInput, userId: string): Promise<Omit<User, 'password'>> {
@@ -202,18 +214,7 @@ export class UserService {
       const updatedUser = await prisma.user.update({
         where: { id },
         data: updateData,
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: UserService.baseUserSelect,
       });
 
       await createAuditLog('User', updatedUser.id, 'UPDATE', userId, {
@@ -225,7 +226,7 @@ export class UserService {
       await CacheService.del(`user:${id}`);
       await CacheService.del('users:all');
       
-      return updatedUser;
+      return this.withAudits(updatedUser, 3);
     } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
@@ -252,18 +253,7 @@ export class UserService {
     try {
       const existingUser = await prisma.user.findUnique({
         where: { id },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: UserService.baseUserSelect,
       });
       
       if (!existingUser) {
@@ -274,25 +264,14 @@ export class UserService {
       
       const deletedUser = await prisma.user.delete({
         where: { id },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          roleId: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: UserService.baseUserSelect,
       });
       
       // Clear cache
       await CacheService.del(`user:${id}`);
       await CacheService.del('users:all');
       
-      return deletedUser;
+      return this.withAudits(deletedUser, 3);
     } catch (error: any) {
       if (error instanceof AppError) {
         throw error;
@@ -311,18 +290,7 @@ export class UserService {
 
     const { skip, take } = calculatePagination(page, limit);
     
-    const userSelect = {
-      id: true,
-      email: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      roleId: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-    };
+    const userSelect = UserService.baseUserSelect;
 
     const filters: Prisma.UserWhereInput[] = [
       {
@@ -349,7 +317,27 @@ export class UserService {
           mode: 'insensitive',
         },
       },
+      // Cari berdasarkan nama role
+      {
+        role: {
+          name: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+      },
     ];
+
+    // Tambahkan filter status berdasarkan kata kunci umum (aktif/nonaktif)
+    const normalized = query.trim().toLowerCase();
+    const activeKeywords = ['active', 'aktif', 'enabled', 'true', '1', 'ya', 'yes'];
+    const inactiveKeywords = ['inactive', 'nonaktif', 'disabled', 'false', '0', 'tidak', 'no'];
+
+    if (activeKeywords.includes(normalized)) {
+      filters.push({ isActive: true });
+    } else if (inactiveKeywords.includes(normalized)) {
+      filters.push({ isActive: false });
+    }
 
     const whereClause = { OR: filters };
 
@@ -367,6 +355,10 @@ export class UserService {
       where: whereClause,
     });
 
-    return executePaginatedQuery(dataQuery, countQuery, page, limit);
+    const pageResult = await executePaginatedQuery(dataQuery, countQuery, page, limit);
+    const dataWithAudits = await Promise.all(
+      pageResult.data.map((u: any) => this.withAudits(u, 3))
+    );
+    return { ...pageResult, data: dataWithAudits } as any;
   }
 }
