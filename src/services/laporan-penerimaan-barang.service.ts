@@ -8,7 +8,6 @@ import { BaseService } from './base.service';
 import { PaginatedResult } from '@/types/common.types';
 import { AppError } from '@/utils/app-error';
 import { ConversionService } from './conversion.service';
-import { FileUploaded } from '@prisma/client';
 import logger from '@/config/logger';
 import { generateFilenameWithPrefix } from '@/utils/random.utils';
 import * as fs from 'fs';
