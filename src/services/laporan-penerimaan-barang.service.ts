@@ -1,4 +1,4 @@
-import { LaporanPenerimaanBarang, Prisma } from '@prisma/client';
+import { ActionType, LaporanPenerimaanBarang, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import {
   CreateLaporanPenerimaanBarangInput,
@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
+import { createAuditLog } from './audit.service';
 
 export class LaporanPenerimaanBarangService extends BaseService<
   LaporanPenerimaanBarang,
@@ -295,6 +296,12 @@ export class LaporanPenerimaanBarangService extends BaseService<
           createdBy: userId,
         },
       });
+      await createAuditLog('FileUploaded', fileUploaded.id, ActionType.CREATE, userId || 'system', {
+        filename: originalFilename,
+        path: filepath,
+        mimetype: mimeType,
+        size: stats.size,
+      });
 
       // Default prompt jika tidak ada
       const defaultPrompt = prompt || 
@@ -314,6 +321,24 @@ export class LaporanPenerimaanBarangService extends BaseService<
         let lpbData: any = null;
         try {
           lpbData = await this.createLpbFromConvertedData(convertedData, userId);
+          
+          // Hubungkan file dengan LPB yang baru dibuat
+          if (lpbData && lpbData.laporanPenerimaanBarangId) {
+            await prisma.fileUploaded.update({
+              where: { id: fileUploaded.id },
+              data: {
+                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+              },
+            });
+            await createAuditLog('FileUploaded', fileUploaded.id, ActionType.UPDATE, userId || 'system', {
+              laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+            });
+            
+            logger.info('File connected to LPB', {
+              fileId: fileUploaded.id,
+              lpbId: lpbData.laporanPenerimaanBarangId,
+            });
+          }
         } catch (lpbError) {
           logger.warn('Failed to create LPB data from converted data', { error: lpbError });
           // Tidak throw error, karena file upload dan konversi sudah berhasil
@@ -427,6 +452,12 @@ export class LaporanPenerimaanBarangService extends BaseService<
 
       const laporanPenerimaanBarang = await prisma.laporanPenerimaanBarang.create({
         data: createData,
+      });
+
+      await createAuditLog('LaporanPenerimaanBarang', laporanPenerimaanBarang.id, ActionType.CREATE, userId || 'system', {
+        purchaseOrderId: purchaseOrder?.id ?? null,
+        customerId: purchaseOrder?.customerId ?? null,
+        statusId: statusId?.id ?? null,
       });
 
       logger.info('LPB data saved to database', { 

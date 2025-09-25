@@ -149,6 +149,16 @@ async function main() {
   });
 
   await prisma.menu.upsert({
+    where: { name: 'Invoice Penagihan' },
+    update: {},
+    create: {
+      name: 'Invoice Penagihan',
+      url: '/po/invoice-penagihan',
+      parentId: purchaseOrderMenu.id,
+    },
+  });
+
+  await prisma.menu.upsert({
     where: { name: 'History Purchase Order' },
     update: {},
     create: {

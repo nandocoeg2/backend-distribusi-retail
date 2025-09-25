@@ -429,18 +429,7 @@ Form Data:
   "success": true,
   "message": "File uploaded and converted successfully",
   "data": {
-    "fileUploaded": {
-      "id": "file-uuid",
-      "filename": "upload_1704067200000.pdf",
-      "path": "/uploads/laporan-penerimaan-barang/clx1p0d3j000108l8g2f3d9b4/1704067200000.pdf",
-      "mimetype": "application/pdf",
-      "size": 1024000,
-      "laporanPenerimaanBarangId": "clx1p0d3j000108l8g2f3d9b4",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z",
-      "createdBy": "user-uuid"
-    },
-    "convertedData": {
+    "lpbData": {
       "fppNumber": "FPP2024001",
       "orderDate": "2024-01-01",
       "deliveryDate": "2024-01-05",
@@ -493,50 +482,9 @@ Form Data:
         "method": "T/T BCA",
         "bankAccount": "1234567890",
         "accountName": "PT Supplier ABC"
-      }
-    },
-    "lpbData": {
-      "fppNumber": "FPP2024001",
-      "orderDate": "2024-01-01",
-      "deliveryDate": "2024-01-05",
-      "deliveryTime": "14:30",
-      "door": 3,
-      "lpbNumber": "C24-000001",
-      "supplier": {
-        "code": "SUP001",
-        "name": "PT Supplier ABC",
-        "address": "Jl. Supplier No. 123, Jakarta",
-        "phone": "021-12345678"
-      },
-      "items": [
-        {
-          "lineNo": 1,
-          "plu": "PLU001",
-          "productName": "Product A",
-          "qtyCarton": 10,
-          "qtyPcs": 0,
-          "price": 100000,
-          "discountPercent": 5,
-          "netPrice": 95000,
-          "ppnbm": 0,
-          "total": 950000,
-          "ket": "Good condition"
-        }
-      ],
-      "pricing": {
-        "totalPurchasePrice": 2000000,
-        "totalDiscount": 50000,
-        "netAfterDiscount": 1950000,
-        "ppnInput": 195000,
-        "grandTotal": 2145000,
-        "grandTotalWords": "Dua juta seratus empat puluh lima ribu rupiah"
-      },
-      "payment": {
-        "method": "T/T BCA",
-        "bankAccount": "1234567890",
-        "accountName": "PT Supplier ABC"
       },
       "laporanPenerimaanBarangId": "clx1p0d3j000108l8g2f3d9b4",
+      "savedToDatabase": true,
       "createdBy": "user-uuid",
       "updatedBy": "user-uuid"
     }
@@ -688,10 +636,10 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 - Laporan dapat memiliki multiple file attachments
 - File dapat diupload menggunakan dua cara:
   1. **Manual Upload**: File harus diupload terlebih dahulu menggunakan endpoint file upload, kemudian ID file ditambahkan ke laporan
-  2. **Upload dengan Konversi**: Menggunakan endpoint `POST /:id/upload` untuk upload file sekaligus konversi otomatis ke JSON
+  2. **Upload dengan Konversi**: Menggunakan endpoint `POST /upload` untuk upload file sekaligus konversi otomatis ke JSON dan pembuatan LPB
 - File yang sudah terhubung dengan laporan lain tidak dapat digunakan
 - Saat update, array files akan mengganti semua file yang ada
-- Upload dengan konversi akan otomatis menyimpan file dan melakukan konversi menggunakan Google Gemini AI
+- Upload dengan konversi akan otomatis menyimpan file, melakukan konversi menggunakan Google Gemini AI, dan membuat data LPB
 
 ## Business Rules
 
