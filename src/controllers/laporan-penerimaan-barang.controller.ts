@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { ResponseUtil } from '@/utils/response.util';
 import { LaporanPenerimaanBarangService } from '@/services/laporan-penerimaan-barang.service';
+import logger from '@/config/logger';
 import {
   CreateLaporanPenerimaanBarangInput,
   GetAllLaporanPenerimaanBarangInput,
@@ -82,5 +83,56 @@ export class LaporanPenerimaanBarangController {
       limit
     );
     return reply.send(ResponseUtil.success(result));
+  }
+
+  static async uploadFile(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+
+    // Ambil file dari request
+    const data = await request.file();
+    
+    if (!data) {
+      return reply.code(400).send(ResponseUtil.error('No file uploaded'));
+    }
+
+    const buffer = await data.toBuffer();
+    let mimeType = data.mimetype;
+    
+    if (mimeType === 'multipart/form-data') {
+      const filename = data.filename || '';
+      if (filename.toLowerCase().endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      } else {
+        mimeType = 'application/octet-stream';
+      }
+    }
+    
+    // Ambil prompt dari form data jika ada
+    const prompt = data.fields?.prompt as string | undefined;
+    
+    // Log untuk debugging
+    logger.info('File upload details', {
+      filename: data.filename,
+      originalMimeType: data.mimetype,
+      correctedMimeType: mimeType,
+      size: buffer.length,
+      prompt: prompt
+    });
+
+    const result = await LaporanPenerimaanBarangService.uploadFileAndConvert(
+      buffer,
+      mimeType,
+      data.filename || 'unknown',
+      prompt,
+      userId
+    );
+
+    return reply.code(201).send(ResponseUtil.success({
+      message: 'File uploaded and converted successfully',
+      lpbData: result.lpbData,
+    }));
   }
 }

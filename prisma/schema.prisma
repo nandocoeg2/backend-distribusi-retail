@@ -471,7 +471,6 @@ model LaporanPenerimaanBarang {
   purchaseOrderId String?        @map("purchase_order_id")
   tanggal_po      DateTime?
   customerId      String?        @map("customer_id")
-  alamat_customer String?
   termin_bayar    String?        @map("termin_bayar")
   statusId        String?        @map("status_id")
   createdAt       DateTime       @default(now())

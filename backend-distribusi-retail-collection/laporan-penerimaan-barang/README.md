@@ -32,7 +32,6 @@ Membuat data laporan penerimaan barang baru.
   "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
   "tanggal_po": "2024-01-01T00:00:00.000Z",
   "customerId": "clx1otn81000308l89p8y5a2k",
-  "alamat_customer": "Jl. Contoh No. 123, Jakarta",
   "termin_bayar": "clx1otn7p000108l82e7ke2j8",
   "statusId": "clx1otn7p000108l82e7ke2j7",
   "files": ["clx1otn7p000108l82e7ke2j6", "clx1otn7p000108l82e7ke2j5"]
@@ -43,7 +42,6 @@ Membuat data laporan penerimaan barang baru.
 - `purchaseOrderId`: **Required** - ID purchase order
 - `tanggal_po`: Optional - Tanggal purchase order (ISO 8601)
 - `customerId`: **Required** - ID customer
-- `alamat_customer`: Optional - Alamat customer
 - `termin_bayar`: Optional - ID term of payment
 - `statusId`: Optional - ID status
 - `files`: Optional - Array ID file yang diupload
@@ -59,7 +57,6 @@ Membuat data laporan penerimaan barang baru.
     "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
     "tanggal_po": "2024-01-01T00:00:00.000Z",
     "customerId": "clx1otn81000308l89p8y5a2k",
-    "alamat_customer": "Jl. Contoh No. 123, Jakarta",
     "termin_bayar": "clx1otn7p000108l82e7ke2j8",
     "statusId": "clx1otn7p000108l82e7ke2j7",
     "createdAt": "2024-01-01T00:00:00.000Z",
@@ -144,7 +141,6 @@ GET /api/v1/laporan-penerimaan-barang?page=1&limit=10
         "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
         "tanggal_po": "2024-01-01T00:00:00.000Z",
         "customerId": "clx1otn81000308l89p8y5a2k",
-        "alamat_customer": "Jl. Contoh No. 123, Jakarta",
         "termin_bayar": "clx1otn7p000108l82e7ke2j8",
         "statusId": "clx1otn7p000108l82e7ke2j7",
         "createdAt": "2024-01-01T00:00:00.000Z",
@@ -200,7 +196,6 @@ GET /api/v1/laporan-penerimaan-barang/clx1p0d3j000108l8g2f3d9b4
     "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
     "tanggal_po": "2024-01-01T00:00:00.000Z",
     "customerId": "clx1otn81000308l89p8y5a2k",
-    "alamat_customer": "Jl. Contoh No. 123, Jakarta",
     "termin_bayar": "clx1otn7p000108l82e7ke2j8",
     "statusId": "clx1otn7p000108l82e7ke2j7",
     "createdAt": "2024-01-01T00:00:00.000Z",
@@ -248,7 +243,6 @@ Memperbarui data laporan penerimaan barang berdasarkan ID.
 **Request Body:**
 ```json
 {
-  "alamat_customer": "Jl. Contoh Baru No. 456, Jakarta",
   "statusId": "clx1otn7p000108l82e7ke2j7",
   "files": ["clx1otn7p000108l82e7ke2j6"]
 }
@@ -259,7 +253,6 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
 - `purchaseOrderId`: Optional - ID purchase order
 - `tanggal_po`: Optional - Tanggal purchase order
 - `customerId`: Optional - ID customer
-- `alamat_customer`: Optional - Alamat customer
 - `termin_bayar`: Optional - ID term of payment
 - `statusId`: Optional - ID status
 - `files`: Optional - Array ID file yang diupload
@@ -274,7 +267,6 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
     "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
     "tanggal_po": "2024-01-01T00:00:00.000Z",
     "customerId": "clx1otn81000308l89p8y5a2k",
-    "alamat_customer": "Jl. Contoh Baru No. 456, Jakarta",
     "termin_bayar": "clx1otn7p000108l82e7ke2j8",
     "statusId": "clx1otn7p000108l82e7ke2j7",
     "createdAt": "2024-01-01T00:00:00.000Z",
@@ -373,7 +365,6 @@ GET /api/v1/laporan-penerimaan-barang/search?q=jakarta&page=1&limit=10
         "purchaseOrderId": "clx1otn7p000108l82e7ke2j9",
         "tanggal_po": "2024-01-01T00:00:00.000Z",
         "customerId": "clx1otn81000308l89p8y5a2k",
-        "alamat_customer": "Jl. Contoh No. 123, Jakarta",
         "termin_bayar": "clx1otn7p000108l82e7ke2j8",
         "statusId": "clx1otn7p000108l82e7ke2j7",
         "createdAt": "2024-01-01T00:00:00.000Z",
@@ -396,6 +387,222 @@ GET /api/v1/laporan-penerimaan-barang/search?q=jakarta&page=1&limit=10
   }
 }
 ```
+
+---
+
+### 7. Upload File dan Konversi
+Mengupload file, melakukan konversi otomatis ke format JSON menggunakan Google Gemini AI, dan membuat data LPB (Laporan Penerimaan Barang) dari hasil konversi.
+
+**Endpoint:** `POST /upload`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body (multipart/form-data):**
+- `file` (required): File yang akan diupload dan dikonversi
+- `prompt` (optional): Custom prompt untuk konversi file
+
+**Supported File Types:**
+- PDF (.pdf) 
+- EDI (.EDI) 
+
+**Example Request:**
+```
+POST /api/v1/laporan-penerimaan-barang/upload
+Content-Type: multipart/form-data
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Form Data:
+- file: [binary file data]
+- prompt: Convert this document into structured JSON format for goods receipt report
+```
+
+**Response Success (201 Created):**
+```json
+{
+  "success": true,
+  "message": "File uploaded and converted successfully",
+  "data": {
+    "fileUploaded": {
+      "id": "file-uuid",
+      "filename": "upload_1704067200000.pdf",
+      "path": "/uploads/laporan-penerimaan-barang/clx1p0d3j000108l8g2f3d9b4/1704067200000.pdf",
+      "mimetype": "application/pdf",
+      "size": 1024000,
+      "laporanPenerimaanBarangId": "clx1p0d3j000108l8g2f3d9b4",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "user-uuid"
+    },
+    "convertedData": {
+      "fppNumber": "FPP2024001",
+      "orderDate": "2024-01-01",
+      "deliveryDate": "2024-01-05",
+      "deliveryTime": "14:30",
+      "door": 3,
+      "lpbNumber": "C24-000001",
+      "supplier": {
+        "code": "SUP001",
+        "name": "PT Supplier ABC",
+        "address": "Jl. Supplier No. 123, Jakarta",
+        "phone": "021-12345678"
+      },
+      "items": [
+        {
+          "lineNo": 1,
+          "plu": "PLU001",
+          "productName": "Product A",
+          "qtyCarton": 10,
+          "qtyPcs": 0,
+          "price": 100000,
+          "discountPercent": 5,
+          "netPrice": 95000,
+          "ppnbm": 0,
+          "total": 950000,
+          "ket": "Good condition"
+        },
+        {
+          "lineNo": 2,
+          "plu": "PLU002",
+          "productName": "Product B",
+          "qtyCarton": 5,
+          "qtyPcs": 0,
+          "price": 200000,
+          "discountPercent": 0,
+          "netPrice": 200000,
+          "ppnbm": 0,
+          "total": 1000000,
+          "ket": "Excellent quality"
+        }
+      ],
+      "pricing": {
+        "totalPurchasePrice": 2000000,
+        "totalDiscount": 50000,
+        "netAfterDiscount": 1950000,
+        "ppnInput": 195000,
+        "grandTotal": 2145000,
+        "grandTotalWords": "Dua juta seratus empat puluh lima ribu rupiah"
+      },
+      "payment": {
+        "method": "T/T BCA",
+        "bankAccount": "1234567890",
+        "accountName": "PT Supplier ABC"
+      }
+    },
+    "lpbData": {
+      "fppNumber": "FPP2024001",
+      "orderDate": "2024-01-01",
+      "deliveryDate": "2024-01-05",
+      "deliveryTime": "14:30",
+      "door": 3,
+      "lpbNumber": "C24-000001",
+      "supplier": {
+        "code": "SUP001",
+        "name": "PT Supplier ABC",
+        "address": "Jl. Supplier No. 123, Jakarta",
+        "phone": "021-12345678"
+      },
+      "items": [
+        {
+          "lineNo": 1,
+          "plu": "PLU001",
+          "productName": "Product A",
+          "qtyCarton": 10,
+          "qtyPcs": 0,
+          "price": 100000,
+          "discountPercent": 5,
+          "netPrice": 95000,
+          "ppnbm": 0,
+          "total": 950000,
+          "ket": "Good condition"
+        }
+      ],
+      "pricing": {
+        "totalPurchasePrice": 2000000,
+        "totalDiscount": 50000,
+        "netAfterDiscount": 1950000,
+        "ppnInput": 195000,
+        "grandTotal": 2145000,
+        "grandTotalWords": "Dua juta seratus empat puluh lima ribu rupiah"
+      },
+      "payment": {
+        "method": "T/T BCA",
+        "bankAccount": "1234567890",
+        "accountName": "PT Supplier ABC"
+      },
+      "laporanPenerimaanBarangId": "clx1p0d3j000108l8g2f3d9b4",
+      "createdBy": "user-uuid",
+      "updatedBy": "user-uuid"
+    }
+  }
+}
+```
+
+**Response Error (400 Bad Request):**
+```json
+{
+  "success": false,
+  "message": "No file uploaded",
+  "error": "Bad Request"
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "Laporan Penerimaan Barang not found",
+  "error": "Not Found"
+}
+```
+
+**Response Error (500 Internal Server Error):**
+```json
+{
+  "success": false,
+  "message": "Could not parse the converted file content.",
+  "error": "Internal Server Error"
+}
+```
+
+**Response Error (502 Bad Gateway):**
+```json
+{
+  "success": false,
+  "message": "Failed to get a response from the conversion service.",
+  "error": "Bad Gateway"
+}
+```
+
+**Features:**
+- ✅ Upload file dengan multipart/form-data
+- ✅ Konversi otomatis ke JSON menggunakan Google Gemini AI
+- ✅ Pembuatan data LPB otomatis dari hasil konversi
+- ✅ Custom prompt support
+- ✅ Error handling dengan rollback
+- ✅ Authentication required
+- ✅ Validation schema
+- ✅ Support berbagai format file (PDF, DOC, XLS, Images)
+
+**Default Prompt:**
+Jika tidak ada custom prompt yang diberikan, sistem akan menggunakan prompt default:
+```
+"Convert this document into structured JSON format for goods receipt report. Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information."
+```
+
+**Notes:**
+- File akan otomatis tersimpan di database dengan relasi ke laporan penerimaan barang
+- Jika konversi gagal, file yang sudah diupload akan dihapus otomatis
+- Response JSON akan mengikuti schema yang telah didefinisikan di ConversionService
+- Data LPB akan otomatis dibuat dari hasil konversi file
+- Jika pembuatan data LPB gagal, proses upload dan konversi tetap berhasil
+- File path akan disimpan dalam format: `/uploads/laporan-penerimaan-barang/{laporan_id}/{timestamp}.{extension}`
 
 ---
 
@@ -444,10 +651,10 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 ## Search Functionality
 
 - Search akan mencari berdasarkan:
-  - Alamat customer
   - Nama file yang diupload
   - Nomor purchase order
   - Nama customer
+  - Alamat pengiriman customer
   - Kode term of payment
   - Nama status
 - Search bersifat case-insensitive
@@ -462,7 +669,6 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "purchaseOrderId": "string (UUID)",
   "tanggal_po": "DateTime (ISO 8601)",
   "customerId": "string (UUID)",
-  "alamat_customer": "string",
   "termin_bayar": "string (UUID)",
   "statusId": "string (UUID)",
   "createdAt": "DateTime (ISO 8601)",
@@ -480,9 +686,12 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 ## File Management
 
 - Laporan dapat memiliki multiple file attachments
-- File harus diupload terlebih dahulu menggunakan endpoint file upload
+- File dapat diupload menggunakan dua cara:
+  1. **Manual Upload**: File harus diupload terlebih dahulu menggunakan endpoint file upload, kemudian ID file ditambahkan ke laporan
+  2. **Upload dengan Konversi**: Menggunakan endpoint `POST /:id/upload` untuk upload file sekaligus konversi otomatis ke JSON
 - File yang sudah terhubung dengan laporan lain tidak dapat digunakan
 - Saat update, array files akan mengganti semua file yang ada
+- Upload dengan konversi akan otomatis menyimpan file dan melakukan konversi menggunakan Google Gemini AI
 
 ## Business Rules
 

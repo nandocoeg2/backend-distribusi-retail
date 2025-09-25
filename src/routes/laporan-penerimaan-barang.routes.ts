@@ -9,9 +9,11 @@ import {
   getLaporanPenerimaanBarangSchema,
   searchLaporanPenerimaanBarangSchema,
   updateLaporanPenerimaanBarangSchema,
+  uploadFileLaporanPenerimaanBarangSchema,
   UpdateLaporanPenerimaanBarangInput,
   GetAllLaporanPenerimaanBarangInput,
   SearchLaporanPenerimaanBarangInput,
+  UploadFileLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 
 export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -114,6 +116,21 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
       ],
     },
     LaporanPenerimaanBarangController.delete
+  );
+
+  fastify.post(
+    '/upload',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        security: [{ Bearer: [] }],
+        consumes: ['multipart/form-data'],
+      },
+      preHandler: [
+        fastify.authenticate,
+      ],
+    },
+    LaporanPenerimaanBarangController.uploadFile
   );
 
   done();

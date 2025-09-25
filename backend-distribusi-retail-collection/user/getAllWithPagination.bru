@@ -5,20 +5,15 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/v1/users
+  url: http://localhost:5050/api/v1/users
   body: none
   auth: bearer
-}
-
-auth:bearer {
-  token: {{access_token}}
 }
 
 headers {
   Accept: application/json
 }
 
-params:query {
-  page: 1
-  limit: 10
+auth:bearer {
+  token: {{access_token}}
 }

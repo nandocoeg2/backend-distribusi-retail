@@ -1,0 +1,19 @@
+meta {
+  name: Upload File and Create LPB
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/upload
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:multipart-form {
+  file: @file(D:\Project\sampledata-pt-doven\2. Laporan Penerimaan Barang\ERP_LPB.pdf) @contentType(multipart/form-data)
+}

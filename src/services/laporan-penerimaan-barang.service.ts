@@ -7,6 +7,14 @@ import {
 import { BaseService } from './base.service';
 import { PaginatedResult } from '@/types/common.types';
 import { AppError } from '@/utils/app-error';
+import { ConversionService } from './conversion.service';
+import { FileUploaded } from '@prisma/client';
+import logger from '@/config/logger';
+import { generateFilenameWithPrefix } from '@/utils/random.utils';
+import * as fs from 'fs';
+import * as path from 'path';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
 
 export class LaporanPenerimaanBarangService extends BaseService<
   LaporanPenerimaanBarang,
@@ -112,12 +120,6 @@ export class LaporanPenerimaanBarangService extends BaseService<
 
     const filters: Prisma.LaporanPenerimaanBarangWhereInput[] = [
       {
-        alamat_customer: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      },
-      {
         files: {
           some: {
             filename: {
@@ -138,6 +140,10 @@ export class LaporanPenerimaanBarangService extends BaseService<
       {
         customer: {
           namaCustomer: {
+            contains: query,
+            mode: 'insensitive',
+          },
+          alamatPengiriman: {
             contains: query,
             mode: 'insensitive',
           },
@@ -247,6 +253,195 @@ export class LaporanPenerimaanBarangService extends BaseService<
       if (conflictingFile) {
         throw new AppError('One or more files are already linked to another report', 400);
       }
+    }
+  }
+
+  static async uploadFileAndConvert(
+    file: Buffer,
+    mimeType: string,
+    originalFilename: string,
+    prompt?: string,
+    userId?: string
+  ): Promise<{
+    lpbData?: any;
+  }> {
+    const pump = promisify(pipeline);
+    let tempFilepath: string | null = null;
+
+    try {
+      // Buat direktori upload seperti bulk purchase order
+      const today = new Date().toISOString().split('T')[0]!;
+      const uploadDir = path.join(process.cwd(), 'fileuploaded', 'laporan-penerimaan-barang', today);
+      await fs.promises.mkdir(uploadDir, { recursive: true });
+
+      // Generate filename dengan prefix seperti bulk purchase order
+      const filename = generateFilenameWithPrefix('LPB', originalFilename);
+      const filepath = path.join(uploadDir, filename);
+      tempFilepath = filepath;
+
+      // Simpan file ke filesystem
+      await fs.promises.writeFile(filepath, file);
+
+      // Get file stats
+      const stats = await fs.promises.stat(filepath);
+
+      // Buat file uploaded record dengan path yang benar
+      const fileUploaded = await prisma.fileUploaded.create({
+        data: {
+          filename: originalFilename, // Original filename
+          path: filepath, // Full path ke file
+          mimetype: mimeType,
+          size: stats.size,
+          createdBy: userId,
+        },
+      });
+
+      // Default prompt jika tidak ada
+      const defaultPrompt = prompt || 
+        'Convert this document into structured JSON format for goods receipt report. ' +
+        'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
+
+      try {
+        // Konversi file menggunakan ConversionService dengan schema laporan penerimaan barang
+        const convertedData = await ConversionService.convertFileToJson(
+          file,
+          mimeType,
+          defaultPrompt,
+          'laporan-penerimaan-barang'
+        );
+
+        // Buat data LPB dari converted data
+        let lpbData: any = null;
+        try {
+          lpbData = await this.createLpbFromConvertedData(convertedData, userId);
+        } catch (lpbError) {
+          logger.warn('Failed to create LPB data from converted data', { error: lpbError });
+          // Tidak throw error, karena file upload dan konversi sudah berhasil
+        }
+
+        return {
+          lpbData,
+        };
+      } catch (error) {
+        // Jika konversi gagal, hapus file yang sudah diupload
+        await prisma.fileUploaded.delete({
+          where: { id: fileUploaded.id },
+        });
+        
+        // Hapus file dari filesystem juga
+        if (tempFilepath) {
+          try {
+            await fs.promises.unlink(tempFilepath);
+          } catch (unlinkError) {
+            logger.warn('Failed to delete temp file', { tempFilepath, error: unlinkError });
+          }
+        }
+        
+        throw error;
+      }
+    } catch (error) {
+      // Jika ada error dalam proses upload file, cleanup
+      if (tempFilepath) {
+        try {
+          await fs.promises.unlink(tempFilepath);
+        } catch (unlinkError) {
+          logger.warn('Failed to delete temp file during cleanup', { tempFilepath, error: unlinkError });
+        }
+      }
+      throw error;
+    }
+  }
+
+  private static async createLpbFromConvertedData(
+    convertedData: any,
+    userId?: string
+  ) {
+    // Mapping converted data ke format yang sesuai untuk LPB
+    const lpbData = {
+      fppNumber: convertedData.fppNumber,
+      orderDate: convertedData.orderDate,
+      deliveryDate: convertedData.deliveryDate,
+      deliveryTime: convertedData.deliveryTime,
+      door: convertedData.door,
+      lpbNumber: convertedData.lpbNumber,
+      supplier: convertedData.supplier,
+      items: convertedData.items,
+      pricing: convertedData.pricing,
+      payment: convertedData.payment,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+
+    const purchaseOrder = await prisma.purchaseOrder.findFirst({
+      where: {
+        po_number: convertedData.fppNumber,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const statusId = await prisma.status.findUnique({
+      where: {
+        status_code_category: {
+          status_code: 'PENDING LAPORAN PENERIMAAN BARANG',
+          category: 'Laporan Penerimaan Barang'
+        }
+      },
+    });
+
+
+    try {
+      const createData: any = {
+        tanggal_po: convertedData.orderDate ? new Date(convertedData.orderDate) : null,
+        createdBy: userId || 'system',
+        updatedBy: userId || 'system',
+      };
+
+      if (purchaseOrder) {
+        logger.info('Found purchase order for LPB creation', { 
+          purchaseOrderId: purchaseOrder.id,
+          poNumber: purchaseOrder.po_number 
+        });
+
+        createData.purchaseOrder = {
+          connect: { id: purchaseOrder.id },
+        };
+        createData.customer = {
+          connect: { id: purchaseOrder.customerId },
+        };
+
+        if (purchaseOrder.termin_bayar) {
+          createData.termin_bayar = purchaseOrder.termin_bayar;
+        }
+        if (statusId) {
+          createData.status = {
+            connect: { id: statusId.id },
+          };
+        }
+      } else {
+        logger.warn('Purchase Order not found, creating LPB without purchase order relation', {
+          fppNumber: convertedData.fppNumber
+        });
+      }
+
+      const laporanPenerimaanBarang = await prisma.laporanPenerimaanBarang.create({
+        data: createData,
+      });
+
+      logger.info('LPB data saved to database', { 
+        laporanId: laporanPenerimaanBarang.id,
+        lpbData: lpbData 
+      });
+
+      return {
+        ...lpbData,
+        laporanPenerimaanBarangId: laporanPenerimaanBarang.id,
+        savedToDatabase: true,
+      };
+    } catch (error) {
+      logger.error('Failed to save LPB data to database', { error, lpbData });
+      throw new AppError('Failed to save LPB data to database', 500);
     }
   }
 }

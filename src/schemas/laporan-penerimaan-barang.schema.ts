@@ -6,7 +6,6 @@ export const createLaporanPenerimaanBarangSchema = z.object({
     purchaseOrderId: z.string({ required_error: 'Purchase Order ID is required' }).describe('The ID of the related purchase order'),
     tanggal_po: z.coerce.date().optional().describe('The purchase order date'),
     customerId: z.string({ required_error: 'Customer ID is required' }).describe('The ID of the related customer'),
-    alamat_customer: z.string().optional().describe('Customer address'),
     termin_bayar: z.string().optional().describe('The ID of the payment term'),
     statusId: z.string().optional().describe('The ID of the status'),
     files: z.array(z.string()).optional().describe('List of uploaded file IDs associated with the report'),
@@ -27,7 +26,6 @@ export const updateLaporanPenerimaanBarangSchema = z.object({
     purchaseOrderId: z.string().optional().describe('The ID of the related purchase order'),
     tanggal_po: z.coerce.date().optional().describe('The purchase order date'),
     customerId: z.string().optional().describe('The ID of the related customer'),
-    alamat_customer: z.string().optional().describe('Customer address'),
     termin_bayar: z.string().optional().describe('The ID of the payment term'),
     statusId: z.string().optional().describe('The ID of the status'),
     files: z.array(z.string()).optional().describe('List of uploaded file IDs associated with the report'),
@@ -52,7 +50,14 @@ export const searchLaporanPenerimaanBarangSchema = z.object({
     .merge(paginationSchema),
 });
 
+export const uploadFileLaporanPenerimaanBarangSchema = z.object({
+  body: z.object({
+    prompt: z.string().optional().describe('Custom prompt for file conversion'),
+  }).optional(),
+});
+
 export type CreateLaporanPenerimaanBarangInput = z.infer<typeof createLaporanPenerimaanBarangSchema>['body'];
 export type UpdateLaporanPenerimaanBarangInput = z.infer<typeof updateLaporanPenerimaanBarangSchema>;
 export type GetAllLaporanPenerimaanBarangInput = z.infer<typeof getAllLaporanPenerimaanBarangSchema>;
 export type SearchLaporanPenerimaanBarangInput = z.infer<typeof searchLaporanPenerimaanBarangSchema>;
+export type UploadFileLaporanPenerimaanBarangInput = z.infer<typeof uploadFileLaporanPenerimaanBarangSchema>;
