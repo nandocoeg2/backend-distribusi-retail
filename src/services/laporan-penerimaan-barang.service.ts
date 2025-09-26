@@ -376,6 +376,285 @@ export class LaporanPenerimaanBarangService extends BaseService<
     }
   }
 
+  static async uploadBulkFilesAndProcess(
+    files: Array<{
+      filename: string;
+      path: string;
+      mimetype: string;
+      size: number;
+      createdBy: string;
+    }>,
+    batchId: string,
+    prompt?: string,
+    userId?: string
+  ): Promise<{
+    batchId: string;
+    totalFiles: number;
+    message: string;
+  }> {
+    try {
+      // Simpan file records ke database
+      const fileRecords: Array<{
+        id: string;
+        path: string;
+        buffer: Buffer;
+        mimeType: string;
+        originalFilename: string;
+      }> = [];
+
+      for (const file of files) {
+        try {
+          // Buat file uploaded record
+          const fileUploaded = await prisma.fileUploaded.create({
+            data: {
+              filename: file.filename,
+              path: file.path,
+              mimetype: file.mimetype,
+              size: file.size,
+              createdBy: file.createdBy,
+            },
+          });
+
+          // Baca file untuk background processing
+          const buffer = await fs.promises.readFile(file.path);
+
+          fileRecords.push({
+            id: fileUploaded.id,
+            path: file.path,
+            buffer: buffer,
+            mimeType: file.mimetype,
+            originalFilename: file.filename,
+          });
+
+          await createAuditLog('FileUploaded', fileUploaded.id, ActionType.CREATE, userId || 'system', {
+            filename: file.filename,
+            path: file.path,
+            mimetype: file.mimetype,
+            size: file.size,
+            batchId: batchId,
+          });
+        } catch (fileError) {
+          logger.error('Failed to save file in bulk upload', { 
+            filename: file.filename, 
+            error: fileError 
+          });
+        }
+      }
+
+      // Proses file di background (async)
+      this.processBulkFilesInBackground(fileRecords, batchId, prompt, userId);
+
+      return {
+        batchId: batchId,
+        totalFiles: fileRecords.length,
+        message: `Bulk upload berhasil. ${fileRecords.length} file akan diproses di background.`
+      };
+    } catch (error) {
+      logger.error('Failed to upload bulk files', { error });
+      throw new AppError('Failed to upload bulk files', 500);
+    }
+  }
+
+  static async getBulkProcessingStatus(batchId: string) {
+    // Cari file yang terkait dengan batch ID ini berdasarkan path yang mengandung batch ID
+    const files = await prisma.fileUploaded.findMany({
+      where: {
+        OR: [
+          {
+            path: {
+              contains: batchId
+            }
+          },
+          {
+            // Fallback: cari berdasarkan pattern bulk laporan penerimaan barang
+            path: {
+              contains: 'laporan-penerimaan-barang/bulk'
+            },
+            filename: {
+              contains: 'LPB_BULK'
+            }
+          }
+        ]
+      },
+      select: {
+        id: true,
+        filename: true,
+        laporanPenerimaanBarangId: true,
+        createdAt: true,
+        path: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (files.length === 0) {
+      throw new AppError('Batch not found', 404);
+    }
+
+    // Hitung statistik
+    const totalFiles = files.length;
+    const processedFiles = files.filter(f => f.laporanPenerimaanBarangId).length;
+    const successFiles = processedFiles;
+    const errorFiles = totalFiles - processedFiles;
+
+    // Tentukan status berdasarkan progress
+    let status = 'PENDING BULK LAPORAN PENERIMAAN BARANG';
+    if (processedFiles > 0 && processedFiles < totalFiles) {
+      status = 'PROCESSING BULK LAPORAN PENERIMAAN BARANG';
+    } else if (processedFiles === totalFiles) {
+      status = 'COMPLETED BULK LAPORAN PENERIMAAN BARANG';
+    }
+
+    return {
+      batchId: batchId,
+      type: 'LAPORAN_PENERIMAAN_BARANG',
+      status: status,
+      totalFiles: totalFiles,
+      processedFiles: processedFiles,
+      successFiles: successFiles,
+      errorFiles: errorFiles,
+      createdAt: files[0]?.createdAt,
+      completedAt: processedFiles === totalFiles ? new Date() : null,
+      files: files,
+    };
+  }
+
+  static async getAllBulkFiles(status?: string) {
+    const whereClause: any = {
+      path: {
+        contains: 'laporan-penerimaan-barang/bulk'
+      },
+      filename: {
+        contains: 'LPB_BULK'
+      }
+    };
+
+    if (status) {
+      whereClause.laporanPenerimaanBarangId = status === 'processed' ? { not: null } : null;
+    }
+
+    const files = await prisma.fileUploaded.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        filename: true,
+        path: true,
+        mimetype: true,
+        size: true,
+        laporanPenerimaanBarangId: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return files;
+  }
+
+  private static async processBulkFilesInBackground(
+    fileRecords: Array<{
+      id: string;
+      path: string;
+      buffer: Buffer;
+      mimeType: string;
+      originalFilename: string;
+    }>,
+    batchId: string,
+    prompt?: string,
+    userId?: string
+  ) {
+    let processedCount = 0;
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (const fileRecord of fileRecords) {
+        try {
+          // Default prompt jika tidak ada
+          const defaultPrompt = prompt || 
+            'Convert this document into structured JSON format for goods receipt report. ' +
+            'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
+
+          // Konversi file menggunakan ConversionService
+          const convertedData = await ConversionService.convertFileToJson(
+            fileRecord.buffer,
+            fileRecord.mimeType,
+            defaultPrompt,
+            'laporan-penerimaan-barang'
+          );
+
+          // Buat data LPB dari converted data
+          try {
+            const lpbData = await this.createLpbFromConvertedData(convertedData, userId);
+            
+            // Hubungkan file dengan LPB yang baru dibuat
+            if (lpbData && lpbData.laporanPenerimaanBarangId) {
+              await prisma.fileUploaded.update({
+                where: { id: fileRecord.id },
+                data: {
+                  laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+                },
+              });
+              
+              await createAuditLog('FileUploaded', fileRecord.id, ActionType.UPDATE, userId || 'system', {
+                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+                batchId: batchId,
+              });
+              
+              successCount++;
+              logger.info('Bulk file processed successfully', {
+                fileId: fileRecord.id,
+                lpbId: lpbData.laporanPenerimaanBarangId,
+                batchId,
+              });
+            }
+          } catch (lpbError) {
+            logger.warn('Failed to create LPB data from converted data in bulk processing', { 
+              fileId: fileRecord.id,
+              error: lpbError 
+            });
+            errorCount++;
+          }
+        } catch (conversionError) {
+          logger.error('Failed to convert file in bulk processing', { 
+            fileId: fileRecord.id,
+            filename: fileRecord.originalFilename,
+            error: conversionError 
+          });
+          errorCount++;
+        }
+
+        processedCount++;
+
+        // Log progress setiap 10 file
+        if (processedCount % 10 === 0) {
+          logger.info('Bulk processing progress', {
+            batchId,
+            processedFiles: processedCount,
+            successFiles: successCount,
+            errorFiles: errorCount,
+            totalFiles: fileRecords.length,
+          });
+        }
+      }
+
+      logger.info('Bulk processing completed', {
+        batchId,
+        totalFiles: fileRecords.length,
+        processedFiles: processedCount,
+        successFiles: successCount,
+        errorFiles: errorCount,
+      });
+
+    } catch (error) {
+      logger.error('Bulk processing failed', { batchId, error });
+    }
+  }
+
   private static async createLpbFromConvertedData(
     convertedData: any,
     userId?: string

@@ -8,6 +8,13 @@ import {
   SearchLaporanPenerimaanBarangInput,
   UpdateLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
+import { generateFilenameWithPrefix } from '@/utils/random.utils';
+import * as fs from 'fs';
+import * as path from 'path';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+
+const pump = promisify(pipeline);
 
 export class LaporanPenerimaanBarangController {
   static async create(
@@ -134,5 +141,103 @@ export class LaporanPenerimaanBarangController {
       message: 'File uploaded and converted successfully',
       lpbData: result.lpbData,
     }));
+  }
+
+  static async uploadBulkFiles(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    if (!request.isMultipart()) {
+      return reply.code(400).send(ResponseUtil.error('Request is not multipart'));
+    }
+
+    if (!request.user) {
+      return reply.code(401).send(ResponseUtil.error('User not authenticated'));
+    }
+
+    const userId = request.user.id;
+    const createdFiles: any[] = [];
+    const tempFilepaths: string[] = [];
+    let prompt: string | undefined;
+
+    // Generate batch ID untuk tracking
+    const batchId = `bulk_lpb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    try {
+      for await (const part of request.parts()) {
+        if (part.type === 'file') {
+          const today = new Date().toISOString().split('T')[0]!;
+          const uploadDir = path.join(process.cwd(), 'fileuploaded', 'laporan-penerimaan-barang', 'bulk', today);
+          await fs.promises.mkdir(uploadDir, { recursive: true });
+
+          const filename = generateFilenameWithPrefix('LPB_BULK', part.filename);
+          const filepath = path.join(uploadDir, `${batchId}_${filename}`);
+          tempFilepaths.push(filepath);
+
+          await pump(part.file, fs.createWriteStream(filepath));
+
+          const stats = await fs.promises.stat(filepath);
+
+          const fileData = {
+            filename: part.filename,
+            path: filepath,
+            mimetype: part.mimetype,
+            size: stats.size,
+            createdBy: userId,
+          };
+
+          createdFiles.push(fileData);
+        } else if (part.type === 'field' && part.fieldname === 'prompt') {
+          prompt = part.value as string;
+        }
+      }
+
+      if (createdFiles.length === 0) {
+        return reply.code(400).send(ResponseUtil.error('At least one file is required for bulk upload'));
+      }
+
+      // Proses file di background
+      const result = await LaporanPenerimaanBarangService.uploadBulkFilesAndProcess(
+        createdFiles,
+        batchId,
+        prompt,
+        userId
+      );
+
+      return reply.code(201).send(ResponseUtil.success({
+        message: result.message,
+        batchId: result.batchId,
+        totalFiles: result.totalFiles,
+      }));
+    } catch (error) {
+      // Cleanup temp files
+      if (tempFilepaths.length > 0) {
+        for (const filepath of tempFilepaths) {
+          await fs.promises.unlink(filepath).catch(console.error);
+        }
+      }
+      
+      logger.error('Error in bulk file upload', { error });
+      return reply.code(500).send(ResponseUtil.error('Failed to process bulk upload'));
+    }
+  }
+
+  static async getBulkProcessingStatus(
+    request: FastifyRequest<{ Params: { batchId: string } }>,
+    reply: FastifyReply
+  ) {
+    const result = await LaporanPenerimaanBarangService.getBulkProcessingStatus(
+      request.params.batchId
+    );
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async getAllBulkFiles(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const { status } = request.query as { status?: string };
+    const files = await LaporanPenerimaanBarangService.getAllBulkFiles(status);
+    return reply.send(ResponseUtil.success(files));
   }
 }

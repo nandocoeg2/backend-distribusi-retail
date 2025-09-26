@@ -538,6 +538,145 @@ Form Data:
 - ✅ Validation schema
 - ✅ Support berbagai format file (PDF, DOC, XLS, Images)
 
+---
+
+### 8. Upload Bulk Files dan Konversi
+Mengupload multiple files sekaligus, melakukan konversi otomatis ke format JSON menggunakan Google Gemini AI, dan membuat data LPB (Laporan Penerimaan Barang) dari hasil konversi. Proses dilakukan di background.
+
+**Endpoint:** `POST /upload-bulk`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body (multipart/form-data):**
+- `files` (required): Multiple files yang akan diupload dan dikonversi
+- `prompt` (optional): Custom prompt untuk konversi file
+
+**Supported File Types:**
+- PDF (.pdf) 
+- EDI (.EDI) 
+
+**Example Request:**
+```
+POST /api/v1/laporan-penerimaan-barang/upload-bulk
+Content-Type: multipart/form-data
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Form Data:
+- files: [binary file data 1]
+- files: [binary file data 2]
+- files: [binary file data 3]
+- prompt: Convert these documents into structured JSON format for goods receipt report
+```
+
+**Response Success (201 Created):**
+```json
+{
+  "success": true,
+  "message": "Bulk upload berhasil. 3 file akan diproses di background.",
+  "data": {
+    "batchId": "clx1p0d3j000108l8g2f3d9b4",
+    "totalFiles": 3
+  }
+}
+```
+
+**Response Error (400 Bad Request):**
+```json
+{
+  "success": false,
+  "message": "No files uploaded",
+  "error": "Bad Request"
+}
+```
+
+---
+
+### 9. Get Bulk Processing Status
+Mendapatkan status progress dari bulk processing.
+
+**Endpoint:** `GET /bulk-status/:batchId`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `batchId` (required): ID batch processing
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "batchId": "clx1p0d3j000108l8g2f3d9b4",
+    "type": "LAPORAN_PENERIMAAN_BARANG",
+    "status": "COMPLETED",
+    "totalFiles": 3,
+    "processedFiles": 3,
+    "successFiles": 2,
+    "errorFiles": 1,
+    "createdAt": "2024-09-24T10:00:00.000Z",
+    "completedAt": "2024-09-24T10:05:00.000Z",
+    "files": [
+      {
+        "id": "file1",
+        "filename": "lpb1.pdf",
+        "laporanPenerimaanBarangId": "lpb1",
+        "createdAt": "2024-09-24T10:00:00.000Z"
+      },
+      {
+        "id": "file2",
+        "filename": "lpb2.pdf",
+        "laporanPenerimaanBarangId": "lpb2",
+        "createdAt": "2024-09-24T10:00:00.000Z"
+      },
+      {
+        "id": "file3",
+        "filename": "lpb3.pdf",
+        "laporanPenerimaanBarangId": null,
+        "createdAt": "2024-09-24T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "Batch not found",
+  "error": "Not Found"
+}
+```
+
+**Batch Status Values:**
+- `PENDING`: Batch baru dibuat, belum mulai diproses
+- `PROCESSING`: Batch sedang diproses di background
+- `COMPLETED`: Batch selesai diproses (berhasil atau ada error)
+- `FAILED`: Batch gagal diproses
+
+**Features:**
+- ✅ Upload multiple files sekaligus
+- ✅ Background processing untuk performa yang lebih baik
+- ✅ Progress tracking dengan batch status
+- ✅ Konversi otomatis ke JSON menggunakan Google Gemini AI
+- ✅ Pembuatan data LPB otomatis dari hasil konversi
+- ✅ Custom prompt support
+- ✅ Error handling dengan rollback
+- ✅ Authentication required
+- ✅ Support berbagai format file (PDF, DOC, XLS, Images)
+
 **Default Prompt:**
 Jika tidak ada custom prompt yang diberikan, sistem akan menggunakan prompt default:
 ```

@@ -210,6 +210,32 @@ const ALL_STATUSES: StatusData[] = [
     category: 'Laporan Penerimaan Barang'
   },
 
+  // Bulk Processing Laporan Penerimaan Barang Status
+  {
+    status_code: 'PENDING BULK LAPORAN PENERIMAAN BARANG',
+    status_name: 'Pending Bulk Laporan Penerimaan Barang',
+    status_description: 'Bulk laporan penerimaan barang menunggu diproses',
+    category: 'Bulk Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'PROCESSING BULK LAPORAN PENERIMAAN BARANG',
+    status_name: 'Processing Bulk Laporan Penerimaan Barang',
+    status_description: 'Bulk laporan penerimaan barang sedang diproses',
+    category: 'Bulk Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'COMPLETED BULK LAPORAN PENERIMAAN BARANG',
+    status_name: 'Completed Bulk Laporan Penerimaan Barang',
+    status_description: 'Bulk laporan penerimaan barang telah selesai diproses',
+    category: 'Bulk Laporan Penerimaan Barang'
+  },
+  {
+    status_code: 'FAILED BULK LAPORAN PENERIMAAN BARANG',
+    status_name: 'Failed Bulk Laporan Penerimaan Barang',
+    status_description: 'Bulk laporan penerimaan barang gagal diproses',
+    category: 'Bulk Laporan Penerimaan Barang'
+  },
+
   // Invoice Penagihan Status
   {
     status_code: 'PENDING INVOICE PENAGIHAN',

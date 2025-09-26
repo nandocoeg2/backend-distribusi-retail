@@ -1,0 +1,22 @@
+meta {
+  name: Upload Bulk Files
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/upload-bulk
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:multipart-form {
+  file: @file(D:\Project\sampledata-pt-doven\2. Laporan Penerimaan Barang\ERP_LPB.pdf)
+  file: @file(D:\Project\sampledata-pt-doven\2. Laporan Penerimaan Barang\ERP_LPB.pdf)
+  file: @file(D:\Project\sampledata-pt-doven\2. Laporan Penerimaan Barang\ERP_LPB.pdf)
+  prompt: Convert these documents into structured JSON format for goods receipt report. Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.
+}

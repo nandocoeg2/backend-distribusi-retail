@@ -133,5 +133,48 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
     LaporanPenerimaanBarangController.uploadFile
   );
 
+  fastify.post(
+    '/upload-bulk',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        security: [{ Bearer: [] }],
+        consumes: ['multipart/form-data'],
+      },
+      preHandler: [
+        fastify.authenticate,
+      ],
+    },
+    LaporanPenerimaanBarangController.uploadBulkFiles
+  );
+
+  fastify.get(
+    '/bulk-status/:batchId',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [
+        fastify.authenticate,
+      ],
+    },
+    LaporanPenerimaanBarangController.getBulkProcessingStatus
+  );
+
+  fastify.get(
+    '/bulk-files',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [
+        fastify.authenticate,
+      ],
+    },
+    LaporanPenerimaanBarangController.getAllBulkFiles
+  );
+
   done();
 };
