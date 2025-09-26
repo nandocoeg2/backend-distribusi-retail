@@ -34,7 +34,11 @@ Membuat data inventory baru.
   "stok_c": 10,
   "stok_q": 50,
   "harga_barang": 25000,
-  "min_stok": 15
+  "min_stok": 15,
+  "berat": 2.5,
+  "panjang": 35,
+  "lebar": 25,
+  "tinggi": 5
 }
 ```
 
@@ -45,6 +49,10 @@ Membuat data inventory baru.
 - `stok_q`: **Required** - Stok dalam pcs (pieces)
 - `harga_barang`: **Required** - Harga barang
 - `min_stok`: Optional - Minimum stok level (default: 10)
+- `berat`: Optional - Berat dalam kg (default: 0)
+- `panjang`: Optional - Panjang dalam cm (default: 0)
+- `lebar`: Optional - Lebar dalam cm (default: 0)
+- `tinggi`: Optional - Tinggi dalam cm (default: 0)
 - `createdBy`: Optional - User yang membuat (auto-generated)
 - `updatedBy`: Optional - User yang mengupdate (auto-generated)
 
@@ -63,7 +71,19 @@ Membuat data inventory baru.
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "createdBy": "user-uuid",
-    "updatedBy": "user-uuid"
+    "updatedBy": "user-uuid",
+    "dimensiKardus": {
+      "id": "dimensi-uuid",
+      "inventoryId": "inventory-uuid",
+      "berat": 2.5,
+      "panjang": 35,
+      "lebar": 25,
+      "tinggi": 5,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "user-uuid",
+      "updatedBy": "user-uuid"
+    }
   }
 }
 ```
@@ -221,7 +241,11 @@ Memperbarui data inventory berdasarkan ID.
   "stok_c": 12,
   "stok_q": 75,
   "harga_barang": 30000,
-  "min_stok": 20
+  "min_stok": 20,
+  "berat": 3.0,
+  "panjang": 40,
+  "lebar": 30,
+  "tinggi": 6
 }
 ```
 
@@ -233,6 +257,10 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
 - `stok_q`: Optional - Stok dalam pcs
 - `harga_barang`: Optional - Harga barang
 - `min_stok`: Optional - Minimum stok level
+- `berat`: Optional - Berat dalam kg
+- `panjang`: Optional - Panjang dalam cm
+- `lebar`: Optional - Lebar dalam cm
+- `tinggi`: Optional - Tinggi dalam cm
 - `updatedBy`: Optional - User yang mengupdate (auto-generated)
 
 **Response Success (200 OK):**
@@ -250,7 +278,19 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T12:00:00.000Z",
     "createdBy": "user-uuid",
-    "updatedBy": "user-uuid"
+    "updatedBy": "user-uuid",
+    "dimensiKardus": {
+      "id": "dimensi-uuid",
+      "inventoryId": "inventory-uuid",
+      "berat": 3.0,
+      "panjang": 40,
+      "lebar": 30,
+      "tinggi": 6,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T12:00:00.000Z",
+      "createdBy": "user-uuid",
+      "updatedBy": "user-uuid"
+    }
   }
 }
 ```
@@ -424,7 +464,19 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "createdAt": "DateTime (ISO 8601)",
   "updatedAt": "DateTime (ISO 8601)",
   "createdBy": "string (UUID)",
-  "updatedBy": "string (UUID)"
+  "updatedBy": "string (UUID)",
+  "dimensiKardus": {
+    "id": "string (UUID)",
+    "inventoryId": "string (UUID, unique)",
+    "berat": "number (kg)",
+    "panjang": "number (cm)",
+    "lebar": "number (cm)",
+    "tinggi": "number (cm)",
+    "createdAt": "DateTime (ISO 8601)",
+    "updatedAt": "DateTime (ISO 8601)",
+    "createdBy": "string (UUID)",
+    "updatedBy": "string (UUID)"
+  }
 }
 ```
 
@@ -445,3 +497,6 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 - Search mendukung pencarian berdasarkan nama barang dan PLU
 - Inventory digunakan untuk mengelola stok barang dalam sistem
 - Sistem memiliki audit log untuk semua operasi CRUD
+- **Dimensi Kardus**: Setiap inventory akan otomatis memiliki record dimensi kardus (relasi 1:1)
+- Field dimensi kardus (berat, panjang, lebar, tinggi) bersifat opsional dengan default 0
+- Dimensi kardus dapat diupdate bersamaan dengan data inventory

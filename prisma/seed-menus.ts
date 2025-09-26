@@ -70,6 +70,16 @@ async function main() {
   });
 
   await prisma.menu.upsert({
+    where: { name: 'Dimensi Kardus' },
+    update: {},
+    create: {
+      name: 'Dimensi Kardus',
+      url: '/master/dimensi-kardus',
+      parentId: masterDataMenu.id,
+    },
+  });
+
+  await prisma.menu.upsert({
     where: { name: 'Term Of Payment' },
     update: {},
     create: {

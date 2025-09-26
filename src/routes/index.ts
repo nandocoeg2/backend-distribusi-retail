@@ -23,6 +23,7 @@ import { companyRoutes } from './company.routes';
 import { groupCustomerRoutes } from './group-customer.routes';
 import { itemPriceRoutes } from './item-price.routes';
 import { laporanPenerimaanBarangRoutes } from './laporan-penerimaan-barang.routes';
+import { dimensiKardusRoutes } from './dimensi-kardus.routes';
 
 export default async (fastify: App) => {
   fastify.register(authRoutes, { prefix: '/auth' });
@@ -49,4 +50,5 @@ export default async (fastify: App) => {
   fastify.register(historyPengirimanRoutes, { prefix: '/history-pengiriman' });
   fastify.register(itemPriceRoutes, { prefix: '/item-prices' });
   fastify.register(laporanPenerimaanBarangRoutes, { prefix: '/laporan-penerimaan-barang' });
+  fastify.register(dimensiKardusRoutes, { prefix: '/dimensi-kardus' });
 };

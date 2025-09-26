@@ -200,6 +200,7 @@ model Inventory {
   purchaseOrderDetails PurchaseOrderDetail[]
   packingItems         PackingItem[]
   itemPrices           ItemPrice[]
+  dimensiKardus        DimensiKardus?
 
   @@map("inventories")
 }
@@ -589,4 +590,20 @@ model InvoicePenagihanDetail {
   invoicePenagihan       InvoicePenagihan  @relation(fields: [invoicePenagihanId], references: [id], onDelete: Cascade)
 
   @@map("invoice_penagihan_detail")
+}
+
+model DimensiKardus {
+  id          String    @id @default(cuid())
+  inventoryId String    @unique
+  berat       Float
+  panjang     Float
+  lebar       Float
+  tinggi      Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String
+  updatedBy   String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@map("dimensi_kardus")
 }

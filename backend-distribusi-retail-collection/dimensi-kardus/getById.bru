@@ -1,0 +1,20 @@
+meta {
+  name: getById
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:5050/api/v1/dimensi-kardus/{{id}}
+  body: none
+  auth: bearer
+}
+
+vars:multi {
+  id: <id>
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+

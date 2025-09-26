@@ -19,6 +19,11 @@ export const createInventorySchema = z.object({
       required_error: 'Harga barang is required',
     }).describe('Price of the item'),
     min_stok: z.number().optional().default(10).describe('Minimum stock level'),
+    // Dimensi Kardus fields
+    berat: z.number().optional().default(0).describe('Berat dalam kg'),
+    panjang: z.number().optional().default(0).describe('Panjang dalam cm'),
+    lebar: z.number().optional().default(0).describe('Lebar dalam cm'),
+    tinggi: z.number().optional().default(0).describe('Tinggi dalam cm'),
     createdBy: z.string().optional().describe('User who created the inventory item'),
     updatedBy: z.string().optional().describe('User who updated the inventory item'),
   }),
@@ -32,6 +37,11 @@ export const updateInventorySchema = z.object({
     stok_q: z.number().optional().describe('Stock in pieces'),
     harga_barang: z.number().optional().describe('Price of the item'),
     min_stok: z.number().optional().describe('Minimum stock level'),
+    // Dimensi Kardus fields (optional for update)
+    berat: z.number().optional().describe('Berat dalam kg'),
+    panjang: z.number().optional().describe('Panjang dalam cm'),
+    lebar: z.number().optional().describe('Lebar dalam cm'),
+    tinggi: z.number().optional().describe('Tinggi dalam cm'),
     updatedBy: z.string().optional().describe('User who updated the inventory item'),
   }),
   params: z.object({

@@ -1,0 +1,29 @@
+meta {
+  name: update
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://localhost:5050/api/v1/dimensi-kardus/{{id}}
+  body: json
+  auth: bearer
+}
+
+vars:multi {
+  id: <id>
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "berat": 1.5,
+    "panjang": 35,
+    "lebar": 22,
+    "tinggi": 18
+  }
+}
+
