@@ -15,6 +15,223 @@ import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { createAuditLog } from './audit.service';
+import { BaseBulkUploadService, BulkFileData, BulkUploadResult } from './base-bulk-upload.service';
+import { generateBulkLpbId } from '@/utils/bulk-id.utils';
+
+export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
+  protected category = 'laporan_penerimaan_barang';
+
+  protected async processFilesInBackground(
+    fileRecords: Array<{
+      id: string;
+      path: string;
+      buffer: Buffer;
+      mimeType: string;
+      originalFilename: string;
+    }>,
+    bulkId: string,
+    prompt?: string,
+    userId?: string
+  ): Promise<void> {
+    let processedCount = 0;
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      // Update status ke processing
+      for (const fileRecord of fileRecords) {
+        await this.updateFileStatus(fileRecord.id, 'PROCESSING BULK LAPORAN PENERIMAAN BARANG', userId);
+      }
+
+      for (const fileRecord of fileRecords) {
+        try {
+          // Default prompt jika tidak ada
+          const defaultPrompt = prompt || 
+            'Convert this document into structured JSON format for goods receipt report. ' +
+            'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
+
+          // Konversi file menggunakan ConversionService
+          const convertedData = await ConversionService.convertFileToJson(
+            fileRecord.buffer,
+            fileRecord.mimeType,
+            defaultPrompt,
+            'laporan-penerimaan-barang'
+          );
+
+          // Buat data LPB dari converted data
+          try {
+            const bulkService = new LaporanPenerimaanBarangBulkService();
+            const lpbData = await bulkService.createLpbFromConvertedData(convertedData, userId);
+            
+            // Hubungkan file dengan LPB yang baru dibuat
+            if (lpbData && lpbData.laporanPenerimaanBarangId) {
+              await prisma.fileUploaded.update({
+                where: { id: fileRecord.id },
+                data: {
+                  laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+                },
+              });
+              
+              await createAuditLog('FileUploaded', fileRecord.id, ActionType.UPDATE, userId || 'system', {
+                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+                bulkId: bulkId,
+              });
+
+              // Update status ke completed
+              await this.updateFileStatus(fileRecord.id, 'COMPLETED BULK LAPORAN PENERIMAAN BARANG', userId);
+              
+              successCount++;
+              logger.info('Bulk file processed successfully', {
+                fileId: fileRecord.id,
+                lpbId: lpbData.laporanPenerimaanBarangId,
+                bulkId,
+              });
+            }
+          } catch (lpbError) {
+            logger.warn('Failed to create LPB data from converted data in bulk processing', { 
+              fileId: fileRecord.id,
+              error: lpbError 
+            });
+            // Update status ke failed
+            await this.updateFileStatus(fileRecord.id, 'FAILED BULK LAPORAN PENERIMAAN BARANG', userId);
+            errorCount++;
+          }
+        } catch (conversionError) {
+          logger.error('Failed to convert file in bulk processing', { 
+            fileId: fileRecord.id,
+            filename: fileRecord.originalFilename,
+            error: conversionError 
+          });
+          // Update status ke failed
+          await this.updateFileStatus(fileRecord.id, 'FAILED BULK LAPORAN PENERIMAAN BARANG', userId);
+          errorCount++;
+        }
+
+        processedCount++;
+
+        // Log progress setiap 10 file
+        if (processedCount % 10 === 0) {
+          logger.info('Bulk processing progress', {
+            bulkId,
+            processedFiles: processedCount,
+            successFiles: successCount,
+            errorFiles: errorCount,
+            totalFiles: fileRecords.length,
+          });
+        }
+      }
+
+      logger.info('Bulk processing completed', {
+        bulkId,
+        totalFiles: fileRecords.length,
+        processedFiles: processedCount,
+        successFiles: successCount,
+        errorFiles: errorCount,
+      });
+
+    } catch (error) {
+      logger.error('Bulk processing failed', { bulkId, error });
+    }
+  }
+
+  public async createLpbFromConvertedData(
+    convertedData: any,
+    userId?: string
+  ) {
+    // Mapping converted data ke format yang sesuai untuk LPB
+    const lpbData = {
+      fppNumber: convertedData.fppNumber,
+      orderDate: convertedData.orderDate,
+      deliveryDate: convertedData.deliveryDate,
+      deliveryTime: convertedData.deliveryTime,
+      door: convertedData.door,
+      lpbNumber: convertedData.lpbNumber,
+      supplier: convertedData.supplier,
+      items: convertedData.items,
+      pricing: convertedData.pricing,
+      payment: convertedData.payment,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+
+    const purchaseOrder = await prisma.purchaseOrder.findFirst({
+      where: {
+        po_number: convertedData.fppNumber,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const statusId = await prisma.status.findUnique({
+      where: {
+        status_code_category: {
+          status_code: 'PENDING LAPORAN PENERIMAAN BARANG',
+          category: 'Laporan Penerimaan Barang'
+        }
+      },
+    });
+
+    try {
+      const createData: any = {
+        tanggal_po: convertedData.orderDate ? new Date(convertedData.orderDate) : null,
+        createdBy: userId || 'system',
+        updatedBy: userId || 'system',
+      };
+
+      if (purchaseOrder) {
+        logger.info('Found purchase order for LPB creation', { 
+          purchaseOrderId: purchaseOrder.id,
+          poNumber: purchaseOrder.po_number 
+        });
+
+        createData.purchaseOrder = {
+          connect: { id: purchaseOrder.id },
+        };
+        createData.customer = {
+          connect: { id: purchaseOrder.customerId },
+        };
+
+        if (purchaseOrder.termin_bayar) {
+          createData.termin_bayar = purchaseOrder.termin_bayar;
+        }
+        if (statusId) {
+          createData.status = {
+            connect: { id: statusId.id },
+          };
+        }
+      } else {
+        logger.warn('Purchase Order not found, creating LPB without purchase order relation', {
+          fppNumber: convertedData.fppNumber
+        });
+      }
+
+      const laporanPenerimaanBarang = await prisma.laporanPenerimaanBarang.create({
+        data: createData,
+      });
+
+      await createAuditLog('LaporanPenerimaanBarang', laporanPenerimaanBarang.id, ActionType.CREATE, userId || 'system', {
+        purchaseOrderId: purchaseOrder?.id ?? null,
+        customerId: purchaseOrder?.customerId ?? null,
+        statusId: statusId?.id ?? null,
+      });
+
+      logger.info('LPB data saved to database', { 
+        laporanId: laporanPenerimaanBarang.id,
+        lpbData: lpbData 
+      });
+
+      return {
+        ...lpbData,
+        laporanPenerimaanBarangId: laporanPenerimaanBarang.id,
+        savedToDatabase: true,
+      };
+    } catch (error) {
+      logger.error('Failed to save LPB data to database', { error, lpbData });
+      throw new AppError('Failed to save LPB data to database', 500);
+    }
+  }
+}
 
 export class LaporanPenerimaanBarangService extends BaseService<
   LaporanPenerimaanBarang,
@@ -319,7 +536,8 @@ export class LaporanPenerimaanBarangService extends BaseService<
         // Buat data LPB dari converted data
         let lpbData: any = null;
         try {
-          lpbData = await this.createLpbFromConvertedData(convertedData, userId);
+          const bulkService = new LaporanPenerimaanBarangBulkService();
+          lpbData = await bulkService.createLpbFromConvertedData(convertedData, userId);
           
           // Hubungkan file dengan LPB yang baru dibuat
           if (lpbData && lpbData.laporanPenerimaanBarangId) {
@@ -376,381 +594,24 @@ export class LaporanPenerimaanBarangService extends BaseService<
     }
   }
 
+  // Static methods untuk bulk upload menggunakan service terpisah
   static async uploadBulkFilesAndProcess(
-    files: Array<{
-      filename: string;
-      path: string;
-      mimetype: string;
-      size: number;
-      createdBy: string;
-    }>,
-    batchId: string,
+    files: BulkFileData[],
     prompt?: string,
     userId?: string
-  ): Promise<{
-    batchId: string;
-    totalFiles: number;
-    message: string;
-  }> {
-    try {
-      // Simpan file records ke database
-      const fileRecords: Array<{
-        id: string;
-        path: string;
-        buffer: Buffer;
-        mimeType: string;
-        originalFilename: string;
-      }> = [];
-
-      for (const file of files) {
-        try {
-          // Buat file uploaded record
-          const fileUploaded = await prisma.fileUploaded.create({
-            data: {
-              filename: file.filename,
-              path: file.path,
-              mimetype: file.mimetype,
-              size: file.size,
-              createdBy: file.createdBy,
-            },
-          });
-
-          // Baca file untuk background processing
-          const buffer = await fs.promises.readFile(file.path);
-
-          fileRecords.push({
-            id: fileUploaded.id,
-            path: file.path,
-            buffer: buffer,
-            mimeType: file.mimetype,
-            originalFilename: file.filename,
-          });
-
-          await createAuditLog('FileUploaded', fileUploaded.id, ActionType.CREATE, userId || 'system', {
-            filename: file.filename,
-            path: file.path,
-            mimetype: file.mimetype,
-            size: file.size,
-            batchId: batchId,
-          });
-        } catch (fileError) {
-          logger.error('Failed to save file in bulk upload', { 
-            filename: file.filename, 
-            error: fileError 
-          });
-        }
-      }
-
-      // Proses file di background (async)
-      this.processBulkFilesInBackground(fileRecords, batchId, prompt, userId);
-
-      return {
-        batchId: batchId,
-        totalFiles: fileRecords.length,
-        message: `Bulk upload berhasil. ${fileRecords.length} file akan diproses di background.`
-      };
-    } catch (error) {
-      logger.error('Failed to upload bulk files', { error });
-      throw new AppError('Failed to upload bulk files', 500);
-    }
+  ): Promise<BulkUploadResult> {
+    const bulkService = new LaporanPenerimaanBarangBulkService();
+    return bulkService.uploadBulkFilesAndProcess(files, prompt, userId);
   }
 
-  static async getBulkProcessingStatus(batchId: string) {
-    // Cari file yang terkait dengan batch ID ini berdasarkan path yang mengandung batch ID
-    const files = await prisma.fileUploaded.findMany({
-      where: {
-        OR: [
-          {
-            path: {
-              contains: batchId
-            }
-          },
-          {
-            // Fallback: cari berdasarkan pattern bulk laporan penerimaan barang
-            path: {
-              contains: 'laporan-penerimaan-barang/bulk'
-            },
-            filename: {
-              contains: 'LPB_BULK'
-            }
-          }
-        ]
-      },
-      select: {
-        id: true,
-        filename: true,
-        laporanPenerimaanBarangId: true,
-        createdAt: true,
-        path: true,
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    if (files.length === 0) {
-      throw new AppError('Batch not found', 404);
-    }
-
-    // Hitung statistik
-    const totalFiles = files.length;
-    const processedFiles = files.filter(f => f.laporanPenerimaanBarangId).length;
-    const successFiles = processedFiles;
-    const errorFiles = totalFiles - processedFiles;
-
-    // Tentukan status berdasarkan progress
-    let status = 'PENDING BULK LAPORAN PENERIMAAN BARANG';
-    if (processedFiles > 0 && processedFiles < totalFiles) {
-      status = 'PROCESSING BULK LAPORAN PENERIMAAN BARANG';
-    } else if (processedFiles === totalFiles) {
-      status = 'COMPLETED BULK LAPORAN PENERIMAAN BARANG';
-    }
-
-    return {
-      batchId: batchId,
-      type: 'LAPORAN_PENERIMAAN_BARANG',
-      status: status,
-      totalFiles: totalFiles,
-      processedFiles: processedFiles,
-      successFiles: successFiles,
-      errorFiles: errorFiles,
-      createdAt: files[0]?.createdAt,
-      completedAt: processedFiles === totalFiles ? new Date() : null,
-      files: files,
-    };
+  static async getBulkProcessingStatus(bulkId: string) {
+    const bulkService = new LaporanPenerimaanBarangBulkService();
+    return bulkService.getBulkProcessingStatus(bulkId);
   }
 
   static async getAllBulkFiles(status?: string) {
-    const whereClause: any = {
-      path: {
-        contains: 'laporan-penerimaan-barang/bulk'
-      },
-      filename: {
-        contains: 'LPB_BULK'
-      }
-    };
-
-    if (status) {
-      whereClause.laporanPenerimaanBarangId = status === 'processed' ? { not: null } : null;
-    }
-
-    const files = await prisma.fileUploaded.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        filename: true,
-        path: true,
-        mimetype: true,
-        size: true,
-        laporanPenerimaanBarangId: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: true,
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    return files;
+    const bulkService = new LaporanPenerimaanBarangBulkService();
+    return bulkService.getAllBulkFiles(status);
   }
 
-  private static async processBulkFilesInBackground(
-    fileRecords: Array<{
-      id: string;
-      path: string;
-      buffer: Buffer;
-      mimeType: string;
-      originalFilename: string;
-    }>,
-    batchId: string,
-    prompt?: string,
-    userId?: string
-  ) {
-    let processedCount = 0;
-    let successCount = 0;
-    let errorCount = 0;
-
-    try {
-      for (const fileRecord of fileRecords) {
-        try {
-          // Default prompt jika tidak ada
-          const defaultPrompt = prompt || 
-            'Convert this document into structured JSON format for goods receipt report. ' +
-            'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
-
-          // Konversi file menggunakan ConversionService
-          const convertedData = await ConversionService.convertFileToJson(
-            fileRecord.buffer,
-            fileRecord.mimeType,
-            defaultPrompt,
-            'laporan-penerimaan-barang'
-          );
-
-          // Buat data LPB dari converted data
-          try {
-            const lpbData = await this.createLpbFromConvertedData(convertedData, userId);
-            
-            // Hubungkan file dengan LPB yang baru dibuat
-            if (lpbData && lpbData.laporanPenerimaanBarangId) {
-              await prisma.fileUploaded.update({
-                where: { id: fileRecord.id },
-                data: {
-                  laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
-                },
-              });
-              
-              await createAuditLog('FileUploaded', fileRecord.id, ActionType.UPDATE, userId || 'system', {
-                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
-                batchId: batchId,
-              });
-              
-              successCount++;
-              logger.info('Bulk file processed successfully', {
-                fileId: fileRecord.id,
-                lpbId: lpbData.laporanPenerimaanBarangId,
-                batchId,
-              });
-            }
-          } catch (lpbError) {
-            logger.warn('Failed to create LPB data from converted data in bulk processing', { 
-              fileId: fileRecord.id,
-              error: lpbError 
-            });
-            errorCount++;
-          }
-        } catch (conversionError) {
-          logger.error('Failed to convert file in bulk processing', { 
-            fileId: fileRecord.id,
-            filename: fileRecord.originalFilename,
-            error: conversionError 
-          });
-          errorCount++;
-        }
-
-        processedCount++;
-
-        // Log progress setiap 10 file
-        if (processedCount % 10 === 0) {
-          logger.info('Bulk processing progress', {
-            batchId,
-            processedFiles: processedCount,
-            successFiles: successCount,
-            errorFiles: errorCount,
-            totalFiles: fileRecords.length,
-          });
-        }
-      }
-
-      logger.info('Bulk processing completed', {
-        batchId,
-        totalFiles: fileRecords.length,
-        processedFiles: processedCount,
-        successFiles: successCount,
-        errorFiles: errorCount,
-      });
-
-    } catch (error) {
-      logger.error('Bulk processing failed', { batchId, error });
-    }
-  }
-
-  private static async createLpbFromConvertedData(
-    convertedData: any,
-    userId?: string
-  ) {
-    // Mapping converted data ke format yang sesuai untuk LPB
-    const lpbData = {
-      fppNumber: convertedData.fppNumber,
-      orderDate: convertedData.orderDate,
-      deliveryDate: convertedData.deliveryDate,
-      deliveryTime: convertedData.deliveryTime,
-      door: convertedData.door,
-      lpbNumber: convertedData.lpbNumber,
-      supplier: convertedData.supplier,
-      items: convertedData.items,
-      pricing: convertedData.pricing,
-      payment: convertedData.payment,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-
-    const purchaseOrder = await prisma.purchaseOrder.findFirst({
-      where: {
-        po_number: convertedData.fppNumber,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const statusId = await prisma.status.findUnique({
-      where: {
-        status_code_category: {
-          status_code: 'PENDING LAPORAN PENERIMAAN BARANG',
-          category: 'Laporan Penerimaan Barang'
-        }
-      },
-    });
-
-
-    try {
-      const createData: any = {
-        tanggal_po: convertedData.orderDate ? new Date(convertedData.orderDate) : null,
-        createdBy: userId || 'system',
-        updatedBy: userId || 'system',
-      };
-
-      if (purchaseOrder) {
-        logger.info('Found purchase order for LPB creation', { 
-          purchaseOrderId: purchaseOrder.id,
-          poNumber: purchaseOrder.po_number 
-        });
-
-        createData.purchaseOrder = {
-          connect: { id: purchaseOrder.id },
-        };
-        createData.customer = {
-          connect: { id: purchaseOrder.customerId },
-        };
-
-        if (purchaseOrder.termin_bayar) {
-          createData.termin_bayar = purchaseOrder.termin_bayar;
-        }
-        if (statusId) {
-          createData.status = {
-            connect: { id: statusId.id },
-          };
-        }
-      } else {
-        logger.warn('Purchase Order not found, creating LPB without purchase order relation', {
-          fppNumber: convertedData.fppNumber
-        });
-      }
-
-      const laporanPenerimaanBarang = await prisma.laporanPenerimaanBarang.create({
-        data: createData,
-      });
-
-      await createAuditLog('LaporanPenerimaanBarang', laporanPenerimaanBarang.id, ActionType.CREATE, userId || 'system', {
-        purchaseOrderId: purchaseOrder?.id ?? null,
-        customerId: purchaseOrder?.customerId ?? null,
-        statusId: statusId?.id ?? null,
-      });
-
-      logger.info('LPB data saved to database', { 
-        laporanId: laporanPenerimaanBarang.id,
-        lpbData: lpbData 
-      });
-
-      return {
-        ...lpbData,
-        laporanPenerimaanBarangId: laporanPenerimaanBarang.id,
-        savedToDatabase: true,
-      };
-    } catch (error) {
-      logger.error('Failed to save LPB data to database', { error, lpbData });
-      throw new AppError('Failed to save LPB data to database', 500);
-    }
-  }
 }

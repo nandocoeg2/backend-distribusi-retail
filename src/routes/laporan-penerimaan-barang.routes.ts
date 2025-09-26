@@ -9,11 +9,13 @@ import {
   getLaporanPenerimaanBarangSchema,
   searchLaporanPenerimaanBarangSchema,
   updateLaporanPenerimaanBarangSchema,
-  uploadFileLaporanPenerimaanBarangSchema,
+  getBulkStatusSchema,
+  getBulkFilesSchema,
   UpdateLaporanPenerimaanBarangInput,
   GetAllLaporanPenerimaanBarangInput,
   SearchLaporanPenerimaanBarangInput,
-  UploadFileLaporanPenerimaanBarangInput,
+  GetBulkStatusInput,
+  GetBulkFilesInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 
 export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -148,29 +150,33 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
     LaporanPenerimaanBarangController.uploadBulkFiles
   );
 
-  fastify.get(
-    '/bulk-status/:batchId',
+  fastify.get<{ Params: GetBulkStatusInput['params'] }>(
+    '/bulk-status/:bulkId',
     {
       schema: {
         tags: ['Laporan Penerimaan Barang'],
         security: [{ Bearer: [] }],
+        params: getBulkStatusSchema.shape.params,
       },
       preHandler: [
         fastify.authenticate,
+        validateRequest(getBulkStatusSchema),
       ],
     },
     LaporanPenerimaanBarangController.getBulkProcessingStatus
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: GetBulkFilesInput['query'] }>(
     '/bulk-files',
     {
       schema: {
         tags: ['Laporan Penerimaan Barang'],
         security: [{ Bearer: [] }],
+        querystring: getBulkFilesSchema.shape.query,
       },
       preHandler: [
         fastify.authenticate,
+        validateRequest(getBulkFilesSchema),
       ],
     },
     LaporanPenerimaanBarangController.getAllBulkFiles

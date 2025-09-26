@@ -38,7 +38,7 @@ export default async (fastify: App) => {
   fastify.register(notificationRoutes, { prefix: '/notifications' });
   fastify.register(statusRoutes, { prefix: '/statuses' });
   fastify.register(fileRoutes, { prefix: '/files' });
-  fastify.register(bulkPurchaseOrderRoutes, { prefix: '/purchase-orders' });
+  fastify.register(bulkPurchaseOrderRoutes, { prefix: '/bulk-purchase-order' });
   fastify.register(packingRoutes, { prefix: '/packings' });
   fastify.register(invoicePengirimanRoutes, { prefix: '/invoice-pengiriman' });
   fastify.register(invoicePenagihanRoutes, { prefix: '/invoice-penagihan' });

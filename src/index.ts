@@ -3,7 +3,7 @@ import { createApp } from '@/app';
 import logger from '@/config/logger';
 import { connectDatabase } from '@/config/database';
 import { connectRedis } from '@/config/redis';
-import { BulkPurchaseOrderService } from '@/services/bulk-purchase-order.service';
+// Background processing is now handled automatically in the upload process
 
 // Load environment variables
 dotenv.config();
@@ -31,13 +31,9 @@ const start = async () => {
       `Swagger documentation available at http://${host}:${port}`
     );
 
-    // Start background job for bulk PO processing
-    setInterval(() => {
-      logger.info('Running bulk PO processing job...');
-      BulkPurchaseOrderService.processPendingFiles().catch((error) => {
-        logger.error('Error in bulk PO processing job:', error);
-      });
-    }, 30000); // every 30 seconds
+    // Background processing is now handled automatically during upload
+    // No need for periodic background jobs as processing starts immediately
+    logger.info('Background processing is handled automatically during file upload');
 
   } catch (error) {    logger.error('Failed to start server:', error);
     process.exit(1);

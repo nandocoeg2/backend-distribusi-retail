@@ -9,6 +9,7 @@ import {
   UpdateLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 import { generateFilenameWithPrefix } from '@/utils/random.utils';
+import { generateBulkLpbId } from '@/utils/bulk-id.utils';
 import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream';
@@ -160,8 +161,8 @@ export class LaporanPenerimaanBarangController {
     const tempFilepaths: string[] = [];
     let prompt: string | undefined;
 
-    // Generate batch ID untuk tracking
-    const batchId = `bulk_lpb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate bulk ID untuk tracking
+    const bulkId = generateBulkLpbId();
 
     try {
       for await (const part of request.parts()) {
@@ -171,7 +172,7 @@ export class LaporanPenerimaanBarangController {
           await fs.promises.mkdir(uploadDir, { recursive: true });
 
           const filename = generateFilenameWithPrefix('LPB_BULK', part.filename);
-          const filepath = path.join(uploadDir, `${batchId}_${filename}`);
+          const filepath = path.join(uploadDir, `${bulkId}_${filename}`);
           tempFilepaths.push(filepath);
 
           await pump(part.file, fs.createWriteStream(filepath));
@@ -199,14 +200,13 @@ export class LaporanPenerimaanBarangController {
       // Proses file di background
       const result = await LaporanPenerimaanBarangService.uploadBulkFilesAndProcess(
         createdFiles,
-        batchId,
         prompt,
         userId
       );
 
       return reply.code(201).send(ResponseUtil.success({
         message: result.message,
-        batchId: result.batchId,
+        bulkId: result.bulkId,
         totalFiles: result.totalFiles,
       }));
     } catch (error) {
@@ -223,11 +223,11 @@ export class LaporanPenerimaanBarangController {
   }
 
   static async getBulkProcessingStatus(
-    request: FastifyRequest<{ Params: { batchId: string } }>,
+    request: FastifyRequest<{ Params: { bulkId: string } }>,
     reply: FastifyReply
   ) {
     const result = await LaporanPenerimaanBarangService.getBulkProcessingStatus(
-      request.params.batchId
+      request.params.bulkId
     );
     return reply.send(ResponseUtil.success(result));
   }

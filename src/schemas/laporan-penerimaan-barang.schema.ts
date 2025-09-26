@@ -50,6 +50,18 @@ export const searchLaporanPenerimaanBarangSchema = z.object({
     .merge(paginationSchema),
 });
 
+export const getBulkStatusSchema = z.object({
+  params: z.object({
+    bulkId: z.string().describe('The bulk ID of the upload job'),
+  }),
+});
+
+export const getBulkFilesSchema = z.object({
+  query: z.object({
+    status: z.enum(['processed', 'pending']).optional().describe('Filter by bulk upload status'),
+  }),
+});
+
 export const uploadFileLaporanPenerimaanBarangSchema = z.object({
   body: z.object({
     prompt: z.string().optional().describe('Custom prompt for file conversion'),
@@ -61,3 +73,5 @@ export type UpdateLaporanPenerimaanBarangInput = z.infer<typeof updateLaporanPen
 export type GetAllLaporanPenerimaanBarangInput = z.infer<typeof getAllLaporanPenerimaanBarangSchema>;
 export type SearchLaporanPenerimaanBarangInput = z.infer<typeof searchLaporanPenerimaanBarangSchema>;
 export type UploadFileLaporanPenerimaanBarangInput = z.infer<typeof uploadFileLaporanPenerimaanBarangSchema>;
+export type GetBulkStatusInput = z.infer<typeof getBulkStatusSchema>;
+export type GetBulkFilesInput = z.infer<typeof getBulkFilesSchema>;

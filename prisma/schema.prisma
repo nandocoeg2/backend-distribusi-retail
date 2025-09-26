@@ -148,6 +148,8 @@ model FileUploaded {
   path            String
   mimetype        String
   size            Int
+  category        String?         // "purchase_order" or "laporan_penerimaan_barang"
+  bulkId          String?        @map("bulk_id") // bulk_po_{cuid} or bulk_lpb_{cuid}
   purchaseOrderId           String?
   laporanPenerimaanBarangId String? @map("laporan_penerimaan_barang_id")
   createdAt       DateTime       @default(now())

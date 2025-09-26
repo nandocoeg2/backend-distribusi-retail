@@ -17,30 +17,30 @@ interface StatusData {
  */
 const ALL_STATUSES: StatusData[] = [
 
-  // Bulk File Processing Status
+  // Bulk File Processing Purchase Order Status
   {
-    status_code: 'PENDING BULK FILE',
-    status_name: 'Pending Bulk File',
-    status_description: 'Bulk file is pending processing',
-    category: 'Bulk File Processing'
+    status_code: 'PENDING BULK PURCHASE ORDER',
+    status_name: 'Pending Bulk Purchase Order',
+    status_description: 'Bulk purchase order file is pending processing',
+    category: 'Bulk Purchase Order'
   },
   {
-    status_code: 'PROCESSING BULK FILE',
-    status_name: 'Processing Bulk File',
-    status_description: 'Bulk file is currently being processed',
-    category: 'Bulk File Processing'
+    status_code: 'PROCESSING BULK PURCHASE ORDER',
+    status_name: 'Processing Bulk Purchase Order',
+    status_description: 'Bulk purchase order file is currently being processed',
+    category: 'Bulk Purchase Order'
   },
   {
-    status_code: 'PROCESSED BULK FILE',
-    status_name: 'Processed Bulk File',
-    status_description: 'Bulk file has been processed successfully',
-    category: 'Bulk File Processing'
+    status_code: 'COMPLETED BULK PURCHASE ORDER',
+    status_name: 'Completed Bulk Purchase Order',
+    status_description: 'Bulk purchase order file has been processed successfully',
+    category: 'Bulk Purchase Order'
   },
   {
-    status_code: 'FAILED BULK FILE',
-    status_name: 'Failed Bulk File',
-    status_description: 'Bulk file processing has failed',
-    category: 'Bulk File Processing'
+    status_code: 'FAILED BULK PURCHASE ORDER',
+    status_name: 'Failed Bulk Purchase Order',
+    status_description: 'Bulk purchase order file processing has failed',
+    category: 'Bulk Purchase Order'
   },
 
   // Purchase Order Status

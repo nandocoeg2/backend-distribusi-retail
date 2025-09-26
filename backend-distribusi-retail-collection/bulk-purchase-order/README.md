@@ -6,7 +6,7 @@ Collection ini berisi endpoint-endpoint untuk mengelola bulk upload purchase ord
 
 ### 1. Bulk Upload Purchase Order
 - **Method**: POST
-- **URL**: `/api/v1/purchase-orders/bulk`
+- **URL**: `/api/v1/bulk-purchase-order/bulk`
 - **Description**: Upload file Excel untuk bulk create purchase order
 - **Authentication**: Bearer Token
 - **Content-Type**: multipart/form-data
@@ -39,7 +39,7 @@ Collection ini berisi endpoint-endpoint untuk mengelola bulk upload purchase ord
 
 ### 2. Get Bulk Upload Status
 - **Method**: GET
-- **URL**: `/api/v1/purchase-orders/bulk/status/:id`
+- **URL**: `/api/v1/bulk-purchase-order/bulk/status/:id`
 - **Description**: Mendapatkan status dari bulk upload berdasarkan ID
 - **Authentication**: Bearer Token
 
@@ -71,7 +71,7 @@ Collection ini berisi endpoint-endpoint untuk mengelola bulk upload purchase ord
 
 ### 3. Get All Bulk Uploads
 - **Method**: GET
-- **URL**: `/api/v1/purchase-orders/bulk/all`
+- **URL**: `/api/v1/bulk-purchase-order/bulk/files`
 - **Description**: Mendapatkan semua file bulk upload dengan optional filter status
 - **Authentication**: Bearer Token
 

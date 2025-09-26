@@ -21,8 +21,8 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
     BulkPurchaseOrderController.bulkCreatePurchaseOrder
   );
 
-  fastify.get<{ Params: { id: string } }>(
-    '/bulk/status/:id',
+  fastify.get(
+    '/bulk/status/:bulkId',
     {
       schema: {
         tags: ['Bulk Purchase Order'],
@@ -35,7 +35,7 @@ export const bulkPurchaseOrderRoutes: FastifyPluginCallback<FastifyPluginOptions
   );
 
   fastify.get(
-    '/bulk/all',
+    '/bulk/files',
     {
       schema: {
         tags: ['Bulk Purchase Order'],

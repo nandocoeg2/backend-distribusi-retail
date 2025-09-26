@@ -6,7 +6,8 @@ import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { prisma } from '@/config/database';
-import { BulkPurchaseOrderService } from '@/services/bulk-purchase-order.service';
+import { BulkPurchaseOrderRefactoredService } from '@/services/bulk-purchase-order-refactored.service';
+import { generateBulkPoId } from '@/utils/bulk-id.utils';
 import { FileUploaded, Prisma } from '@prisma/client';
 import { ResponseUtil } from '@/utils/response.util';
 
@@ -15,92 +16,84 @@ const pump = promisify(pipeline);
 export class BulkPurchaseOrderController {
   static async bulkCreatePurchaseOrder(request: FastifyRequest, reply: FastifyReply) {
     if (!request.isMultipart()) {
-      throw new AppError('Request is not multipart', 400);
+      return reply.code(400).send(ResponseUtil.error('Request is not multipart'));
     }
 
     if (!request.user) {
-      throw new AppError('User not authenticated', 401);
+      return reply.code(401).send(ResponseUtil.error('User not authenticated'));
     }
 
-    const createdFiles: FileUploaded[] = [];
+    const userId = request.user.id;
+    const createdFiles: any[] = [];
     const tempFilepaths: string[] = [];
+    let prompt: string | undefined;
 
-    const pendingStatus = await prisma.status.findUnique({
-      where: { 
-        status_code_category: {
-          status_code: 'PENDING BULK FILE',
-          category: 'Bulk File Processing'
-        }
-      },
-    });
-
-    if (!pendingStatus) {
-      throw new AppError('Pending status not found in database.', 500);
-    }
+    // Generate bulk ID untuk tracking
+    const bulkId = generateBulkPoId();
 
     try {
       for await (const part of request.parts()) {
         if (part.type === 'file') {
           const today = new Date().toISOString().split('T')[0]!;
-          const uploadDir = path.join(process.cwd(), 'fileuploaded', 'bulk', today);
+          const uploadDir = path.join(process.cwd(), 'fileuploaded', 'purchase-order', 'bulk', today);
           await fs.promises.mkdir(uploadDir, { recursive: true });
 
-          const filename = generateFilenameWithPrefix('BULK_PO', part.filename);
-          const filepath = path.join(uploadDir, filename);
+          const filename = generateFilenameWithPrefix('PO_BULK', part.filename);
+          const filepath = path.join(uploadDir, `${bulkId}_${filename}`);
           tempFilepaths.push(filepath);
 
           await pump(part.file, fs.createWriteStream(filepath));
 
           const stats = await fs.promises.stat(filepath);
 
-          const data: Prisma.FileUploadedCreateInput = {
+          const fileData = {
             filename: part.filename,
             path: filepath,
             mimetype: part.mimetype,
             size: stats.size,
-            status: {
-              connect: { id: pendingStatus.id },
-            },
-            user: {
-              connect: { id: request.user.id },
-            },
+            createdBy: userId,
           };
 
-          const createdFile = await prisma.fileUploaded.create({ data: data as any });
-          createdFiles.push(createdFile);
+          createdFiles.push(fileData);
+        } else if (part.type === 'field' && part.fieldname === 'prompt') {
+          prompt = part.value as string;
         }
       }
 
       if (createdFiles.length === 0) {
-        throw new AppError('At least one file is required for bulk upload', 400);
+        return reply.code(400).send(ResponseUtil.error('At least one file is required for bulk upload'));
       }
 
+      // Proses file di background
+      const result = await BulkPurchaseOrderRefactoredService.uploadBulkFilesAndProcess(
+        createdFiles,
+        prompt,
+        userId
+      );
+
       return reply.code(201).send(ResponseUtil.success({
-        message: `${createdFiles.length} files uploaded successfully and are pending processing.`,
-        files: createdFiles,
+        message: result.message,
+        bulkId: result.bulkId,
+        totalFiles: result.totalFiles,
       }));
     } catch (error) {
+      // Cleanup temp files
       if (tempFilepaths.length > 0) {
-        for (const path of tempFilepaths) {
-          await fs.promises.unlink(path).catch(console.error);
+        for (const filepath of tempFilepaths) {
+          await fs.promises.unlink(filepath).catch(console.error);
         }
       }
-      if (createdFiles.length > 0) {
-        const idsToDelete = createdFiles.map((f) => f.id);
-        await prisma.fileUploaded.deleteMany({
-          where: { id: { in: idsToDelete } },
-        });
-      }
+      
       throw error;
     }
   }
 
   static async getUploadStatus(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest<{ Params: { bulkId: string } }>,
     reply: FastifyReply
   ) {
-    const { id } = request.params;
-    const fileStatus = await BulkPurchaseOrderService.getBulkUploadStatus(id);
+    const { bulkId } = request.params;
+    const fileStatus = await BulkPurchaseOrderRefactoredService.getBulkProcessingStatus(bulkId);
     return reply.send(ResponseUtil.success(fileStatus));
   }
 
@@ -109,7 +102,8 @@ export class BulkPurchaseOrderController {
     reply: FastifyReply
   ) {
     const { status } = request.query as { status?: string };
-    const files = await BulkPurchaseOrderService.getAllBulkFiles(status);
+    const files = await BulkPurchaseOrderRefactoredService.getAllBulkFiles(status);
     return reply.send(ResponseUtil.success(files));
   }
 }
+

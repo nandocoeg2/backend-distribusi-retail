@@ -543,7 +543,7 @@ Form Data:
 ### 8. Upload Bulk Files dan Konversi
 Mengupload multiple files sekaligus, melakukan konversi otomatis ke format JSON menggunakan Google Gemini AI, dan membuat data LPB (Laporan Penerimaan Barang) dari hasil konversi. Proses dilakukan di background.
 
-**Endpoint:** `POST /upload-bulk`
+**Endpoint:** `POST /bulk`
 
 **Headers:**
 ```json
@@ -564,7 +564,7 @@ Mengupload multiple files sekaligus, melakukan konversi otomatis ke format JSON 
 
 **Example Request:**
 ```
-POST /api/v1/laporan-penerimaan-barang/upload-bulk
+POST /api/v1/laporan-penerimaan-barang/bulk
 Content-Type: multipart/form-data
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
@@ -581,7 +581,7 @@ Form Data:
   "success": true,
   "message": "Bulk upload berhasil. 3 file akan diproses di background.",
   "data": {
-    "batchId": "clx1p0d3j000108l8g2f3d9b4",
+    "bulkId": "bulk_lpb_clx0d0d0d0000000000000000",
     "totalFiles": 3
   }
 }
@@ -601,7 +601,7 @@ Form Data:
 ### 9. Get Bulk Processing Status
 Mendapatkan status progress dari bulk processing.
 
-**Endpoint:** `GET /bulk-status/:batchId`
+**Endpoint:** `GET /bulk-status/:bulkId`
 
 **Headers:**
 ```json
@@ -611,20 +611,26 @@ Mendapatkan status progress dari bulk processing.
 ```
 
 **Path Parameters:**
-- `batchId` (required): ID batch processing
+- `bulkId` (required): ID bulk processing
 
 **Response Success (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "batchId": "clx1p0d3j000108l8g2f3d9b4",
+    "bulkId": "bulk_lpb_clx0d0d0d0000000000000000",
     "type": "LAPORAN_PENERIMAAN_BARANG",
-    "status": "COMPLETED",
+    "status": "COMPLETED BULK LAPORAN PENERIMAAN BARANG",
     "totalFiles": 3,
     "processedFiles": 3,
     "successFiles": 2,
     "errorFiles": 1,
+    "processingFiles": 0,
+    "pendingFiles": 0,
+    "statusBreakdown": {
+      "COMPLETED BULK LAPORAN PENERIMAAN BARANG": 2,
+      "FAILED BULK LAPORAN PENERIMAAN BARANG": 1
+    },
     "createdAt": "2024-09-24T10:00:00.000Z",
     "completedAt": "2024-09-24T10:05:00.000Z",
     "files": [
@@ -655,16 +661,59 @@ Mendapatkan status progress dari bulk processing.
 ```json
 {
   "success": false,
-  "message": "Batch not found",
+  "message": "Bulk not found",
   "error": "Not Found"
 }
 ```
 
-**Batch Status Values:**
-- `PENDING`: Batch baru dibuat, belum mulai diproses
-- `PROCESSING`: Batch sedang diproses di background
-- `COMPLETED`: Batch selesai diproses (berhasil atau ada error)
-- `FAILED`: Batch gagal diproses
+---
+
+### 10. Get All Bulk Files
+Mendapatkan daftar semua file bulk upload dengan filter status.
+
+**Endpoint:** `GET /bulk-files`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Query Parameters:**
+- `status` (optional): Filter berdasarkan status (`processed` atau `pending`)
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "file_123",
+      "filename": "lpb1.pdf",
+      "path": "/uploads/laporan-penerimaan-barang/bulk/2024-01-15/bulk_lpb_xxx_lpb1.pdf",
+      "mimetype": "application/pdf",
+      "size": 1024000,
+      "category": "laporan_penerimaan_barang",
+      "bulkId": "bulk_lpb_clx0d0d0d0000000000000000",
+      "laporanPenerimaanBarangId": "lpb_456",
+      "status": {
+        "status_code": "COMPLETED BULK LAPORAN PENERIMAAN BARANG",
+        "status_name": "Completed Bulk Laporan Penerimaan Barang"
+      },
+      "createdAt": "2024-01-15T10:00:00.000Z",
+      "updatedAt": "2024-01-15T10:05:00.000Z",
+      "createdBy": "user_123"
+    }
+  ]
+}
+```
+
+**Bulk Status Values:**
+- `PENDING BULK LAPORAN PENERIMAAN BARANG`: File baru diupload, belum diproses
+- `PROCESSING BULK LAPORAN PENERIMAAN BARANG`: File sedang diproses di background
+- `COMPLETED BULK LAPORAN PENERIMAAN BARANG`: File berhasil diproses dan LPB dibuat
+- `FAILED BULK LAPORAN PENERIMAAN BARANG`: File gagal diproses
 
 **Features:**
 - ✅ Upload multiple files sekaligus

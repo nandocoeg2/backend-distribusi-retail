@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/bulk-status/{{batch_id}}
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/bulk-status/{{bulk_id}}
   body: none
   auth: bearer
 }
@@ -15,5 +15,5 @@ auth:bearer {
 }
 
 vars:pre-request {
-  batch_id: bulk_lpb_1758906450870_n3861xcpx
+  bulk_id: bulk_laporan_penerimaan_barang_eaa057edcc50f69b
 }
