@@ -17,6 +17,32 @@ interface StatusData {
  */
 const ALL_STATUSES: StatusData[] = [
 
+  // Legacy Bulk File Processing Status (for backward compatibility)
+  {
+    status_code: 'PENDING BULK FILE',
+    status_name: 'Pending Bulk File',
+    status_description: 'Bulk file is pending processing',
+    category: 'Bulk File Processing'
+  },
+  {
+    status_code: 'PROCESSING BULK FILE',
+    status_name: 'Processing Bulk File',
+    status_description: 'Bulk file is currently being processed',
+    category: 'Bulk File Processing'
+  },
+  {
+    status_code: 'PROCESSED BULK FILE',
+    status_name: 'Processed Bulk File',
+    status_description: 'Bulk file has been processed successfully',
+    category: 'Bulk File Processing'
+  },
+  {
+    status_code: 'FAILED BULK FILE',
+    status_name: 'Failed Bulk File',
+    status_description: 'Bulk file processing has failed',
+    category: 'Bulk File Processing'
+  },
+
   // Bulk File Processing Purchase Order Status
   {
     status_code: 'PENDING BULK PURCHASE ORDER',

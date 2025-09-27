@@ -136,6 +136,21 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
   );
 
   fastify.post(
+    '/bulk',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        security: [{ Bearer: [] }],
+        consumes: ['multipart/form-data'],
+      },
+      preHandler: [
+        fastify.authenticate,
+      ],
+    },
+    LaporanPenerimaanBarangController.uploadBulkFiles
+  );
+
+  fastify.post(
     '/upload-bulk',
     {
       schema: {

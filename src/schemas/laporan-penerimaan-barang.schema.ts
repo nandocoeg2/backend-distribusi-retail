@@ -58,7 +58,14 @@ export const getBulkStatusSchema = z.object({
 
 export const getBulkFilesSchema = z.object({
   query: z.object({
-    status: z.enum(['processed', 'pending']).optional().describe('Filter by bulk upload status'),
+    status: z.enum([
+      'processed', 
+      'pending',
+      'PENDING BULK LAPORAN PENERIMAAN BARANG',
+      'PROCESSING BULK LAPORAN PENERIMAAN BARANG', 
+      'COMPLETED BULK LAPORAN PENERIMAAN BARANG',
+      'FAILED BULK LAPORAN PENERIMAAN BARANG'
+    ]).optional().describe('Filter by bulk upload status'),
   }),
 });
 

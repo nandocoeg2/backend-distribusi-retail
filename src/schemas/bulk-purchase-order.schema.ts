@@ -8,7 +8,18 @@ export const getBulkUploadStatusSchema = z.object({
 
 export const getBulkUploadsSchema = z.object({
   query: z.object({
-    status: z.enum(['processed', 'pending']).optional().describe('Filter by bulk upload status'),
+    status: z.enum([
+      'processed', 
+      'pending',
+      'PENDING BULK FILE',
+      'PROCESSING BULK FILE',
+      'PROCESSED BULK FILE',
+      'FAILED BULK FILE',
+      'PENDING BULK PURCHASE ORDER',
+      'PROCESSING BULK PURCHASE ORDER', 
+      'COMPLETED BULK PURCHASE ORDER',
+      'FAILED BULK PURCHASE ORDER'
+    ]).optional().describe('Filter by bulk upload status'),
   }),
 });
 

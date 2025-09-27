@@ -258,8 +258,16 @@ export abstract class BaseBulkUploadService {
     };
 
     if (status) {
-      const processedField = this.category === 'purchase_order' ? 'purchaseOrderId' : 'laporanPenerimaanBarangId';
-      whereClause[processedField] = status === 'processed' ? { not: null } : null;
+      // Handle specific status codes
+      if (status.includes('BULK')) {
+        whereClause.status = {
+          status_code: status
+        };
+      } else {
+        // Handle legacy processed/pending filters
+        const processedField = this.category === 'purchase_order' ? 'purchaseOrderId' : 'laporanPenerimaanBarangId';
+        whereClause[processedField] = status === 'processed' ? { not: null } : null;
+      }
     }
 
     const files = await prisma.fileUploaded.findMany({
