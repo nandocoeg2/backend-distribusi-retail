@@ -33,8 +33,14 @@ export class SuratJalanController {
   ) {
     try {
       const query = request.query as any;
-      const page = parseInt(query.page || '1');
-      const limit = parseInt(query.limit || '10');
+      // Handle case where page might be an object or invalid value
+      const pageValue = query.page;
+      const page = typeof pageValue === 'string' ? parseInt(pageValue) || 1 : 1;
+      
+      // Handle case where limit might be an object or invalid value
+      const limitValue = query.limit;
+      const limit = typeof limitValue === 'string' ? parseInt(limitValue) || 10 : 10;
+      
       const result = await SuratJalanService.getAllSuratJalan(page, limit);
       return reply.send(ResponseUtil.success(result));
     } catch (error: any) {
