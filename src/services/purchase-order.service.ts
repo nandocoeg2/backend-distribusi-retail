@@ -18,6 +18,43 @@ export interface FileInfo {
 }
 
 export class PurchaseOrderService {
+  private static async findPurchaseOrdersByPoNumber(
+    poNumber: string,
+    excludeIds: string[] = [],
+  ) {
+    const whereClause: Prisma.PurchaseOrderWhereInput = {
+      po_number: poNumber,
+    };
+
+    if (excludeIds.length > 0) {
+      whereClause.id = { notIn: excludeIds };
+    }
+
+    return prisma.purchaseOrder.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        po_number: true,
+      },
+    });
+  }
+
+  static async checkDuplicatePoNumber(poNumber: string) {
+    const matchingPurchaseOrders = await this.findPurchaseOrdersByPoNumber(poNumber);
+
+    const matchingCount = matchingPurchaseOrders.length;
+    const duplicateCount = matchingCount > 1 ? matchingCount - 1 : 0;
+    const duplicateIds = matchingPurchaseOrders.map((po) => po.id);
+
+    return {
+      hasDuplicate: duplicateCount > 0,
+      matchingCount,
+      duplicateCount,
+      duplicateIds,
+      matchingPurchaseOrders,
+    };
+  }
+
   static async createPurchaseOrder(
     poData: CreatePurchaseOrderInput,
     fileInfos: FileInfo[],
@@ -577,10 +614,27 @@ export class PurchaseOrderService {
     ids: string[],
     status_code: string,
     userId: string
-  ): Promise<{ success: PurchaseOrder[]; failed: { id: string; error: string }[] }> {
+  ): Promise<{
+    success: PurchaseOrder[];
+    failed: {
+      id: string;
+      error: string;
+      duplicateCount?: number;
+      duplicateIds?: string[];
+      matchingCount?: number;
+      poNumber?: string;
+    }[];
+  }> {
     const results = {
       success: [] as PurchaseOrder[],
-      failed: [] as { id: string; error: string }[]
+      failed: [] as {
+        id: string;
+        error: string;
+        duplicateCount?: number;
+        duplicateIds?: string[];
+        matchingCount?: number;
+        poNumber?: string;
+      }[],
     };
 
     // Process each purchase order individually
@@ -589,10 +643,43 @@ export class PurchaseOrderService {
         const purchaseOrder = await this.processSinglePurchaseOrder(id, status_code, userId);
         results.success.push(purchaseOrder);
       } catch (error: any) {
-        results.failed.push({
+        const failure = {
           id,
-          error: error.message || 'Unknown error occurred'
-        });
+          error: error?.message || 'Unknown error occurred',
+        } as {
+          id: string;
+          error: string;
+          duplicateCount?: number;
+          duplicateIds?: string[];
+          matchingCount?: number;
+          poNumber?: string;
+        };
+
+        const details = error?.details as Record<string, unknown> | undefined;
+
+        if (details) {
+          const duplicateCount = details['duplicateCount'];
+          if (typeof duplicateCount === 'number') {
+            failure.duplicateCount = duplicateCount;
+          }
+
+          const duplicateIds = details['duplicateIds'];
+          if (Array.isArray(duplicateIds)) {
+            failure.duplicateIds = duplicateIds.filter((value): value is string => typeof value === 'string');
+          }
+
+          const matchingCount = details['matchingCount'];
+          if (typeof matchingCount === 'number') {
+            failure.matchingCount = matchingCount;
+          }
+
+          const poNumber = details['poNumber'];
+          if (typeof poNumber === 'string') {
+            failure.poNumber = poNumber;
+          }
+        }
+
+        results.failed.push(failure);
       }
     }
 
@@ -614,6 +701,22 @@ export class PurchaseOrderService {
 
     if (!purchaseOrder) {
       throw new AppError('Purchase Order not found', 404);
+    }
+
+    const duplicateCheck = await this.checkDuplicatePoNumber(purchaseOrder.po_number);
+
+    if (duplicateCheck.hasDuplicate) {
+      throw new AppError(
+        'Duplicate PO number detected. Please resolve duplicates before processing.',
+        400,
+        {
+          poNumber: purchaseOrder.po_number,
+          duplicateCount: duplicateCheck.duplicateCount,
+          duplicateIds: duplicateCheck.duplicateIds,
+          matchingCount: duplicateCheck.matchingCount,
+          matchingPurchaseOrders: duplicateCheck.matchingPurchaseOrders,
+        }
+      );
     }
 
     const status = await prisma.status.findUnique({

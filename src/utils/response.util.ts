@@ -12,11 +12,12 @@ export class ResponseUtil {
     return response;
   }
 
-  static error(message: string) {
+  static error(message: string, details?: Record<string, unknown>) {
     return {
-      success: false,
+      success: false as const,
       error: {
         message,
+        ...(details ?? {}),
       },
     };
   }
