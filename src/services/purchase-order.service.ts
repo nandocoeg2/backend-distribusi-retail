@@ -530,7 +530,7 @@ export class PurchaseOrderService {
       prisma.status.findUnique({
         where: {
           status_code_category: {
-            status_code: 'APPROVED PURCHASE ORDER',
+            status_code: 'COMPLETED PURCHASE ORDER',
             category: 'Purchase Order',
           },
         },
