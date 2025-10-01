@@ -844,6 +844,205 @@ Memproses satu LPB berdasarkan ID dan mengubah statusnya menjadi `PROCESSING LAP
 - Endpoint single menggunakan service yang sama dengan proses bulk dan tetap mengembalikan struktur `success` dan `failed`
 - Cocok digunakan saat ingin memproses LPB langsung dari detail view
 - Jika status sudah `PROCESSING`, sistem akan mengembalikan data yang sama tanpa error
+
+---
+
+### 13. Complete Laporan Penerimaan Barang (Bulk)
+Menyelesaikan beberapa LPB sekaligus dengan mengubah statusnya menjadi `COMPLETED LAPORAN PENERIMAAN BARANG` dan status Purchase Order terkait menjadi `COMPLETED PURCHASE ORDER`.
+
+**Endpoint:** `PATCH /complete`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Request Body:**
+```json
+{
+  "ids": [
+    "clx1otn7p000108l82e7ke2j9",
+    "clx1otn81000308l89p8y5a2m"
+  ]
+}
+```
+
+**Validation Rules:**
+- `ids`: **Required** - Minimal satu ID LPB
+- Setiap LPB harus sudah terhubung dengan Purchase Order (`purchaseOrderId` tidak boleh null)
+- Status `COMPLETED LAPORAN PENERIMAAN BARANG` harus tersedia di master status kategori LPB
+- Status `COMPLETED PURCHASE ORDER` harus tersedia di master status kategori Purchase Order
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "success": [
+      {
+        "id": "clx1otn7p000108l82e7ke2j9",
+        "purchaseOrderId": "clx1otn7p000108l82e7ke2j0",
+        "status": {
+          "id": "status-uuid",
+          "status_code": "COMPLETED LAPORAN PENERIMAAN BARANG",
+          "status_name": "Completed Laporan Penerimaan Barang",
+          "category": "Laporan Penerimaan Barang"
+        },
+        "purchaseOrder": {
+          "id": "clx1otn7p000108l82e7ke2j0",
+          "po_number": "PO-2024-001",
+          "status": {
+            "id": "po-status-uuid",
+            "status_code": "COMPLETED PURCHASE ORDER",
+            "status_name": "Completed Purchase Order",
+            "category": "Purchase Order"
+          }
+        },
+        "customer": {
+          "id": "customer-uuid",
+          "namaCustomer": "PT Contoh Mitra"
+        },
+        "updatedAt": "2024-09-28T12:00:00.000Z"
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+**Response Error (400 Bad Request):**
+```json
+{
+  "success": true,
+  "data": {
+    "success": [],
+    "failed": [
+      {
+        "id": "clx1otn81000308l89p8y5a2m",
+        "error": "Purchase order must be linked before completing LPB",
+        "details": {
+          "field": "purchaseOrderId"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "COMPLETED LAPORAN PENERIMAAN BARANG status not found",
+    "details": {
+      "status_code": "COMPLETED LAPORAN PENERIMAAN BARANG"
+    }
+  }
+}
+```
+
+**Features:**
+- ✅ Mengubah status LPB menjadi `COMPLETED`
+- ✅ Mengubah status Purchase Order terkait menjadi `COMPLETED`
+- ✅ Transaction support untuk memastikan data consistency
+- ✅ Batch processing untuk multiple LPB
+- ✅ Automatic audit log creation
+- ✅ Error handling per item dengan struktur `success` dan `failed`
+- ✅ Idempotent - jika sudah completed, tidak akan error
+
+**Notes:**
+- Operasi dilakukan dalam transaction untuk memastikan LPB dan Purchase Order terupdate bersamaan
+- Jika LPB sudah `COMPLETED`, sistem akan mengembalikan data yang sama tanpa error
+- Audit log otomatis dibuat untuk kedua entitas (LPB dan Purchase Order) dengan aksi `CompleteLaporanPenerimaanBarang` dan `CompletePurchaseOrderFromLpb`
+- Purchase Order wajib sudah terhubung dengan LPB sebelum dapat di-complete
+
+---
+
+### 14. Complete Laporan Penerimaan Barang (Single)
+Menyelesaikan satu LPB berdasarkan ID dengan mengubah statusnya menjadi `COMPLETED LAPORAN PENERIMAAN BARANG` dan status Purchase Order terkait menjadi `COMPLETED PURCHASE ORDER`.
+
+**Endpoint:** `PATCH /:id/complete`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID laporan penerimaan barang
+
+**Example Request:**
+```
+PATCH /api/v1/laporan-penerimaan-barang/clx1otn7p000108l82e7ke2j9/complete
+```
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "success": [
+      {
+        "id": "clx1otn7p000108l82e7ke2j9",
+        "purchaseOrderId": "clx1otn7p000108l82e7ke2j0",
+        "status": {
+          "status_code": "COMPLETED LAPORAN PENERIMAAN BARANG",
+          "status_name": "Completed Laporan Penerimaan Barang"
+        },
+        "purchaseOrder": {
+          "id": "clx1otn7p000108l82e7ke2j0",
+          "po_number": "PO-2024-001",
+          "status": {
+            "status_code": "COMPLETED PURCHASE ORDER",
+            "status_name": "Completed Purchase Order"
+          }
+        },
+        "customer": {
+          "namaCustomer": "PT Contoh Mitra"
+        },
+        "updatedAt": "2024-09-28T12:00:00.000Z"
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Purchase order must be linked before completing LPB",
+    "details": {
+      "field": "purchaseOrderId"
+    }
+  }
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Laporan Penerimaan Barang not found"
+  }
+}
+```
+
+**Notes:**
+- Endpoint single menggunakan service yang sama dengan complete bulk dan tetap mengembalikan struktur `success` dan `failed`
+- Cocok digunakan saat ingin menyelesaikan LPB langsung dari detail view
+- Jika status sudah `COMPLETED`, sistem akan mengembalikan data yang sama tanpa error
+- Transaction support memastikan status LPB dan Purchase Order terupdate secara atomic
+
 ---
 
 ## Error Handling

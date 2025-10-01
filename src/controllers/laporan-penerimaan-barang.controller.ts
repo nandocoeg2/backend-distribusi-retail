@@ -8,6 +8,7 @@ import {
   SearchLaporanPenerimaanBarangInput,
   UpdateLaporanPenerimaanBarangInput,
   ProcessLaporanPenerimaanBarangInput,
+  CompleteLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 import { generateFilenameWithPrefix } from '@/utils/random.utils';
 import { generateBulkLpbId } from '@/utils/bulk-id.utils';
@@ -117,6 +118,36 @@ export class LaporanPenerimaanBarangController {
     const userId = request.user?.id || 'system';
 
     const result = await LaporanPenerimaanBarangService.processLaporanPenerimaanBarang(
+      [request.params.id],
+      userId
+    );
+
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async complete(
+    request: FastifyRequest<{
+      Body: CompleteLaporanPenerimaanBarangInput['body'];
+    }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+
+    const result = await LaporanPenerimaanBarangService.completeLaporanPenerimaanBarang(
+      request.body.ids,
+      userId
+    );
+
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async completeSingle(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+
+    const result = await LaporanPenerimaanBarangService.completeLaporanPenerimaanBarang(
       [request.params.id],
       userId
     );

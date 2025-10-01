@@ -26,6 +26,9 @@ const LPB_INCLUDE_RELATIONS = {
   files: true,
 } satisfies Prisma.LaporanPenerimaanBarangInclude;
 
+const LPB_COMPLETED_STATUS_CODE = 'COMPLETED LAPORAN PENERIMAAN BARANG';
+const PO_COMPLETED_STATUS_CODE = 'COMPLETED PURCHASE ORDER';
+
 type LaporanPenerimaanBarangWithRelations = Prisma.LaporanPenerimaanBarangGetPayload<{
   include: typeof LPB_INCLUDE_RELATIONS;
 }>;
@@ -452,6 +455,198 @@ export class LaporanPenerimaanBarangService extends BaseService<
     }
 
     return results;
+  }
+
+  static async completeLaporanPenerimaanBarang(
+    ids: string[],
+    userId: string
+  ): Promise<{
+    success: LaporanPenerimaanBarangWithRelations[];
+    failed: {
+      id: string;
+      error: string;
+      details?: Record<string, unknown>;
+    }[];
+  }> {
+    const actorId = userId || 'system';
+
+    const [completedLaporanStatus, completedPurchaseOrderStatus] = await Promise.all([
+      prisma.status.findUnique({
+        where: {
+          status_code_category: {
+            status_code: LPB_COMPLETED_STATUS_CODE,
+            category: 'Laporan Penerimaan Barang',
+          },
+        },
+      }),
+      prisma.status.findUnique({
+        where: {
+          status_code_category: {
+            status_code: PO_COMPLETED_STATUS_CODE,
+            category: 'Purchase Order',
+          },
+        },
+      }),
+    ]);
+
+    if (!completedLaporanStatus) {
+      throw new AppError('COMPLETED LAPORAN PENERIMAAN BARANG status not found', 404, {
+        status_code: LPB_COMPLETED_STATUS_CODE,
+      });
+    }
+
+    if (!completedPurchaseOrderStatus) {
+      throw new AppError('COMPLETED PURCHASE ORDER status not found', 404, {
+        status_code: PO_COMPLETED_STATUS_CODE,
+      });
+    }
+
+    const results = {
+      success: [] as LaporanPenerimaanBarangWithRelations[],
+      failed: [] as {
+        id: string;
+        error: string;
+        details?: Record<string, unknown>;
+      }[],
+    };
+
+    for (const id of ids) {
+      try {
+        const completed = await this.completeSingleLaporanPenerimaanBarang(
+          id,
+          actorId,
+          completedLaporanStatus.id,
+          completedPurchaseOrderStatus.id
+        );
+        results.success.push(completed);
+      } catch (error) {
+        const message =
+          error instanceof AppError
+            ? error.message
+            : 'Unknown error occurred while completing LPB';
+        const failure: {
+          id: string;
+          error: string;
+          details?: Record<string, unknown>;
+        } = {
+          id,
+          error: message,
+        };
+
+        if (error instanceof AppError && error.details) {
+          failure.details = error.details;
+        }
+
+        logger.warn('Failed to complete LPB', {
+          lpbId: id,
+          error,
+        });
+
+        results.failed.push(failure);
+      }
+    }
+
+    return results;
+  }
+
+  private static async completeSingleLaporanPenerimaanBarang(
+    id: string,
+    userId: string,
+    completedStatusId: string,
+    completedPurchaseOrderStatusId: string
+  ): Promise<LaporanPenerimaanBarangWithRelations> {
+    const laporan = await prisma.laporanPenerimaanBarang.findUnique({
+      where: { id },
+      include: LPB_INCLUDE_RELATIONS,
+    });
+
+    if (!laporan) {
+      throw new AppError('Laporan Penerimaan Barang not found', 404);
+    }
+
+    if (!laporan.purchaseOrderId) {
+      throw new AppError(
+        'Purchase order must be linked before completing LPB',
+        400,
+        { field: 'purchaseOrderId' }
+      );
+    }
+
+    if (!laporan.purchaseOrder) {
+      throw new AppError('Linked Purchase Order not found', 404, {
+        purchaseOrderId: laporan.purchaseOrderId,
+      });
+    }
+
+    const previousLaporanStatusId = laporan.statusId;
+    const previousPurchaseOrderStatusId = laporan.purchaseOrder.statusId;
+
+    if (
+      previousLaporanStatusId === completedStatusId &&
+      previousPurchaseOrderStatusId === completedPurchaseOrderStatusId
+    ) {
+      logger.info('LPB already completed', { lpbId: id });
+      return laporan;
+    }
+
+    const { updatedLaporan, updatedPurchaseOrder } = await prisma.$transaction(
+      async (tx) => {
+        const updatedPurchaseOrder = await tx.purchaseOrder.update({
+          where: { id: laporan.purchaseOrder!.id },
+          data: {
+            statusId: completedPurchaseOrderStatusId,
+            updatedBy: userId,
+          },
+        });
+
+        const updatedLaporan = await tx.laporanPenerimaanBarang.update({
+          where: { id },
+          data: {
+            statusId: completedStatusId,
+            updatedBy: userId,
+          },
+          include: LPB_INCLUDE_RELATIONS,
+        });
+
+        return { updatedLaporan, updatedPurchaseOrder };
+      }
+    );
+
+    await createAuditLog(
+      'PurchaseOrder',
+      laporan.purchaseOrder.id,
+      ActionType.UPDATE,
+      userId,
+      {
+        action: 'CompletePurchaseOrderFromLpb',
+        previousStatusId: previousPurchaseOrderStatusId,
+        newStatusId: updatedPurchaseOrder.statusId,
+        laporanPenerimaanBarangId: id,
+      }
+    );
+
+    await createAuditLog(
+      'LaporanPenerimaanBarang',
+      updatedLaporan.id,
+      ActionType.UPDATE,
+      userId,
+      {
+        action: 'CompleteLaporanPenerimaanBarang',
+        previousStatusId: previousLaporanStatusId,
+        newStatusId: updatedLaporan.statusId,
+      }
+    );
+
+    logger.info('LPB completed and purchase order status updated', {
+      lpbId: id,
+      purchaseOrderId: laporan.purchaseOrder.id,
+      previousLaporanStatusId,
+      newLaporanStatusId: updatedLaporan.statusId,
+      previousPurchaseOrderStatusId,
+      newPurchaseOrderStatusId: updatedPurchaseOrder.statusId,
+    });
+
+    return updatedLaporan;
   }
 
   private static async processSingleLaporanPenerimaanBarang(

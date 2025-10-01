@@ -386,6 +386,26 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | `/api/term-of-payments/:id`| `DELETE`| Menghapus termin pembayaran | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Term of Payment deleted" } }` |
 | `/api/term-of-payments/search`| `GET` | Pencarian termin pembayaran | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": 1, "name": "30 Days", ... }] }` |
 
+### 📦 Manajemen Laporan Penerimaan Barang
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/laporan-penerimaan-barang` | `GET` | Mendapatkan semua laporan penerimaan barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "tanggal_po": "2024-01-01", ... }], "pagination": {...} } }` |
+| `/api/laporan-penerimaan-barang/:id` | `GET` | Mendapatkan laporan penerimaan barang berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": "uuid", "tanggal_po": "2024-01-01", ... } }` |
+| `/api/laporan-penerimaan-barang` | `POST` | Membuat laporan penerimaan barang baru | `Authorization: Bearer <token>` | `{ "purchaseOrderId": "...", "customerId": "...", ... }` | `{ "success": true, "data": { "id": "uuid", ... } }` |
+| `/api/laporan-penerimaan-barang/:id` | `PUT` | Update data laporan penerimaan barang | `Authorization: Bearer <token>` | `{ "tanggal_po": "2024-01-02", ... }` | `{ "success": true, "data": { "id": "uuid", ... } }` |
+| `/api/laporan-penerimaan-barang/:id` | `DELETE` | Menghapus laporan penerimaan barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Deleted" } }` |
+| `/api/laporan-penerimaan-barang/search` | `GET` | Pencarian laporan penerimaan barang | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [...], "pagination": {...} } }` |
+| `/api/laporan-penerimaan-barang/process` | `PATCH` | Process laporan penerimaan barang (bulk) | `Authorization: Bearer <token>` | `{ "ids": ["uuid1", "uuid2"] }` | `{ "success": true, "data": { "success": [...], "failed": [...] } }` |
+| `/api/laporan-penerimaan-barang/:id/process` | `PATCH` | Process laporan penerimaan barang (single) | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "success": [...], "failed": [] } }` |
+| `/api/laporan-penerimaan-barang/complete` | `PATCH` | Complete laporan penerimaan barang (bulk) | `Authorization: Bearer <token>` | `{ "ids": ["uuid1", "uuid2"] }` | `{ "success": true, "data": { "success": [...], "failed": [...] } }` |
+| `/api/laporan-penerimaan-barang/:id/complete` | `PATCH` | Complete laporan penerimaan barang (single) | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "success": [...], "failed": [] } }` |
+| `/api/laporan-penerimaan-barang/upload` | `POST` | Upload dan konversi file laporan penerimaan barang | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "success": true, "data": { "message": "File uploaded and converted successfully", "lpbData": {...} } }` |
+| `/api/laporan-penerimaan-barang/bulk` | `POST` | Bulk upload laporan penerimaan barang | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "success": true, "data": { "bulkId": "...", "totalFiles": 5, ... } }` |
+| `/api/laporan-penerimaan-barang/upload-bulk` | `POST` | Bulk upload laporan penerimaan barang (alias) | `Authorization: Bearer <token>` | (multipart/form-data) | `{ "success": true, "data": { "bulkId": "...", "totalFiles": 5, ... } }` |
+| `/api/laporan-penerimaan-barang/bulk-status/:bulkId` | `GET` | Status bulk upload | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "bulkId": "...", "status": "...", ... } }` |
+| `/api/laporan-penerimaan-barang/bulk-files` | `GET` | Mendapatkan semua bulk files | `Authorization: Bearer <token>` | - | `{ "success": true, "data": [{ "id": "...", "filename": "...", ... }] }` |
+
 ## 🚨 Error Handling
 
 ### Format Error Response

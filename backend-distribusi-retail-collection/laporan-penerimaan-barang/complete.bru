@@ -1,0 +1,29 @@
+meta {
+  name: Complete Laporan Penerimaan Barang (Bulk)
+  type: http
+  seq: 10
+}
+
+patch {
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/complete
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "ids": [
+      "{{laporan_penerimaan_barang_id_1}}",
+      "{{laporan_penerimaan_barang_id_2}}"
+    ]
+  }
+}
+
+vars:pre-request {
+  laporan_penerimaan_barang_id_1: lpb_id_1_here
+  laporan_penerimaan_barang_id_2: lpb_id_2_here
+}
