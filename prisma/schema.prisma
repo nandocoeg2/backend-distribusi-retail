@@ -128,7 +128,7 @@ model PurchaseOrder {
   termin_bayar            String?
   total_items             Int?
   supplierId              String?
-  po_type                 POType                    @default(SINGLE)
+  po_type                 POType                    @default(MANUAL)
   files                   FileUploaded[]
   purchaseOrderDetails    PurchaseOrderDetail[]
   packings                Packing[]
@@ -247,8 +247,8 @@ model PurchaseOrderDetail {
 }
 
 enum POType {
-  SINGLE
-  BULK
+  MANUAL
+  AUTO
 }
 
 enum NotificationType {

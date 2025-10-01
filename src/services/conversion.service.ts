@@ -18,8 +18,7 @@ export class ConversionService {
           id: { type: Type.STRING },
           date: {
             type: Type.STRING,
-            description:
-              'e.g., Process 11-MAR-25 Jam 00:00:00, convert to YYYY-MM-DD',
+            description: 'e.g., Process 11-MAR-25 Jam 00:00:00',
           },
           type: { type: Type.STRING, description: 'e.g., AUTO, MANUAL' },
         },

@@ -25,7 +25,7 @@ describe('PurchaseOrderController', () => {
         yield { type: 'field', fieldname: 'tanggal_masuk_po', value: new Date().toISOString() };
         yield { type: 'field', fieldname: 'tanggal_batas_kirim', value: new Date().toISOString() };
         yield { type: 'field', fieldname: 'termin_bayar', value: '30 hari' };
-        yield { type: 'field', fieldname: 'po_type', value: 'SINGLE' };
+        yield { type: 'field', fieldname: 'po_type', value: 'MANUAL' };
         yield { type: 'field', fieldname: 'status_code', value: 'PENDING PURCHASE ORDER' };
       }),
     };
@@ -48,7 +48,7 @@ describe('PurchaseOrderController', () => {
         tanggal_masuk_po: new Date(),
         tanggal_batas_kirim: new Date(),
         termin_bayar: '30 hari',
-        po_type: 'SINGLE',
+        po_type: 'MANUAL',
         status_code: 'PENDING PURCHASE ORDER',
       };
       const po = { id: '1', ...createInput, createdAt: new Date(), updatedAt: new Date() };
@@ -69,7 +69,7 @@ describe('PurchaseOrderController', () => {
         tanggal_masuk_po: new Date(),
         tanggal_batas_kirim: new Date(),
         termin_bayar: '30 hari',
-        po_type: 'SINGLE',
+        po_type: 'MANUAL',
         status_code: 'PENDING PURCHASE ORDER',
       };
       const po = { id: '1', ...createInput };

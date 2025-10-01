@@ -69,7 +69,7 @@ export class PurchaseOrderController {
         tanggal_masuk_po: fields.tanggal_masuk_po,
         tanggal_batas_kirim: fields.tanggal_batas_kirim,
         termin_bayar: fields.termin_bayar,
-        po_type: fields.po_type as 'BULK' | 'SINGLE',
+        po_type: fields.po_type as 'AUTO' | 'MANUAL',
         status_code: fields.status_code,
         purchaseOrderDetails,
       };

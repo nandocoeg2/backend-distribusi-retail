@@ -16,7 +16,7 @@ async function main() {
         },
         total_items: 10,
         tanggal_order: new Date(),
-        po_type: 'SINGLE',
+        po_type: 'MANUAL',
       },
     });
     console.log('Purchase order created');

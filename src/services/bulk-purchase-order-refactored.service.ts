@@ -1,15 +1,31 @@
-import { BaseBulkUploadService, BulkFileData, BulkUploadResult } from './base-bulk-upload.service';
+import {
+  BaseBulkUploadService,
+  BulkFileData,
+  BulkUploadResult,
+} from './base-bulk-upload.service';
 import { ConversionService } from './conversion.service';
 import { prisma } from '@/config/database';
 import { createAuditLog } from './audit.service';
-import { ActionType, POType, Supplier, Customer } from '@prisma/client';
+import { ActionType } from '@prisma/client';
 import logger from '@/config/logger';
 import { AppError } from '@/utils/app-error';
+import {
+  buildPrompt,
+  unwrapPayload,
+  normalizeItems,
+  normalizeInvoice,
+  parseOrderDate,
+  normalizePoType,
+  resolveSupplier,
+  resolveCustomer,
+  fetchDefaultStatus,
+  buildCreateData,
+  persistPurchaseOrder,
+} from './bulk-purchase-order.helpers';
 
 export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
   protected category = 'purchase_order';
 
-  // Static methods untuk compatibility dengan controller
   static async uploadBulkFilesAndProcess(
     files: BulkFileData[],
     prompt?: string,
@@ -46,77 +62,24 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
     let errorCount = 0;
 
     try {
-      // Update status ke processing
-      for (const fileRecord of fileRecords) {
-        await this.updateFileStatus(fileRecord.id, 'PROCESSING BULK PURCHASE ORDER', userId);
-      }
+      await this.markFilesAsProcessing(fileRecords, userId);
+      const effectivePrompt = buildPrompt(prompt);
 
       for (const fileRecord of fileRecords) {
-        try {
-          // Default prompt jika tidak ada
-          const defaultPrompt = prompt || 
-            'Convert this document into structured JSON format for bulk purchase order processing. ' +
-            'Extract relevant information such as order details, supplier information, items, pricing, and payment information.';
+        const outcome = await this.processSingleFile(
+          fileRecord,
+          bulkId,
+          effectivePrompt,
+          userId
+        );
 
-          // Konversi file menggunakan ConversionService
-          const convertedData = await ConversionService.convertFileToJson(
-            fileRecord.buffer,
-            fileRecord.mimeType,
-            defaultPrompt,
-            'bulk-purchase-order'
-          );
-
-          // Buat data Purchase Order dari converted data
-          try {
-            const poData = await this.createPoFromConvertedData(convertedData, userId);
-            
-            // Hubungkan file dengan Purchase Order yang baru dibuat
-            if (poData && poData.purchaseOrderId) {
-              await prisma.fileUploaded.update({
-                where: { id: fileRecord.id },
-                data: {
-                  purchaseOrderId: poData.purchaseOrderId,
-                },
-              });
-              
-              await createAuditLog('FileUploaded', fileRecord.id, ActionType.UPDATE, userId || 'system', {
-                purchaseOrderId: poData.purchaseOrderId,
-                bulkId: bulkId,
-              });
-
-              // Update status ke completed
-              await this.updateFileStatus(fileRecord.id, 'COMPLETED BULK PURCHASE ORDER', userId);
-              
-              successCount++;
-              logger.info('Bulk file processed successfully', {
-                fileId: fileRecord.id,
-                poId: poData.purchaseOrderId,
-                bulkId,
-              });
-            }
-          } catch (poError) {
-            logger.warn('Failed to create PO data from converted data in bulk processing', { 
-              fileId: fileRecord.id,
-              error: poError 
-            });
-            // Update status ke failed
-            await this.updateFileStatus(fileRecord.id, 'FAILED BULK PURCHASE ORDER', userId);
-            errorCount++;
-          }
-        } catch (conversionError) {
-          logger.error('Failed to convert file in bulk processing', { 
-            fileId: fileRecord.id,
-            filename: fileRecord.originalFilename,
-            error: conversionError 
-          });
-          // Update status ke failed
-          await this.updateFileStatus(fileRecord.id, 'FAILED BULK PURCHASE ORDER', userId);
+        processedCount++;
+        if (outcome === 'success') {
+          successCount++;
+        } else {
           errorCount++;
         }
 
-        processedCount++;
-
-        // Log progress setiap 10 file
         if (processedCount % 10 === 0) {
           logger.info('Bulk processing progress', {
             bulkId,
@@ -135,140 +98,218 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
         successFiles: successCount,
         errorFiles: errorCount,
       });
-
     } catch (error) {
       logger.error('Bulk processing failed', { bulkId, error });
     }
   }
 
-  private async createPoFromConvertedData(
-    convertedData: any,
+  private async markFilesAsProcessing(
+    fileRecords: Array<{ id: string }>,
     userId?: string
   ) {
-    // Mapping converted data ke format yang sesuai untuk Purchase Order
+    for (const fileRecord of fileRecords) {
+      await this.updateFileStatus(
+        fileRecord.id,
+        'PROCESSING BULK PURCHASE ORDER',
+        userId
+      );
+    }
+  }
+
+  private async processSingleFile(
+    fileRecord: {
+      id: string;
+      buffer: Buffer;
+      mimeType: string;
+      originalFilename: string;
+    },
+    bulkId: string,
+    prompt: string,
+    userId?: string
+  ): Promise<'success' | 'failed'> {
+    try {
+      const convertedData = await ConversionService.convertFileToJson(
+        fileRecord.buffer,
+        fileRecord.mimeType,
+        prompt,
+        'bulk-purchase-order'
+      );
+
+      const poData = await this.createPoFromConvertedData(
+        convertedData,
+        userId
+      );
+
+      if (poData?.purchaseOrderId) {
+        await prisma.fileUploaded.update({
+          where: { id: fileRecord.id },
+          data: {
+            purchaseOrderId: poData.purchaseOrderId,
+          },
+        });
+
+        await createAuditLog(
+          'FileUploaded',
+          fileRecord.id,
+          ActionType.UPDATE,
+          userId || 'system',
+          {
+            purchaseOrderId: poData.purchaseOrderId,
+            bulkId,
+          }
+        );
+
+        await this.updateFileStatus(
+          fileRecord.id,
+          'COMPLETED BULK PURCHASE ORDER',
+          userId
+        );
+
+        logger.info('Bulk file processed successfully', {
+          fileId: fileRecord.id,
+          poId: poData.purchaseOrderId,
+          bulkId,
+        });
+
+        return 'success';
+      }
+
+      await this.updateFileStatus(
+        fileRecord.id,
+        'FAILED BULK PURCHASE ORDER',
+        userId
+      );
+      logger.warn('Converted data did not produce a purchase order', {
+        fileId: fileRecord.id,
+        bulkId,
+      });
+      return 'failed';
+    } catch (error) {
+      await this.updateFileStatus(
+        fileRecord.id,
+        'FAILED BULK PURCHASE ORDER',
+        userId
+      );
+
+      const logContext = {
+        fileId: fileRecord.id,
+        filename: fileRecord.originalFilename,
+        bulkId,
+        error,
+      };
+
+      if (error instanceof AppError) {
+        logger.warn(
+          'Failed to create PO data from converted data in bulk processing',
+          logContext
+        );
+      } else {
+        logger.error('Failed to convert file in bulk processing', logContext);
+      }
+
+      return 'failed';
+    }
+  }
+
+  private async createPoFromConvertedData(convertedData: any, userId?: string) {
+    const payload = unwrapPayload(convertedData);
+    const orderPayload = (payload?.order ?? {}) as Record<string, unknown>;
+    const supplierPayload = payload?.supplier;
+    const customerPayload = payload?.customers;
+
+    const { normalizedItems, detailInputs, totalItems } = normalizeItems(payload);
+
+    const orderDateRaw = (orderPayload as { date?: unknown }).date;
+    const orderTypeRaw = (orderPayload as { type?: unknown }).type;
+    const orderIdRaw = (orderPayload as { id?: unknown }).id;
+
+    const parsedOrderDate = parseOrderDate(orderDateRaw);
+    const invoice = normalizeInvoice(payload?.invoice);
+    const poType = normalizePoType(orderTypeRaw);
+
     const poData = {
-      order: convertedData.order,
-      supplier: convertedData.supplier,
-      customers: convertedData.customers,
-      items: convertedData.items,
+      order: {
+        ...orderPayload,
+        parsedDate: parsedOrderDate.toISOString(),
+      },
+      supplier: supplierPayload,
+      customers: customerPayload,
+      items: normalizedItems,
+      invoice,
+      total_items: totalItems,
       createdBy: userId,
       updatedBy: userId,
     };
 
-    // Cari atau buat supplier
-    let supplier: Supplier | null = null;
-    if (convertedData.supplier?.name) {
-      supplier = await prisma.supplier.findFirst({
-        where: {
-          name: {
-            contains: convertedData.supplier.name,
-            mode: 'insensitive'
-          }
-        }
-      });
+    const supplier = await resolveSupplier(supplierPayload, userId);
+    const customer = await resolveCustomer(customerPayload, userId);
+    const status = await fetchDefaultStatus();
 
-      if (!supplier) {
-        supplier = await prisma.supplier.create({
-          data: {
-            name: convertedData.supplier.name,
-            address: convertedData.supplier.address || '',
-            phoneNumber: convertedData.supplier.phone || '',
-            email: convertedData.supplier.email || '',
-            createdBy: userId || 'system',
-            updatedBy: userId || 'system',
-          },
-        });
-      }
-    }
-
-    // Cari atau buat customer
-    let customer: Customer | null = null;
-    if (convertedData.customers?.name) {
-      customer = await prisma.customer.findFirst({
-        where: {
-          namaCustomer: {
-            contains: convertedData.customers.name,
-            mode: 'insensitive'
-          }
-        }
-      });
-
-      if (!customer) {
-        customer = await prisma.customer.create({
-          data: {
-            namaCustomer: convertedData.customers.name,
-            kodeCustomer: `CUST-${Date.now()}`,
-            groupCustomerId: 'default-group', // You might want to handle this properly
-            regionId: 'default-region', // You might want to handle this properly
-            alamatPengiriman: convertedData.customers.address || '',
-            phoneNumber: convertedData.customers.phone || '',
-            email: convertedData.customers.email || '',
-            createdBy: userId || 'system',
-            updatedBy: userId || 'system',
-          },
-        });
-      }
-    }
-
-    // Cari status
-    const status = await prisma.status.findUnique({
-      where: {
-        status_code_category: {
-          status_code: 'PENDING PURCHASE ORDER',
-          category: 'Purchase Order'
-        }
-      },
+    const createData = buildCreateData({
+      poNumber: orderIdRaw,
+      parsedOrderDate,
+      poType,
+      totalItems,
+      hasDetails: detailInputs.length > 0,
+      supplier,
+      customer,
+      status,
+      userId,
     });
 
-    try {
-      const createData: any = {
-        po_number: convertedData.order?.id || `PO-${Date.now()}`,
-        tanggal_masuk_po: convertedData.order?.date ? new Date(convertedData.order.date) : new Date(),
-        po_type: POType.SINGLE,
-        createdBy: userId || 'system',
-        updatedBy: userId || 'system',
-      };
+    const { purchaseOrder, persistedDetails } = await persistPurchaseOrder({
+      createData,
+      detailInputs,
+      userId,
+    });
 
-      if (supplier) {
-        createData.supplier = {
-          connect: { id: supplier.id },
-        };
-      }
-
-      if (customer) {
-        createData.customer = {
-          connect: { id: customer.id },
-        };
-      }
-
-      if (status) {
-        createData.status = {
-          connect: { id: status.id },
-        };
-      }
-
-      const purchaseOrder = await prisma.purchaseOrder.create({
-        data: createData,
-      });
-
-      await createAuditLog('PurchaseOrder', purchaseOrder.id, ActionType.CREATE, userId || 'system', {
+    await createAuditLog(
+      'PurchaseOrder',
+      purchaseOrder.id,
+      ActionType.CREATE,
+      userId || 'system',
+      {
         supplierId: supplier?.id ?? null,
         statusId: status?.id ?? null,
-      });
+      }
+    );
 
-      logger.info('PO data saved to database', { 
-        poId: purchaseOrder.id,
-        poData: poData 
-      });
+    logger.info('PO data saved to database', {
+      poId: purchaseOrder.id,
+      poNumber: purchaseOrder.po_number,
+      totalItems,
+    });
 
-      return {
-        ...poData,
-        purchaseOrderId: purchaseOrder.id,
-        savedToDatabase: true,
-      };
-    } catch (error) {
-      logger.error('Failed to save PO data to database', { error, poData });
-      throw new AppError('Failed to save PO data to database', 500);
-    }
+    return {
+      ...poData,
+      order: {
+        ...(poData.order ?? {}),
+        po_number: purchaseOrder.po_number,
+        type: poType,
+        originalType: orderTypeRaw,
+      },
+      purchaseOrderId: purchaseOrder.id,
+      purchaseOrderDetails:
+        persistedDetails.length > 0 ? persistedDetails : detailInputs,
+      supplierRecord: supplier
+        ? {
+            id: supplier.id,
+            name: supplier.name,
+            code: supplier.code,
+            phoneNumber: supplier.phoneNumber,
+            bank: supplier.bank,
+          }
+        : null,
+      customerRecord: customer
+        ? {
+            id: customer.id,
+            namaCustomer: customer.namaCustomer,
+            kodeCustomer: customer.kodeCustomer,
+            alamatPengiriman: customer.alamatPengiriman,
+            phoneNumber: customer.phoneNumber,
+          }
+        : null,
+      savedToDatabase: true,
+    };
   }
 }
