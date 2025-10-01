@@ -2,18 +2,16 @@ import { ConversionService } from '@/services/conversion.service';
 import { AppError } from '@/utils/app-error';
 
 var mockGenerateContent: jest.Mock = jest.fn();
-jest.mock('@google/generative-ai', () => {
+jest.mock('@google/genai', () => {
     return {
-        GoogleGenerativeAI: jest.fn().mockImplementation(() => {
+        GoogleGenAI: jest.fn().mockImplementation(() => {
             return {
-                getGenerativeModel: jest.fn().mockImplementation(() => {
-                    return {
-                        generateContent: (...args: any[]) => mockGenerateContent(...args),
-                    };
-                }),
+                models: {
+                    generateContent: (...args: any[]) => mockGenerateContent(...args),
+                },
             };
         }),
-        SchemaType: {
+        Type: {
             OBJECT: 'OBJECT',
             STRING: 'STRING',
             INTEGER: 'INTEGER',
@@ -39,9 +37,7 @@ describe.skip('ConversionService', () => {
     const jsonResponse = { key: 'value' };
 
     mockGenerateContent.mockResolvedValue({
-      response: {
-        text: () => JSON.stringify(jsonResponse),
-      },
+      text: JSON.stringify(jsonResponse),
     });
 
     const result = await ConversionService.convertFileToJson(file, mimeType, prompt);
@@ -56,9 +52,7 @@ describe.skip('ConversionService', () => {
     const prompt = 'test prompt';
 
     mockGenerateContent.mockResolvedValue({
-      response: {
-        text: () => 'invalid json',
-      },
+      text: 'invalid json',
     });
 
     await expect(ConversionService.convertFileToJson(file, mimeType, prompt)).rejects.toThrow(

@@ -1,152 +1,182 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI, Type, type Schema } from '@google/genai';
 import { environment } from '@/config/environment';
 import logger from '@/config/logger';
 import { AppError } from '@/utils/app-error';
 
 export class ConversionService {
-  private static genAI = new GoogleGenerativeAI(environment.GOOGLE_API_KEY);
+  private static genAI = new GoogleGenAI({
+    apiKey: environment.GOOGLE_API_KEY,
+  });
 
   // Schema untuk bulk purchase order processing
-  private static bulkPurchaseOrderSchema = {
-    type: SchemaType.OBJECT,
+  private static bulkPurchaseOrderSchema: Schema = {
+    type: Type.OBJECT,
     properties: {
       order: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          id: { type: SchemaType.STRING },
-          date: { type: SchemaType.STRING },
-          status: { type: SchemaType.STRING },
-          type: { type: SchemaType.STRING }
-        }
+          id: { type: Type.STRING },
+          date: {
+            type: Type.STRING,
+            description:
+              'e.g., Process 11-MAR-25 Jam 00:00:00, convert to YYYY-MM-DD',
+          },
+          type: { type: Type.STRING, description: 'e.g., AUTO, MANUAL' },
+        },
       },
       supplier: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          name: { type: SchemaType.STRING, nullable: true },
-          code: { type: SchemaType.STRING, nullable: true },
-          address: { type: SchemaType.STRING, nullable: true },
-          phone: { type: SchemaType.STRING, nullable: true },
-          fax: { type: SchemaType.STRING, nullable: true },
+          name: { type: Type.STRING, nullable: true },
+          code: { type: Type.STRING, nullable: true },
+          address: { type: Type.STRING, nullable: true },
+          phone: { type: Type.STRING, nullable: true },
+          fax: { type: Type.STRING, nullable: true },
           bank: {
-            type: SchemaType.OBJECT,
+            type: Type.OBJECT,
             properties: {
-              name: { type: SchemaType.STRING, nullable: true },
-              account: { type: SchemaType.STRING, nullable: true },
-              holder: { type: SchemaType.STRING, nullable: true }
-            }
-          }
-        }
+              name: { type: Type.STRING, nullable: true },
+              account: { type: Type.STRING, nullable: true },
+              holder: { type: Type.STRING, nullable: true },
+            },
+          },
+        },
       },
       customers: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          name: { type: SchemaType.STRING, nullable: true },
-          code: { type: SchemaType.STRING, nullable: true },
-          address: { type: SchemaType.STRING, nullable: true },
-          phone: { type: SchemaType.STRING, nullable: true },
-          fax: { type: SchemaType.STRING, nullable: true },
+          name: { type: Type.STRING, nullable: true },
+          code: { type: Type.STRING, nullable: true },
+          address: { type: Type.STRING, nullable: true },
+          phone: { type: Type.STRING, nullable: true },
+          fax: { type: Type.STRING, nullable: true },
           bank: {
-            type: SchemaType.OBJECT,
+            type: Type.OBJECT,
             properties: {
-              name: { type: SchemaType.STRING, nullable: true },
-              account: { type: SchemaType.STRING, nullable: true },
-              holder: { type: SchemaType.STRING, nullable: true }
-            }
-          }
-        }
+              name: { type: Type.STRING, nullable: true },
+              account: { type: Type.STRING, nullable: true },
+              holder: { type: Type.STRING, nullable: true },
+            },
+          },
+        },
       },
       items: {
-        type: SchemaType.ARRAY,
+        type: Type.ARRAY,
         items: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            productName: { type: SchemaType.STRING, nullable: true },
-            plu: { type: SchemaType.STRING, nullable: true },
-            qtyOrdered_carton: { type: SchemaType.INTEGER, nullable: true },
-            price_perCarton: { type: SchemaType.NUMBER, nullable: true },
-            totalLine_net: { type: SchemaType.NUMBER, nullable: true },
-          }
-        }
+            productName: { type: Type.STRING, nullable: true },
+            plu: { type: Type.STRING, nullable: true },
+            qtyOrdered_carton: { type: Type.INTEGER, nullable: true },
+            price_perCarton: { type: Type.NUMBER, nullable: true },
+            totalLine_net: { type: Type.NUMBER, nullable: true },
+          },
+        },
       },
-    }
+      invoice: {
+        type: Type.OBJECT,
+        properties: {
+          TOTAL_PURCHASE_PRICE: { type: Type.NUMBER, nullable: true },
+          TOTAL_ITEM_DISCOUNT: { type: Type.NUMBER, nullable: true },
+          TOTAL_INVOICE_DISCOUNT: { type: Type.NUMBER, nullable: true },
+          TOTAL_AFTER_DISCOUNT: { type: Type.NUMBER, nullable: true },
+          TOTAL_BONUS: { type: Type.NUMBER, nullable: true },
+          TOTAL_LST: { type: Type.NUMBER, nullable: true },
+          TOTAL_VAT_INPUT: { type: Type.NUMBER, nullable: true },
+          TOTAL_INCLUDE_VAT: { type: Type.NUMBER, nullable: true },
+          TOTAL_INVOICE: { type: Type.NUMBER, nullable: true },
+          amountInWords: {
+            type: Type.STRING,
+            nullable: true,
+            description:
+              'By Letter : Satu Juta Sembilan Puluh Delapan Ribu Sembilan Ratus',
+          },
+        },
+      },
+    },
   };
 
   // Schema untuk laporan penerimaan barang
-  private static laporanPenerimaanBarangSchema = {
-    type: SchemaType.OBJECT,
+  private static laporanPenerimaanBarangSchema: Schema = {
+    type: Type.OBJECT,
     properties: {
-      fppNumber: { type: SchemaType.STRING },
-      orderDate: { type: SchemaType.STRING },
-      deliveryDate: { type: SchemaType.STRING },
-      deliveryTime: { type: SchemaType.STRING },
-      door: { type: SchemaType.INTEGER },
-      lpbNumber: { type: SchemaType.STRING },
+      fppNumber: { type: Type.STRING },
+      orderDate: { type: Type.STRING },
+      deliveryDate: { type: Type.STRING },
+      deliveryTime: { type: Type.STRING },
+      door: { type: Type.INTEGER },
+      lpbNumber: { type: Type.STRING },
       supplier: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          code: { type: SchemaType.STRING },
-          name: { type: SchemaType.STRING },
-          address: { type: SchemaType.STRING },
-          phone: { type: SchemaType.STRING, nullable: true }
-        }
+          code: { type: Type.STRING },
+          name: { type: Type.STRING },
+          address: { type: Type.STRING },
+          phone: { type: Type.STRING, nullable: true },
+        },
       },
       items: {
-        type: SchemaType.ARRAY,
+        type: Type.ARRAY,
         items: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            lineNo: { type: SchemaType.INTEGER },
-            plu: { type: SchemaType.STRING },
-            productName: { type: SchemaType.STRING },
-            qtyCarton: { type: SchemaType.INTEGER },
-            qtyPcs: { type: SchemaType.INTEGER },
-            price: { type: SchemaType.NUMBER },
-            discountPercent: { type: SchemaType.NUMBER },
-            netPrice: { type: SchemaType.NUMBER },
-            ppnbm: { type: SchemaType.NUMBER },
-            total: { type: SchemaType.NUMBER },
-            ket: { type: SchemaType.STRING }
-          }
-        }
+            lineNo: { type: Type.INTEGER },
+            plu: { type: Type.STRING },
+            productName: { type: Type.STRING },
+            qtyCarton: { type: Type.INTEGER },
+            qtyPcs: { type: Type.INTEGER },
+            price: { type: Type.NUMBER },
+            discountPercent: { type: Type.NUMBER },
+            netPrice: { type: Type.NUMBER },
+            ppnbm: { type: Type.NUMBER },
+            total: { type: Type.NUMBER },
+            ket: { type: Type.STRING },
+          },
+        },
       },
       pricing: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          totalPurchasePrice: { type: SchemaType.NUMBER },
-          totalDiscount: { type: SchemaType.NUMBER },
-          netAfterDiscount: { type: SchemaType.NUMBER },
-          ppnInput: { type: SchemaType.NUMBER },
-          grandTotal: { type: SchemaType.NUMBER },
-          grandTotalWords: { type: SchemaType.STRING }
-        }
+          totalPurchasePrice: { type: Type.NUMBER },
+          totalDiscount: { type: Type.NUMBER },
+          netAfterDiscount: { type: Type.NUMBER },
+          ppnInput: { type: Type.NUMBER },
+          grandTotal: { type: Type.NUMBER },
+          grandTotalWords: { type: Type.STRING },
+        },
       },
       payment: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          method: { type: SchemaType.STRING },
-          bankAccount: { type: SchemaType.STRING },
-          accountName: { type: SchemaType.STRING }
-        }
-      }
-    }
+          method: { type: Type.STRING },
+          bankAccount: { type: Type.STRING },
+          accountName: { type: Type.STRING },
+        },
+      },
+    },
   };
 
-  private static getModel(schemaType: 'bulk-purchase-order' | 'laporan-penerimaan-barang' = 'bulk-purchase-order') {
-    const responseSchema = schemaType === 'laporan-penerimaan-barang' 
-      ? this.laporanPenerimaanBarangSchema 
-      : this.bulkPurchaseOrderSchema;
+  private static getModelConfig(
+    schemaType:
+      | 'bulk-purchase-order'
+      | 'laporan-penerimaan-barang' = 'bulk-purchase-order'
+  ) {
+    const responseSchema =
+      schemaType === 'laporan-penerimaan-barang'
+        ? this.laporanPenerimaanBarangSchema
+        : this.bulkPurchaseOrderSchema;
 
-    return this.genAI.getGenerativeModel({
+    return {
       model: 'gemini-2.5-flash',
-      systemInstruction:
-        'You are an expert at converting documents into structured JSON. ' +
-        'Analyze the provided file and convert it into a valid JSON object based on the user\'s prompt. ' +
-        'Do not include any explanatory text or markdown formatting in your response.',
-      generationConfig: {
+      config: {
+        systemInstruction:
+          'You are an expert at converting documents into structured JSON. ' +
+          "Analyze the provided file and convert it into a valid JSON object based on the user's prompt. " +
+          'Do not include any explanatory text or markdown formatting in your response.',
         responseMimeType: 'application/json',
-        responseSchema: responseSchema as any
+        responseSchema,
       },
-    });
+    } as const;
   }
 
   private static async fileToGenerativePart(file: Buffer, mimeType: string) {
@@ -159,10 +189,12 @@ export class ConversionService {
   }
 
   static async convertFileToJson(
-    file: Buffer, 
-    mimeType: string, 
+    file: Buffer,
+    mimeType: string,
     prompt: string,
-    schemaType: 'bulk-purchase-order' | 'laporan-penerimaan-barang' = 'bulk-purchase-order'
+    schemaType:
+      | 'bulk-purchase-order'
+      | 'laporan-penerimaan-barang' = 'bulk-purchase-order'
   ) {
     logger.info('Preparing file for Gemini API...');
     const filePart = await this.fileToGenerativePart(file, mimeType);
@@ -171,26 +203,132 @@ export class ConversionService {
     const requestPayload = [prompt, filePart];
 
     try {
-      logger.info(`Sending request to Gemini API for structured JSON output with schema: ${schemaType}...`);
-      const model = this.getModel(schemaType);
-      const result = await model.generateContent(requestPayload);
-      const response = await result.response;
+      logger.info(
+        `Sending request to Gemini API for structured JSON output with schema: ${schemaType}...`
+      );
+      const { model, config } = this.getModelConfig(schemaType);
+      const response = await this.genAI.models.generateContent({
+        model,
+        contents: requestPayload,
+        config,
+      });
       logger.info('Received structured response from Gemini API.');
 
-      const jsonString = response.text();
+      const jsonString = response.text;
       logger.info({ message: 'Raw JSON string from Gemini', jsonString });
 
       try {
+        if (!jsonString) {
+          throw new Error('Empty response body');
+        }
         const parsedJson = JSON.parse(jsonString);
         logger.info('Successfully parsed JSON response.');
         return parsedJson;
       } catch (parseError) {
-        logger.error('Failed to parse JSON from Gemini response', { error: parseError, jsonString });
+        logger.error('Failed to parse JSON from Gemini response', {
+          error: parseError,
+          jsonString,
+        });
         throw new AppError('Could not parse the converted file content.', 500);
       }
     } catch (apiError) {
-      logger.error('Error calling Gemini API', { error: JSON.stringify(apiError, Object.getOwnPropertyNames(apiError)) });
-      throw new AppError('Failed to get a response from the conversion service.', 502);
+      const errorInfo = this.parseApiError(apiError);
+
+      if (errorInfo.quotaExceeded) {
+        logger.warn('Gemini quota exceeded', errorInfo.logPayload);
+        const retryMessage = errorInfo.retryAfterSeconds
+          ? `Google Gemini quota exceeded. Please retry after ${Math.ceil(
+              errorInfo.retryAfterSeconds
+            )} seconds.`
+          : 'Google Gemini quota exceeded. Please review your plan or billing settings.';
+        throw new AppError(retryMessage, 429);
+      }
+
+      logger.error('Error calling Gemini API', errorInfo.logPayload);
+      throw new AppError(
+        'Failed to get a response from the conversion service.',
+        502
+      );
     }
+  }
+
+  private static parseApiError(error: unknown) {
+    const defaultPayload = { error };
+    const result = {
+      quotaExceeded: false,
+      retryAfterSeconds: undefined as number | undefined,
+      logPayload: defaultPayload as Record<string, unknown>,
+    };
+
+    if (!error || typeof error !== 'object') {
+      return result;
+    }
+
+    const apiError = error as Record<string, unknown>;
+    const rawError = apiError.error ?? apiError.message;
+    let structuredError: any;
+
+    if (typeof rawError === 'string') {
+      try {
+        structuredError = JSON.parse(rawError);
+      } catch (parseError) {
+        logger.debug('Failed to parse Gemini error message as JSON', {
+          parseError,
+          rawError,
+        });
+      }
+    } else if (rawError && typeof rawError === 'object') {
+      structuredError = rawError;
+    }
+
+    const googleError = structuredError?.error ?? structuredError;
+    const statusCode =
+      typeof apiError.status === 'number'
+        ? apiError.status
+        : typeof googleError?.code === 'number'
+        ? googleError.code
+        : undefined;
+    const statusText =
+      typeof googleError?.status === 'string' ? googleError.status : undefined;
+
+    if (statusCode === 429 || statusText === 'RESOURCE_EXHAUSTED') {
+      result.quotaExceeded = true;
+      const retryInfo = Array.isArray(googleError?.details)
+        ? googleError.details.find((detail: any) =>
+            detail?.['@type']?.includes('RetryInfo')
+          )
+        : undefined;
+
+      const retryAfterSeconds = this.parseRetryDelay(retryInfo?.retryDelay);
+      result.retryAfterSeconds = retryAfterSeconds;
+    }
+
+    result.logPayload = {
+      error,
+      structuredError,
+      statusCode,
+      statusText,
+      retryAfterSeconds: result.retryAfterSeconds,
+    };
+
+    return result;
+  }
+
+  private static parseRetryDelay(retryDelay: unknown) {
+    if (typeof retryDelay === 'number') {
+      return retryDelay;
+    }
+
+    if (typeof retryDelay !== 'string') {
+      return undefined;
+    }
+
+    const secondsMatch = retryDelay.match(/([0-9]+(?:\.[0-9]+)?)\s*s?/i);
+    if (!secondsMatch) {
+      return undefined;
+    }
+
+    const parsed = Number(secondsMatch[1]);
+    return Number.isFinite(parsed) ? parsed : undefined;
   }
 }
