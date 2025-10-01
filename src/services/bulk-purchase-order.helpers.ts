@@ -1,4 +1,4 @@
-import { Customer, POType, Status, Supplier } from '@prisma/client';
+import { Customer, POType, Status, Supplier, TermOfPayment } from '@prisma/client';
 import { prisma } from '@/config/database';
 import { AppError } from '@/utils/app-error';
 
@@ -131,6 +131,75 @@ const sanitizeString = (value: unknown): string | undefined => {
     return value.trim();
   }
   return undefined;
+};
+
+export const deriveTermOfPaymentCode = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const segments = trimmed
+    .split('.')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+  const candidate = segments.length > 0 ? segments[segments.length - 1] : trimmed;
+  if (!candidate) {
+    return undefined;
+  }
+
+  const code = candidate.slice(-1).toUpperCase();
+  return code || undefined;
+};
+
+export interface ResolvedTermOfPayment {
+  termOfPayment: TermOfPayment | null;
+  attemptedCodes: string[];
+}
+
+export const resolveTermOfPaymentForSupplier = async (params: {
+  supplierPayload: unknown;
+  supplierRecord: Supplier | null;
+}): Promise<ResolvedTermOfPayment> => {
+  const { supplierPayload, supplierRecord } = params;
+
+  const attemptedCodes: string[] = [];
+
+  const fetchByCode = async (code: string | undefined | null) => {
+    if (!code) {
+      return null;
+    }
+
+    if (!attemptedCodes.includes(code)) {
+      attemptedCodes.push(code);
+    }
+
+    return prisma.termOfPayment.findUnique({
+      where: { kode_top: code },
+    });
+  };
+
+  const payloadCode =
+    supplierPayload && typeof supplierPayload === 'object'
+      ? (supplierPayload as Record<string, unknown>).code
+      : undefined;
+
+  let termOfPayment = await fetchByCode(
+    deriveTermOfPaymentCode(payloadCode)
+  );
+
+  if (!termOfPayment) {
+    termOfPayment = await fetchByCode(
+      deriveTermOfPaymentCode(supplierRecord?.code)
+    );
+  }
+
+  return { termOfPayment, attemptedCodes };
 };
 
 export const buildPrompt = (prompt?: string) => prompt || DEFAULT_PROMPT;
@@ -435,6 +504,9 @@ export const buildCreateData = (params: {
   supplier: Supplier | null;
   customer: Customer | null;
   status: Status | null;
+  termOfPayment: TermOfPayment | null;
+  existingTermOfPaymentId?: string;
+  tanggalBatasKirim?: Date;
   userId?: string;
 }) => {
   const {
@@ -446,6 +518,9 @@ export const buildCreateData = (params: {
     supplier,
     customer,
     status,
+    termOfPayment,
+    existingTermOfPaymentId,
+    tanggalBatasKirim,
     userId,
   } = params;
 
@@ -457,6 +532,16 @@ export const buildCreateData = (params: {
     createdBy: userId || 'system',
     updatedBy: userId || 'system',
   };
+
+  if (tanggalBatasKirim) {
+    createData.tanggal_batas_kirim = tanggalBatasKirim;
+  }
+
+  if (termOfPayment) {
+    createData.termOfPayment = { connect: { id: termOfPayment.id } };
+  } else if (existingTermOfPaymentId) {
+    createData.termOfPayment = { connect: { id: existingTermOfPaymentId } };
+  }
 
   if (supplier) {
     createData.supplier = { connect: { id: supplier.id } };
@@ -539,3 +624,7 @@ export const persistPurchaseOrder = async (params: {
     persistedDetails,
   };
 };
+
+
+
+

@@ -6,7 +6,11 @@ import {
   SearchPurchaseOrderInput,
 } from '@/schemas/purchase-order.schema';
 import { AppError } from '@/utils/app-error';
-import { generatePackingNumber, generateUniqueInvoiceNumber, generateSuratJalanNumber } from '@/utils/random.utils';
+import {
+  generatePackingNumber,
+  generateUniqueInvoiceNumber,
+  generateSuratJalanNumber,
+} from '@/utils/random.utils';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
 
@@ -20,7 +24,7 @@ export interface FileInfo {
 export class PurchaseOrderService {
   private static async findPurchaseOrdersByPoNumber(
     poNumber: string,
-    excludeIds: string[] = [],
+    excludeIds: string[] = []
   ) {
     const whereClause: Prisma.PurchaseOrderWhereInput = {
       po_number: poNumber,
@@ -40,7 +44,9 @@ export class PurchaseOrderService {
   }
 
   static async checkDuplicatePoNumber(poNumber: string) {
-    const matchingPurchaseOrders = await this.findPurchaseOrdersByPoNumber(poNumber);
+    const matchingPurchaseOrders = await this.findPurchaseOrdersByPoNumber(
+      poNumber
+    );
 
     const matchingCount = matchingPurchaseOrders.length;
     const duplicateCount = matchingCount > 1 ? matchingCount - 1 : 0;
@@ -73,25 +79,28 @@ export class PurchaseOrderService {
       let statusId: string | undefined;
       if (poData.status_code) {
         const status = await prisma.status.findUnique({
-          where: { 
+          where: {
             status_code_category: {
               status_code: poData.status_code,
-              category: 'Purchase Order'
-            }
+              category: 'Purchase Order',
+            },
           },
         });
         if (!status) {
-          throw new AppError(`Status with code '${poData.status_code}' not found`, 404);
+          throw new AppError(
+            `Status with code '${poData.status_code}' not found`,
+            404
+          );
         }
         statusId = status.id;
       } else {
         // Use default status 'PENDING PURCHASE ORDER'
         const defaultStatus = await prisma.status.findUnique({
-          where: { 
+          where: {
             status_code_category: {
               status_code: 'PENDING PURCHASE ORDER',
-              category: 'Purchase Order'
-            }
+              category: 'Purchase Order',
+            },
           },
         });
         if (defaultStatus) {
@@ -99,12 +108,17 @@ export class PurchaseOrderService {
         }
       }
 
-      const { status_code, purchaseOrderDetails, ...poDataWithoutStatus } = poData;
+      const { status_code, purchaseOrderDetails, ...poDataWithoutStatus } =
+        poData;
       const dataForDb = {
         ...poDataWithoutStatus,
         statusId,
-        tanggal_masuk_po: poData.tanggal_masuk_po ? new Date(poData.tanggal_masuk_po) : new Date(),
-        tanggal_batas_kirim: poData.tanggal_batas_kirim ? new Date(poData.tanggal_batas_kirim) : undefined,
+        tanggal_masuk_po: poData.tanggal_masuk_po
+          ? new Date(poData.tanggal_masuk_po)
+          : new Date(),
+        tanggal_batas_kirim: poData.tanggal_batas_kirim
+          ? new Date(poData.tanggal_batas_kirim)
+          : undefined,
         files: {
           create: fileInfos,
         },
@@ -180,7 +194,10 @@ export class PurchaseOrderService {
     }
   }
 
-  static async getAllPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
+  static async getAllPurchaseOrders(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResult<PurchaseOrder>> {
     const skip = (page - 1) * limit;
 
     const statuses = await prisma.status.findMany({
@@ -195,7 +212,7 @@ export class PurchaseOrderService {
       },
     });
 
-    const statusIds = statuses.map(status => status.id);
+    const statusIds = statuses.map((status) => status.id);
 
     const [data, totalItems] = await Promise.all([
       prisma.purchaseOrder.findMany({
@@ -247,6 +264,7 @@ export class PurchaseOrderService {
         purchaseOrderDetails: true,
         files: true,
         status: true,
+        termOfPayment: true,
         packings: {
           include: {
             packingItems: {
@@ -264,8 +282,14 @@ export class PurchaseOrderService {
       throw new AppError('Purchase Order not found', 404);
     }
 
-    if (purchaseOrder.po_type === 'AUTO' && (!purchaseOrder.files || purchaseOrder.files.length === 0)) {
-      throw new AppError('Data integrity violation: BULK purchase order must have at least one file.', 500);
+    if (
+      purchaseOrder.po_type === 'AUTO' &&
+      (!purchaseOrder.files || purchaseOrder.files.length === 0)
+    ) {
+      throw new AppError(
+        'Data integrity violation: BULK purchase order must have at least one file.',
+        500
+      );
     }
 
     // Get audit trail for this purchase order
@@ -316,15 +340,18 @@ export class PurchaseOrderService {
         let statusId: string | undefined;
         if (status_code) {
           const status = await tx.status.findUnique({
-            where: { 
+            where: {
               status_code_category: {
                 status_code: status_code,
-                category: 'Purchase Order'
-              }
+                category: 'Purchase Order',
+              },
             },
           });
           if (!status) {
-            throw new AppError(`Status with code '${status_code}' not found`, 404);
+            throw new AppError(
+              `Status with code '${status_code}' not found`,
+              404
+            );
           }
           statusId = status.id;
         }
@@ -374,10 +401,10 @@ export class PurchaseOrderService {
 
         const purchaseOrder = await tx.purchaseOrder.update({
           where: { id },
-          data: { 
-            ...poData, 
+          data: {
+            ...poData,
             ...(statusId && { statusId }),
-            updatedBy: userId 
+            updatedBy: userId,
           },
           include: {
             purchaseOrderDetails: true,
@@ -422,7 +449,18 @@ export class PurchaseOrderService {
           where: { id },
           include: {
             packings: { include: { packingItems: true } },
-            invoices: { include: { suratJalan: { include: { suratJalanDetails: { include: { suratJalanDetailItems: true } }, historyPengiriman: true } } } },
+            invoices: {
+              include: {
+                suratJalan: {
+                  include: {
+                    suratJalanDetails: {
+                      include: { suratJalanDetailItems: true },
+                    },
+                    historyPengiriman: true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -432,15 +470,35 @@ export class PurchaseOrderService {
 
         await createAuditLog('PurchaseOrder', id, 'DELETE', userId, existingPO);
 
-        await tx.purchaseOrderDetail.deleteMany({ where: { purchaseOrderId: id } });
-        await tx.packingItem.deleteMany({ where: { packing: { purchaseOrderId: id } } });
+        await tx.purchaseOrderDetail.deleteMany({
+          where: { purchaseOrderId: id },
+        });
+        await tx.packingItem.deleteMany({
+          where: { packing: { purchaseOrderId: id } },
+        });
         await tx.packing.deleteMany({ where: { purchaseOrderId: id } });
-        await tx.suratJalanDetailItem.deleteMany({ where: { suratJalanDetail: { suratJalan: { invoice: { purchaseOrderId: id } } } } });
-        await tx.suratJalanDetail.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
-        await tx.historyPengiriman.deleteMany({ where: { suratJalan: { invoice: { purchaseOrderId: id } } } });
-        await tx.suratJalan.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
-        await tx.invoicePengirimanDetail.deleteMany({ where: { invoice: { purchaseOrderId: id } } });
-        await tx.invoicePengiriman.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.suratJalanDetailItem.deleteMany({
+          where: {
+            suratJalanDetail: {
+              suratJalan: { invoice: { purchaseOrderId: id } },
+            },
+          },
+        });
+        await tx.suratJalanDetail.deleteMany({
+          where: { suratJalan: { invoice: { purchaseOrderId: id } } },
+        });
+        await tx.historyPengiriman.deleteMany({
+          where: { suratJalan: { invoice: { purchaseOrderId: id } } },
+        });
+        await tx.suratJalan.deleteMany({
+          where: { invoice: { purchaseOrderId: id } },
+        });
+        await tx.invoicePengirimanDetail.deleteMany({
+          where: { invoice: { purchaseOrderId: id } },
+        });
+        await tx.invoicePengiriman.deleteMany({
+          where: { purchaseOrderId: id },
+        });
 
         return await tx.purchaseOrder.delete({
           where: { id },
@@ -462,25 +520,28 @@ export class PurchaseOrderService {
     }
   }
 
-  static async getHistoryPurchaseOrders(page: number = 1, limit: number = 10): Promise<PaginatedResult<PurchaseOrder>> {
+  static async getHistoryPurchaseOrders(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResult<PurchaseOrder>> {
     const skip = (page - 1) * limit;
 
     const [approvedStatus, failedStatus] = await Promise.all([
-      prisma.status.findUnique({ 
-        where: { 
+      prisma.status.findUnique({
+        where: {
           status_code_category: {
             status_code: 'APPROVED PURCHASE ORDER',
-            category: 'Purchase Order'
-          }
-        } 
+            category: 'Purchase Order',
+          },
+        },
       }),
-      prisma.status.findUnique({ 
-        where: { 
+      prisma.status.findUnique({
+        where: {
           status_code_category: {
             status_code: 'FAILED PURCHASE ORDER',
-            category: 'Purchase Order'
-          }
-        } 
+            category: 'Purchase Order',
+          },
+        },
       }),
     ]);
 
@@ -529,16 +590,18 @@ export class PurchaseOrderService {
     };
   }
 
-  static async searchPurchaseOrders(query: SearchPurchaseOrderInput['query']): Promise<PaginatedResult<PurchaseOrder>> {
-    const { 
-      tanggal_masuk_po, 
-      customer_name, 
-      customerId, 
-      po_number, 
-      supplierId, 
+  static async searchPurchaseOrders(
+    query: SearchPurchaseOrderInput['query']
+  ): Promise<PaginatedResult<PurchaseOrder>> {
+    const {
+      tanggal_masuk_po,
+      customer_name,
+      customerId,
+      po_number,
+      supplierId,
       status_code,
       page = 1,
-      limit = 10
+      limit = 10,
     } = query;
 
     const skip = (page - 1) * limit;
@@ -550,15 +613,23 @@ export class PurchaseOrderService {
         filters.push({
           tanggal_masuk_po: {
             gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-            lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
-          }
-        }); 
+            lte: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate() + 1
+            ),
+          },
+        });
       } catch (e) {
         // ignore invalid date
       }
     }
     if (customer_name) {
-      filters.push({ customer: { namaCustomer: { contains: customer_name, mode: 'insensitive' } } });
+      filters.push({
+        customer: {
+          namaCustomer: { contains: customer_name, mode: 'insensitive' },
+        },
+      });
     }
     if (customerId) {
       filters.push({ customerId });
@@ -640,7 +711,11 @@ export class PurchaseOrderService {
     // Process each purchase order individually
     for (const id of ids) {
       try {
-        const purchaseOrder = await this.processSinglePurchaseOrder(id, status_code, userId);
+        const purchaseOrder = await this.processSinglePurchaseOrder(
+          id,
+          status_code,
+          userId
+        );
         results.success.push(purchaseOrder);
       } catch (error: any) {
         const failure = {
@@ -665,7 +740,9 @@ export class PurchaseOrderService {
 
           const duplicateIds = details['duplicateIds'];
           if (Array.isArray(duplicateIds)) {
-            failure.duplicateIds = duplicateIds.filter((value): value is string => typeof value === 'string');
+            failure.duplicateIds = duplicateIds.filter(
+              (value): value is string => typeof value === 'string'
+            );
           }
 
           const matchingCount = details['matchingCount'];
@@ -703,7 +780,9 @@ export class PurchaseOrderService {
       throw new AppError('Purchase Order not found', 404);
     }
 
-    const duplicateCheck = await this.checkDuplicatePoNumber(purchaseOrder.po_number);
+    const duplicateCheck = await this.checkDuplicatePoNumber(
+      purchaseOrder.po_number
+    );
 
     if (duplicateCheck.hasDuplicate) {
       throw new AppError(
@@ -720,11 +799,11 @@ export class PurchaseOrderService {
     }
 
     const status = await prisma.status.findUnique({
-      where: { 
+      where: {
         status_code_category: {
           status_code: status_code,
-          category: 'Purchase Order'
-        }
+          category: 'Purchase Order',
+        },
       },
     });
 
@@ -733,11 +812,11 @@ export class PurchaseOrderService {
     }
 
     const pendingPackingStatus = await prisma.status.findUnique({
-      where: { 
+      where: {
         status_code_category: {
           status_code: 'PENDING PACKING',
-          category: 'Packing'
-        }
+          category: 'Packing',
+        },
       },
     });
 
@@ -746,11 +825,11 @@ export class PurchaseOrderService {
     }
 
     const pendingItemStatus = await prisma.status.findUnique({
-      where: { 
+      where: {
         status_code_category: {
           status_code: 'PENDING ITEM',
-          category: 'Packing Detail Item'
-        }
+          category: 'Packing Detail Item',
+        },
       },
     });
 
@@ -761,7 +840,7 @@ export class PurchaseOrderService {
     return await prisma.$transaction(async (tx) => {
       let createdInvoiceId: string | null = null;
       let createdSuratJalanId: string | null = null;
-    
+
       let updatedPurchaseOrder = await tx.purchaseOrder.update({
         where: { id },
         data: { statusId: status.id, updatedBy: userId },
@@ -774,23 +853,28 @@ export class PurchaseOrderService {
         },
       });
 
-      if (purchaseOrder.purchaseOrderDetails && purchaseOrder.purchaseOrderDetails.length > 0) {
+      if (
+        purchaseOrder.purchaseOrderDetails &&
+        purchaseOrder.purchaseOrderDetails.length > 0
+      ) {
         const existingPacking = await tx.packing.findUnique({
           where: { purchaseOrderId: id },
         });
 
         if (!existingPacking) {
-          const packingItems = purchaseOrder.purchaseOrderDetails.map(detail => ({
-            nama_barang: detail.nama_barang,
-            total_qty: detail.quantity,
-            jumlah_carton: Math.ceil(detail.quantity / detail.isi),
-            isi_per_carton: detail.isi,
-            no_box: '',
-            inventoryId: detail.inventoryId,
-            statusId: pendingItemStatus.id,
-            createdBy: userId,
-            updatedBy: userId,
-          }));
+          const packingItems = purchaseOrder.purchaseOrderDetails.map(
+            (detail) => ({
+              nama_barang: detail.nama_barang,
+              total_qty: detail.quantity,
+              jumlah_carton: Math.ceil(detail.quantity / detail.isi),
+              isi_per_carton: detail.isi,
+              no_box: '',
+              inventoryId: detail.inventoryId,
+              statusId: pendingItemStatus.id,
+              createdBy: userId,
+              updatedBy: userId,
+            })
+          );
 
           const createdPacking = await tx.packing.create({
             data: {
@@ -815,20 +899,20 @@ export class PurchaseOrderService {
           });
 
           const pendingInvoiceStatus = await tx.status.findUnique({
-            where: { 
+            where: {
               status_code_category: {
                 status_code: 'PENDING INVOICE',
-                category: 'Invoice Pengiriman'
-              }
+                category: 'Invoice Pengiriman',
+              },
             },
           });
 
           const pendingSuratJalanStatus = await tx.status.findUnique({
-            where: { 
+            where: {
               status_code_category: {
                 status_code: 'DRAFT SURAT JALAN',
-                category: 'Surat Jalan'
-              }
+                category: 'Surat Jalan',
+              },
             },
           });
 
@@ -845,28 +929,33 @@ export class PurchaseOrderService {
           });
 
           if (!createdInvoice) {
-            const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(detail => {
-              const unitPrice = detail.harga || 0;
-              const quantity = detail.quantity;
-              const total = unitPrice * quantity;
-              
-              return {
-                nama_barang: detail.nama_barang,
-                PLU: detail.plu || '',
-                quantity: quantity,
-                satuan: 'pcs',
-                harga: unitPrice,
-                total: total,
-                discount_percentage: 0,
-                discount_rupiah: 0,
-                PPN_pecentage: 0,
-                ppn_rupiah: 0,
-                createdBy: userId,
-                updatedBy: userId,
-              };
-            });
+            const invoiceDetails = purchaseOrder.purchaseOrderDetails.map(
+              (detail) => {
+                const unitPrice = detail.harga || 0;
+                const quantity = detail.quantity;
+                const total = unitPrice * quantity;
 
-            const subTotal = invoiceDetails.reduce((sum, detail) => sum + Number(detail.total), 0);
+                return {
+                  nama_barang: detail.nama_barang,
+                  PLU: detail.plu || '',
+                  quantity: quantity,
+                  satuan: 'pcs',
+                  harga: unitPrice,
+                  total: total,
+                  discount_percentage: 0,
+                  discount_rupiah: 0,
+                  PPN_pecentage: 0,
+                  ppn_rupiah: 0,
+                  createdBy: userId,
+                  updatedBy: userId,
+                };
+              }
+            );
+
+            const subTotal = invoiceDetails.reduce(
+              (sum, detail) => sum + Number(detail.total),
+              0
+            );
             const grandTotal = subTotal;
 
             const invoiceNumber = await generateUniqueInvoiceNumber(
@@ -883,7 +972,8 @@ export class PurchaseOrderService {
               data: {
                 no_invoice: invoiceNumber,
                 tanggal: new Date(),
-                deliver_to: purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
+                deliver_to:
+                  purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
                 sub_total: subTotal,
                 total_discount: 0,
                 total_price: subTotal,
@@ -902,56 +992,68 @@ export class PurchaseOrderService {
                 },
               },
             });
-            
+
             createdInvoiceId = createdInvoice.id;
 
             // Create audit log for invoice
-            await createAuditLog('InvoicePengiriman', createdInvoice.id, 'CREATE', userId, {
-              action: 'AutoCreatedFromProcessPO',
-              purchaseOrderId: id,
-              poNumber: purchaseOrder.po_number,
-              invoiceNumber: createdInvoice.no_invoice,
-              grandTotal: grandTotal,
-            });
+            await createAuditLog(
+              'InvoicePengiriman',
+              createdInvoice.id,
+              'CREATE',
+              userId,
+              {
+                action: 'AutoCreatedFromProcessPO',
+                purchaseOrderId: id,
+                poNumber: purchaseOrder.po_number,
+                invoiceNumber: createdInvoice.no_invoice,
+                grandTotal: grandTotal,
+              }
+            );
           } else {
             createdInvoiceId = createdInvoice.id;
           }
 
-          const suratJalanDetails = purchaseOrder.purchaseOrderDetails.map((detail, index) => ({
-            no_box: `BOX-${String(index + 1).padStart(3, '0')}`,
-            total_quantity_in_box: detail.quantity,
-            isi_box: Math.ceil(detail.quantity / detail.isi),
-            sisa: 0,
-            total_box: Math.ceil(detail.quantity / detail.isi),
-            suratJalanDetailItems: {
-              create: [
-                {
-                  nama_barang: detail.nama_barang,
-                  PLU: detail.plu || '',
-                  quantity: detail.quantity,
-                  satuan: 'pcs',
-                  total_box: Math.ceil(detail.quantity / detail.isi),
-                  keterangan: `From PO: ${purchaseOrder.po_number}`,
-                  createdBy: userId,
-                  updatedBy: userId,
-                },
-              ],
-            },
-          }));
+          const suratJalanDetails = purchaseOrder.purchaseOrderDetails.map(
+            (detail, index) => ({
+              no_box: `BOX-${String(index + 1).padStart(3, '0')}`,
+              total_quantity_in_box: detail.quantity,
+              isi_box: Math.ceil(detail.quantity / detail.isi),
+              sisa: 0,
+              total_box: Math.ceil(detail.quantity / detail.isi),
+              suratJalanDetailItems: {
+                create: [
+                  {
+                    nama_barang: detail.nama_barang,
+                    PLU: detail.plu || '',
+                    quantity: detail.quantity,
+                    satuan: 'pcs',
+                    total_box: Math.ceil(detail.quantity / detail.isi),
+                    keterangan: `From PO: ${purchaseOrder.po_number}`,
+                    createdBy: userId,
+                    updatedBy: userId,
+                  },
+                ],
+              },
+            })
+          );
 
           let existingSuratJalan = await tx.suratJalan.findFirst({
             where: { invoiceId: createdInvoice.id },
           });
 
           if (!existingSuratJalan) {
-            const suratJalanNumber = generateSuratJalanNumber(purchaseOrder.po_number);
-            
+            const suratJalanNumber = generateSuratJalanNumber(
+              purchaseOrder.po_number
+            );
+
             const newSuratJalan = await tx.suratJalan.create({
               data: {
                 no_surat_jalan: suratJalanNumber,
-                deliver_to: purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
+                deliver_to:
+                  purchaseOrder.customer?.namaCustomer || 'Unknown Customer',
                 PIC: purchaseOrder.customer?.namaCustomer || 'Unknown PIC',
-                alamat_tujuan: purchaseOrder.customer?.alamatPengiriman || 'Unknown Address',
+                alamat_tujuan:
+                  purchaseOrder.customer?.alamatPengiriman || 'Unknown Address',
                 is_printed: false,
                 print_counter: 0,
                 invoiceId: createdInvoice.id,
@@ -963,24 +1065,30 @@ export class PurchaseOrderService {
                 },
               },
             });
-            
+
             if (newSuratJalan) {
               createdSuratJalanId = newSuratJalan.id;
 
               // Create audit log for surat jalan
-              await createAuditLog('SuratJalan', newSuratJalan.id, 'CREATE', userId, {
-                action: 'AutoCreatedFromProcessPO',
-                purchaseOrderId: id,
-                poNumber: purchaseOrder.po_number,
-                suratJalanNumber: newSuratJalan.no_surat_jalan,
-                invoiceId: createdInvoice.id,
-              });
+              await createAuditLog(
+                'SuratJalan',
+                newSuratJalan.id,
+                'CREATE',
+                userId,
+                {
+                  action: 'AutoCreatedFromProcessPO',
+                  purchaseOrderId: id,
+                  poNumber: purchaseOrder.po_number,
+                  suratJalanNumber: newSuratJalan.no_surat_jalan,
+                  invoiceId: createdInvoice.id,
+                }
+              );
             }
           } else {
             createdSuratJalanId = existingSuratJalan.id;
           }
         }
-        
+
         if (createdInvoiceId || createdSuratJalanId) {
           updatedPurchaseOrder = await tx.purchaseOrder.update({
             where: { id },
@@ -1013,5 +1121,4 @@ export class PurchaseOrderService {
       return updatedPurchaseOrder;
     });
   }
-
 }

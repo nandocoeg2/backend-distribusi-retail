@@ -15,6 +15,7 @@ import {
   normalizeItems,
   normalizeInvoice,
   parseOrderDate,
+  resolveTermOfPaymentForSupplier,
   normalizePoType,
   resolveSupplier,
   resolveCustomer,
@@ -227,10 +228,81 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
     const invoice = normalizeInvoice(payload?.invoice);
     const poType = normalizePoType(orderTypeRaw);
 
+    const supplierCodeFromPayload =
+      supplierPayload && typeof supplierPayload === 'object'
+        ? (supplierPayload as Record<string, unknown>).code
+        : undefined;
+
+    const supplier = await resolveSupplier(supplierPayload, userId);
+
+    const { termOfPayment, attemptedCodes } =
+      await resolveTermOfPaymentForSupplier({
+        supplierPayload,
+        supplierRecord: supplier,
+      });
+
+    const termOfPaymentCode =
+      termOfPayment?.kode_top ?? attemptedCodes[0] ?? null;
+
+    if (!termOfPayment && attemptedCodes.length > 0) {
+      const supplierCodeForLog =
+        (typeof supplierCodeFromPayload === 'string' && supplierCodeFromPayload) ||
+        supplier?.code ||
+        null;
+
+      logger.warn('Term of payment not found for derived supplier code', {
+        attemptedCodes,
+        supplierCode: supplierCodeForLog,
+      });
+    }
+
+    const customer = await resolveCustomer(customerPayload, userId);
+    if (!customer) {
+      const recordId =
+        typeof orderIdRaw === 'string' && orderIdRaw.trim().length > 0
+          ? orderIdRaw
+          : 'BULK-PO-' + Date.now();
+
+      await createAuditLog(
+        'PurchaseOrder',
+        recordId,
+        ActionType.UPDATE,
+        userId || 'system',
+        {
+          reason: 'Customer resolution failed during bulk PO processing',
+          orderId: orderIdRaw ?? null,
+          customerPayload,
+        }
+      );
+
+      throw new AppError(
+        'Data pelanggan pada file tidak lengkap. Nama atau kode pelanggan wajib ada.',
+        400
+      );
+    }
+    const status = await fetchDefaultStatus();
+
+    const tanggalBatasKirim =
+      termOfPayment !== null
+        ? new Date(
+            parsedOrderDate.getTime() +
+              termOfPayment.batas_hari * 24 * 60 * 60 * 1000
+          )
+        : undefined;
+
+    const existingOrder = orderPayload as Record<string, unknown>;
+    const existingTerminBayar = existingOrder.termin_bayar as string | null | undefined;
+    const existingTanggalBatasKirim =
+      existingOrder.tanggal_batas_kirim as string | null | undefined;
+
     const poData = {
       order: {
         ...orderPayload,
         parsedDate: parsedOrderDate.toISOString(),
+        termin_bayar: termOfPayment?.id ?? existingTerminBayar ?? null,
+        tanggal_batas_kirim: tanggalBatasKirim
+          ? tanggalBatasKirim.toISOString()
+          : existingTanggalBatasKirim ?? null,
       },
       supplier: supplierPayload,
       customers: customerPayload,
@@ -241,10 +313,6 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
       updatedBy: userId,
     };
 
-    const supplier = await resolveSupplier(supplierPayload, userId);
-    const customer = await resolveCustomer(customerPayload, userId);
-    const status = await fetchDefaultStatus();
-
     const createData = buildCreateData({
       poNumber: orderIdRaw,
       parsedOrderDate,
@@ -254,6 +322,12 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
       supplier,
       customer,
       status,
+      termOfPayment,
+      existingTermOfPaymentId:
+        typeof existingTerminBayar === 'string' && existingTerminBayar.trim().length > 0
+          ? existingTerminBayar
+          : undefined,
+      tanggalBatasKirim,
       userId,
     });
 
@@ -271,6 +345,7 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
       {
         supplierId: supplier?.id ?? null,
         statusId: status?.id ?? null,
+        termOfPaymentId: termOfPayment?.id ?? null,
       }
     );
 
@@ -278,6 +353,7 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
       poId: purchaseOrder.id,
       poNumber: purchaseOrder.po_number,
       totalItems,
+      termOfPaymentCode,
     });
 
     return {
@@ -309,7 +385,16 @@ export class BulkPurchaseOrderRefactoredService extends BaseBulkUploadService {
             phoneNumber: customer.phoneNumber,
           }
         : null,
+      termOfPaymentRecord: termOfPayment
+        ? {
+            id: termOfPayment.id,
+            kode_top: termOfPayment.kode_top,
+            batas_hari: termOfPayment.batas_hari,
+          }
+        : null,
       savedToDatabase: true,
     };
   }
 }
+
+

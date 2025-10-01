@@ -204,7 +204,9 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
         };
 
         if (purchaseOrder.termin_bayar) {
-          createData.termin_bayar = purchaseOrder.termin_bayar;
+          createData.termOfPayment = {
+            connect: { id: purchaseOrder.termin_bayar },
+          };
         }
         if (statusId) {
           createData.status = {
@@ -225,6 +227,7 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
         purchaseOrderId: purchaseOrder?.id ?? null,
         customerId: purchaseOrder?.customerId ?? null,
         statusId: statusId?.id ?? null,
+        termOfPaymentId: purchaseOrder?.termin_bayar ?? null,
       });
 
       logger.info('LPB data saved to database', { 
@@ -763,4 +766,6 @@ export class LaporanPenerimaanBarangService extends BaseService<
   }
 
 }
+
+
 

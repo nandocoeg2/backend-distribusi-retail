@@ -137,6 +137,7 @@ model PurchaseOrder {
   customer                Customer                  @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
+  termOfPayment           TermOfPayment?            @relation(fields: [termin_bayar], references: [id])
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
 
   @@map("purchase_orders")
@@ -463,6 +464,7 @@ model TermOfPayment {
   updatedAt               DateTime                  @updatedAt
   createdBy               String
   updatedBy               String
+  purchaseOrders          PurchaseOrder[]
   laporanPenerimaanBarang LaporanPenerimaanBarang[]
   invoicePenagihan        InvoicePenagihan[]
 
