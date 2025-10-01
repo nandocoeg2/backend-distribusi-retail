@@ -50,6 +50,13 @@ export const searchLaporanPenerimaanBarangSchema = z.object({
     .merge(paginationSchema),
 });
 
+export const processLaporanPenerimaanBarangSchema = z.object({
+  body: z.object({
+    ids: z.array(z.string()).min(1).describe('Array of goods receipt report IDs to process'),
+  }),
+  query: z.object({}).optional(),
+  params: z.object({}).optional(),
+});
 export const getBulkStatusSchema = z.object({
   params: z.object({
     bulkId: z.string().describe('The bulk ID of the upload job'),
@@ -80,5 +87,7 @@ export type UpdateLaporanPenerimaanBarangInput = z.infer<typeof updateLaporanPen
 export type GetAllLaporanPenerimaanBarangInput = z.infer<typeof getAllLaporanPenerimaanBarangSchema>;
 export type SearchLaporanPenerimaanBarangInput = z.infer<typeof searchLaporanPenerimaanBarangSchema>;
 export type UploadFileLaporanPenerimaanBarangInput = z.infer<typeof uploadFileLaporanPenerimaanBarangSchema>;
+export type ProcessLaporanPenerimaanBarangInput = z.infer<typeof processLaporanPenerimaanBarangSchema>;
 export type GetBulkStatusInput = z.infer<typeof getBulkStatusSchema>;
 export type GetBulkFilesInput = z.infer<typeof getBulkFilesSchema>;
+

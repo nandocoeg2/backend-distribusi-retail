@@ -18,6 +18,17 @@ import { createAuditLog } from './audit.service';
 import { BaseBulkUploadService, BulkFileData, BulkUploadResult } from './base-bulk-upload.service';
 import { generateBulkLpbId } from '@/utils/bulk-id.utils';
 
+const LPB_INCLUDE_RELATIONS = {
+  purchaseOrder: true,
+  customer: true,
+  termOfPayment: true,
+  status: true,
+  files: true,
+} satisfies Prisma.LaporanPenerimaanBarangInclude;
+
+type LaporanPenerimaanBarangWithRelations = Prisma.LaporanPenerimaanBarangGetPayload<{
+  include: typeof LPB_INCLUDE_RELATIONS;
+}>;
 export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
   protected category = 'laporan_penerimaan_barang';
 
@@ -242,13 +253,7 @@ export class LaporanPenerimaanBarangService extends BaseService<
   protected tableName = 'LaporanPenerimaanBarang';
   protected prismaModel = prisma.laporanPenerimaanBarang;
 
-  private static includeRelations = {
-    purchaseOrder: true,
-    customer: true,
-    termOfPayment: true,
-    status: true,
-    files: true,
-  } satisfies Prisma.LaporanPenerimaanBarangInclude;
+  private static includeRelations = LPB_INCLUDE_RELATIONS;
 
   static async createLaporanPenerimaanBarang(
     data: CreateLaporanPenerimaanBarangInput,
@@ -390,6 +395,149 @@ export class LaporanPenerimaanBarangService extends BaseService<
       limit,
       this.includeRelations
     );
+  }
+
+  static async processLaporanPenerimaanBarang(
+    ids: string[],
+    userId: string
+  ): Promise<{
+    success: LaporanPenerimaanBarangWithRelations[];
+    failed: {
+      id: string;
+      error: string;
+      details?: Record<string, unknown>;
+    }[];
+  }> {
+    const results = {
+      success: [] as LaporanPenerimaanBarangWithRelations[],
+      failed: [] as {
+        id: string;
+        error: string;
+        details?: Record<string, unknown>;
+      }[],
+    };
+
+    for (const id of ids) {
+      try {
+        const processed = await this.processSingleLaporanPenerimaanBarang(id, userId);
+        results.success.push(processed);
+      } catch (error) {
+        const message =
+          error instanceof AppError
+            ? error.message
+            : 'Unknown error occurred while processing LPB';
+        const failure: {
+          id: string;
+          error: string;
+          details?: Record<string, unknown>;
+        } = {
+          id,
+          error: message,
+        };
+
+        if (error instanceof AppError && error.details) {
+          failure.details = error.details;
+        }
+
+        logger.warn('Failed to process LPB', {
+          lpbId: id,
+          error,
+        });
+
+        results.failed.push(failure);
+      }
+    }
+
+    return results;
+  }
+
+  private static async processSingleLaporanPenerimaanBarang(
+    id: string,
+    userId: string
+  ): Promise<LaporanPenerimaanBarangWithRelations> {
+    const laporan = await prisma.laporanPenerimaanBarang.findUnique({
+      where: { id },
+      include: LPB_INCLUDE_RELATIONS,
+    });
+
+    if (!laporan) {
+      throw new AppError('Laporan Penerimaan Barang not found', 404);
+    }
+
+    if (!laporan.purchaseOrderId) {
+      throw new AppError(
+        'Purchase order must be linked before processing LPB',
+        400,
+        { field: 'purchaseOrderId' }
+      );
+    }
+
+    if (!laporan.tanggal_po) {
+      throw new AppError(
+        'Purchase order date (tanggal_po) is required before processing LPB',
+        400,
+        { field: 'tanggal_po' }
+      );
+    }
+
+    if (!laporan.customerId) {
+      throw new AppError('Customer must be linked before processing LPB', 400, { field: 'customerId' });
+    }
+
+    if (!laporan.termin_bayar) {
+      throw new AppError(
+        'Term of payment (termin_bayar) is required before processing LPB',
+        400,
+        { field: 'termin_bayar' }
+      );
+    }
+
+    const processingStatus = await prisma.status.findUnique({
+      where: {
+        status_code_category: {
+          status_code: 'PROCESSING LAPORAN PENERIMAAN BARANG',
+          category: 'Laporan Penerimaan Barang',
+        },
+      },
+    });
+
+    if (!processingStatus) {
+      throw new AppError('PROCESSING LAPORAN PENERIMAAN BARANG status not found', 404, { status_code: 'PROCESSING LAPORAN PENERIMAAN BARANG' });
+    }
+
+    if (laporan.statusId === processingStatus.id) {
+      logger.info('LPB already in processing status', { lpbId: id });
+      return laporan;
+    }
+
+    const updated = await prisma.laporanPenerimaanBarang.update({
+      where: { id },
+      data: {
+        statusId: processingStatus.id,
+        updatedBy: userId || 'system',
+      },
+      include: LPB_INCLUDE_RELATIONS,
+    });
+
+    await createAuditLog(
+      'LaporanPenerimaanBarang',
+      updated.id,
+      ActionType.UPDATE,
+      userId || 'system',
+      {
+        action: 'ProcessLaporanPenerimaanBarang',
+        previousStatusId: laporan.statusId,
+        newStatusId: processingStatus.id,
+      }
+    );
+
+    logger.info('LPB moved to processing status', {
+      lpbId: id,
+      previousStatusId: laporan.statusId,
+      newStatusId: processingStatus.id,
+    });
+
+    return updated;
   }
 
   private async validateRelations(
@@ -615,3 +763,4 @@ export class LaporanPenerimaanBarangService extends BaseService<
   }
 
 }
+

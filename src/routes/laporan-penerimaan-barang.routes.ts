@@ -8,12 +8,14 @@ import {
   getAllLaporanPenerimaanBarangSchema,
   getLaporanPenerimaanBarangSchema,
   searchLaporanPenerimaanBarangSchema,
+  processLaporanPenerimaanBarangSchema,
   updateLaporanPenerimaanBarangSchema,
   getBulkStatusSchema,
   getBulkFilesSchema,
   UpdateLaporanPenerimaanBarangInput,
   GetAllLaporanPenerimaanBarangInput,
   SearchLaporanPenerimaanBarangInput,
+  ProcessLaporanPenerimaanBarangInput,
   GetBulkStatusInput,
   GetBulkFilesInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
@@ -120,6 +122,40 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
     LaporanPenerimaanBarangController.delete
   );
 
+  fastify.patch<{ Body: ProcessLaporanPenerimaanBarangInput['body'] }>(
+    '/process',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        body: processLaporanPenerimaanBarangSchema.shape.body,
+        security: [{ Bearer: [] }],
+        description: 'Process goods receipt reports by providing array of IDs in body',
+      },
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(processLaporanPenerimaanBarangSchema),
+      ],
+    },
+    LaporanPenerimaanBarangController.process
+  );
+
+  fastify.patch<{ Params: { id: string } }>(
+    '/:id/process',
+    {
+      schema: {
+        tags: ['Laporan Penerimaan Barang'],
+        params: getLaporanPenerimaanBarangSchema.shape.params,
+        security: [{ Bearer: [] }],
+        description: 'Process a single goods receipt report by ID',
+      },
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(getLaporanPenerimaanBarangSchema),
+      ],
+    },
+    LaporanPenerimaanBarangController.processSingle
+  );
+
   fastify.post(
     '/upload',
     {
@@ -199,3 +235,4 @@ export const laporanPenerimaanBarangRoutes: FastifyPluginCallback<FastifyPluginO
 
   done();
 };
+

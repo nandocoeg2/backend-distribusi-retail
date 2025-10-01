@@ -7,6 +7,7 @@ import {
   GetAllLaporanPenerimaanBarangInput,
   SearchLaporanPenerimaanBarangInput,
   UpdateLaporanPenerimaanBarangInput,
+  ProcessLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 import { generateFilenameWithPrefix } from '@/utils/random.utils';
 import { generateBulkLpbId } from '@/utils/bulk-id.utils';
@@ -90,6 +91,36 @@ export class LaporanPenerimaanBarangController {
       page,
       limit
     );
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async process(
+    request: FastifyRequest<{
+      Body: ProcessLaporanPenerimaanBarangInput['body'];
+    }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+
+    const result = await LaporanPenerimaanBarangService.processLaporanPenerimaanBarang(
+      request.body.ids,
+      userId
+    );
+
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async processSingle(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+
+    const result = await LaporanPenerimaanBarangService.processLaporanPenerimaanBarang(
+      [request.params.id],
+      userId
+    );
+
     return reply.send(ResponseUtil.success(result));
   }
 
@@ -241,3 +272,4 @@ export class LaporanPenerimaanBarangController {
     return reply.send(ResponseUtil.success(files));
   }
 }
+

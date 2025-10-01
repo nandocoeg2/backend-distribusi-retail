@@ -740,6 +740,110 @@ Jika tidak ada custom prompt yang diberikan, sistem akan menggunakan prompt defa
 - Jika pembuatan data LPB gagal, proses upload dan konversi tetap berhasil
 - File path akan disimpan dalam format: `/uploads/laporan-penerimaan-barang/{laporan_id}/{timestamp}.{extension}`
 
+### 11. Process Laporan Penerimaan Barang (Bulk)
+Memproses beberapa LPB sekaligus dan mengubah statusnya menjadi `PROCESSING LAPORAN PENERIMAAN BARANG`.
+
+**Endpoint:** `PATCH /process`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Request Body:**
+```json
+{
+  "ids": [
+    "clx1otn7p000108l82e7ke2j9",
+    "clx1otn81000308l89p8y5a2m"
+  ]
+}
+```
+
+**Validation Rules:**
+- `ids`: **Required** - Minimal satu ID LPB
+- Setiap LPB harus sudah memiliki `purchaseOrderId`, `tanggal_po`, `customerId`, dan `termin_bayar`
+- Status `PROCESSING LAPORAN PENERIMAAN BARANG` harus tersedia di master status kategori LPB
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "success": [
+      {
+        "id": "clx1otn7p000108l82e7ke2j9",
+        "purchaseOrderId": "clx1otn7p000108l82e7ke2j0",
+        "status": {
+          "status_code": "PROCESSING LAPORAN PENERIMAAN BARANG",
+          "status_name": "Processing Laporan Penerimaan Barang"
+        },
+        "updatedAt": "2024-09-28T12:00:00.000Z"
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+**Notes:**
+- Response selalu mengembalikan dua array: `success` dan `failed`
+- LPB yang gagal diproses akan berada di array `failed` dengan detail field yang belum terpenuhi
+- Audit log otomatis dibuat dengan aksi `ProcessLaporanPenerimaanBarang`
+
+### 12. Process Laporan Penerimaan Barang (Single)
+Memproses satu LPB berdasarkan ID dan mengubah statusnya menjadi `PROCESSING LAPORAN PENERIMAAN BARANG`.
+
+**Endpoint:** `PATCH /:id/process`
+
+**Headers:**
+```json
+{
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "success": [
+      {
+        "id": "clx1otn7p000108l82e7ke2j9",
+        "status": {
+          "status_code": "PROCESSING LAPORAN PENERIMAAN BARANG"
+        },
+        "customer": {
+          "namaCustomer": "PT Contoh Mitra"
+        }
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Term of payment (termin_bayar) is required before processing LPB",
+    "details": {
+      "field": "termin_bayar"
+    }
+  }
+}
+```
+
+**Notes:**
+- Endpoint single menggunakan service yang sama dengan proses bulk dan tetap mengembalikan struktur `success` dan `failed`
+- Cocok digunakan saat ingin memproses LPB langsung dari detail view
+- Jika status sudah `PROCESSING`, sistem akan mengembalikan data yang sama tanpa error
 ---
 
 ## Error Handling
