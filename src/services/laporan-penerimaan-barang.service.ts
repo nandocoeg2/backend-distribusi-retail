@@ -15,7 +15,11 @@ import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { createAuditLog } from './audit.service';
-import { BaseBulkUploadService, BulkFileData, BulkUploadResult } from './base-bulk-upload.service';
+import {
+  BaseBulkUploadService,
+  BulkFileData,
+  BulkUploadResult,
+} from './base-bulk-upload.service';
 import { generateBulkLpbId } from '@/utils/bulk-id.utils';
 
 const LPB_INCLUDE_RELATIONS = {
@@ -29,9 +33,10 @@ const LPB_INCLUDE_RELATIONS = {
 const LPB_COMPLETED_STATUS_CODE = 'COMPLETED LAPORAN PENERIMAAN BARANG';
 const PO_COMPLETED_STATUS_CODE = 'COMPLETED PURCHASE ORDER';
 
-type LaporanPenerimaanBarangWithRelations = Prisma.LaporanPenerimaanBarangGetPayload<{
-  include: typeof LPB_INCLUDE_RELATIONS;
-}>;
+type LaporanPenerimaanBarangWithRelations =
+  Prisma.LaporanPenerimaanBarangGetPayload<{
+    include: typeof LPB_INCLUDE_RELATIONS;
+  }>;
 export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
   protected category = 'laporan_penerimaan_barang';
 
@@ -54,15 +59,20 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
     try {
       // Update status ke processing
       for (const fileRecord of fileRecords) {
-        await this.updateFileStatus(fileRecord.id, 'PROCESSING BULK LAPORAN PENERIMAAN BARANG', userId);
+        await this.updateFileStatus(
+          fileRecord.id,
+          'PROCESSING BULK LAPORAN PENERIMAAN BARANG',
+          userId
+        );
       }
 
       for (const fileRecord of fileRecords) {
         try {
           // Default prompt jika tidak ada
-          const defaultPrompt = prompt || 
+          const defaultPrompt =
+            prompt ||
             'Convert this document into structured JSON format for goods receipt report. ' +
-            'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
+              'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
 
           // Konversi file menggunakan ConversionService
           const convertedData = await ConversionService.convertFileToJson(
@@ -75,8 +85,11 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
           // Buat data LPB dari converted data
           try {
             const bulkService = new LaporanPenerimaanBarangBulkService();
-            const lpbData = await bulkService.createLpbFromConvertedData(convertedData, userId);
-            
+            const lpbData = await bulkService.createLpbFromConvertedData(
+              convertedData,
+              userId
+            );
+
             // Hubungkan file dengan LPB yang baru dibuat
             if (lpbData && lpbData.laporanPenerimaanBarangId) {
               await prisma.fileUploaded.update({
@@ -85,15 +98,25 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
                   laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
                 },
               });
-              
-              await createAuditLog('FileUploaded', fileRecord.id, ActionType.UPDATE, userId || 'system', {
-                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
-                bulkId: bulkId,
-              });
+
+              await createAuditLog(
+                'FileUploaded',
+                fileRecord.id,
+                ActionType.UPDATE,
+                userId || 'system',
+                {
+                  laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+                  bulkId: bulkId,
+                }
+              );
 
               // Update status ke completed
-              await this.updateFileStatus(fileRecord.id, 'COMPLETED BULK LAPORAN PENERIMAAN BARANG', userId);
-              
+              await this.updateFileStatus(
+                fileRecord.id,
+                'COMPLETED BULK LAPORAN PENERIMAAN BARANG',
+                userId
+              );
+
               successCount++;
               logger.info('Bulk file processed successfully', {
                 fileId: fileRecord.id,
@@ -102,22 +125,33 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
               });
             }
           } catch (lpbError) {
-            logger.warn('Failed to create LPB data from converted data in bulk processing', { 
-              fileId: fileRecord.id,
-              error: lpbError 
-            });
+            logger.warn(
+              'Failed to create LPB data from converted data in bulk processing',
+              {
+                fileId: fileRecord.id,
+                error: lpbError,
+              }
+            );
             // Update status ke failed
-            await this.updateFileStatus(fileRecord.id, 'FAILED BULK LAPORAN PENERIMAAN BARANG', userId);
+            await this.updateFileStatus(
+              fileRecord.id,
+              'FAILED BULK LAPORAN PENERIMAAN BARANG',
+              userId
+            );
             errorCount++;
           }
         } catch (conversionError) {
-          logger.error('Failed to convert file in bulk processing', { 
+          logger.error('Failed to convert file in bulk processing', {
             fileId: fileRecord.id,
             filename: fileRecord.originalFilename,
-            error: conversionError 
+            error: conversionError,
           });
           // Update status ke failed
-          await this.updateFileStatus(fileRecord.id, 'FAILED BULK LAPORAN PENERIMAAN BARANG', userId);
+          await this.updateFileStatus(
+            fileRecord.id,
+            'FAILED BULK LAPORAN PENERIMAAN BARANG',
+            userId
+          );
           errorCount++;
         }
 
@@ -142,16 +176,12 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
         successFiles: successCount,
         errorFiles: errorCount,
       });
-
     } catch (error) {
       logger.error('Bulk processing failed', { bulkId, error });
     }
   }
 
-  public async createLpbFromConvertedData(
-    convertedData: any,
-    userId?: string
-  ) {
+  public async createLpbFromConvertedData(convertedData: any, userId?: string) {
     // Mapping converted data ke format yang sesuai untuk LPB
     const lpbData = {
       fppNumber: convertedData.fppNumber,
@@ -181,22 +211,24 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
       where: {
         status_code_category: {
           status_code: 'PENDING LAPORAN PENERIMAAN BARANG',
-          category: 'Laporan Penerimaan Barang'
-        }
+          category: 'Laporan Penerimaan Barang',
+        },
       },
     });
 
     try {
       const createData: any = {
-        tanggal_po: convertedData.orderDate ? new Date(convertedData.orderDate) : null,
+        tanggal_po: convertedData.orderDate
+          ? new Date(convertedData.orderDate)
+          : null,
         createdBy: userId || 'system',
         updatedBy: userId || 'system',
       };
 
       if (purchaseOrder) {
-        logger.info('Found purchase order for LPB creation', { 
+        logger.info('Found purchase order for LPB creation', {
           purchaseOrderId: purchaseOrder.id,
-          poNumber: purchaseOrder.po_number 
+          poNumber: purchaseOrder.po_number,
         });
 
         createData.purchaseOrder = {
@@ -217,25 +249,35 @@ export class LaporanPenerimaanBarangBulkService extends BaseBulkUploadService {
           };
         }
       } else {
-        logger.warn('Purchase Order not found, creating LPB without purchase order relation', {
-          fppNumber: convertedData.fppNumber
-        });
+        logger.warn(
+          'Purchase Order not found, creating LPB without purchase order relation',
+          {
+            fppNumber: convertedData.fppNumber,
+          }
+        );
       }
 
-      const laporanPenerimaanBarang = await prisma.laporanPenerimaanBarang.create({
-        data: createData,
-      });
+      const laporanPenerimaanBarang =
+        await prisma.laporanPenerimaanBarang.create({
+          data: createData,
+        });
 
-      await createAuditLog('LaporanPenerimaanBarang', laporanPenerimaanBarang.id, ActionType.CREATE, userId || 'system', {
-        purchaseOrderId: purchaseOrder?.id ?? null,
-        customerId: purchaseOrder?.customerId ?? null,
-        statusId: statusId?.id ?? null,
-        termOfPaymentId: purchaseOrder?.termin_bayar ?? null,
-      });
+      await createAuditLog(
+        'LaporanPenerimaanBarang',
+        laporanPenerimaanBarang.id,
+        ActionType.CREATE,
+        userId || 'system',
+        {
+          purchaseOrderId: purchaseOrder?.id ?? null,
+          customerId: purchaseOrder?.customerId ?? null,
+          statusId: statusId?.id ?? null,
+          termOfPaymentId: purchaseOrder?.termin_bayar ?? null,
+        }
+      );
 
-      logger.info('LPB data saved to database', { 
+      logger.info('LPB data saved to database', {
         laporanId: laporanPenerimaanBarang.id,
-        lpbData: lpbData 
+        lpbData: lpbData,
       });
 
       return {
@@ -277,7 +319,10 @@ export class LaporanPenerimaanBarangService extends BaseService<
       return {
         ...rest,
         tanggal_po: tanggal_po ? new Date(tanggal_po) : undefined,
-        files: files && files.length > 0 ? { connect: files.map((id) => ({ id })) } : undefined,
+        files:
+          files && files.length > 0
+            ? { connect: files.map((id) => ({ id })) }
+            : undefined,
         createdBy: actorId,
         updatedBy: actorId,
       };
@@ -391,16 +436,15 @@ export class LaporanPenerimaanBarangService extends BaseService<
             contains: query,
             mode: 'insensitive',
           },
+          status_code: {
+            contains: query,
+            mode: 'insensitive',
+          },
         },
       },
     ];
 
-    return service.searchEntities(
-      filters,
-      page,
-      limit,
-      this.includeRelations
-    );
+    return service.searchEntities(filters, page, limit, this.includeRelations);
   }
 
   static async processLaporanPenerimaanBarang(
@@ -425,7 +469,10 @@ export class LaporanPenerimaanBarangService extends BaseService<
 
     for (const id of ids) {
       try {
-        const processed = await this.processSingleLaporanPenerimaanBarang(id, userId);
+        const processed = await this.processSingleLaporanPenerimaanBarang(
+          id,
+          userId
+        );
         results.success.push(processed);
       } catch (error) {
         const message =
@@ -470,29 +517,34 @@ export class LaporanPenerimaanBarangService extends BaseService<
   }> {
     const actorId = userId || 'system';
 
-    const [completedLaporanStatus, completedPurchaseOrderStatus] = await Promise.all([
-      prisma.status.findUnique({
-        where: {
-          status_code_category: {
-            status_code: LPB_COMPLETED_STATUS_CODE,
-            category: 'Laporan Penerimaan Barang',
+    const [completedLaporanStatus, completedPurchaseOrderStatus] =
+      await Promise.all([
+        prisma.status.findUnique({
+          where: {
+            status_code_category: {
+              status_code: LPB_COMPLETED_STATUS_CODE,
+              category: 'Laporan Penerimaan Barang',
+            },
           },
-        },
-      }),
-      prisma.status.findUnique({
-        where: {
-          status_code_category: {
-            status_code: PO_COMPLETED_STATUS_CODE,
-            category: 'Purchase Order',
+        }),
+        prisma.status.findUnique({
+          where: {
+            status_code_category: {
+              status_code: PO_COMPLETED_STATUS_CODE,
+              category: 'Purchase Order',
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
     if (!completedLaporanStatus) {
-      throw new AppError('COMPLETED LAPORAN PENERIMAAN BARANG status not found', 404, {
-        status_code: LPB_COMPLETED_STATUS_CODE,
-      });
+      throw new AppError(
+        'COMPLETED LAPORAN PENERIMAAN BARANG status not found',
+        404,
+        {
+          status_code: LPB_COMPLETED_STATUS_CODE,
+        }
+      );
     }
 
     if (!completedPurchaseOrderStatus) {
@@ -679,7 +731,9 @@ export class LaporanPenerimaanBarangService extends BaseService<
     }
 
     if (!laporan.customerId) {
-      throw new AppError('Customer must be linked before processing LPB', 400, { field: 'customerId' });
+      throw new AppError('Customer must be linked before processing LPB', 400, {
+        field: 'customerId',
+      });
     }
 
     if (!laporan.termin_bayar) {
@@ -700,7 +754,11 @@ export class LaporanPenerimaanBarangService extends BaseService<
     });
 
     if (!processingStatus) {
-      throw new AppError('PROCESSING LAPORAN PENERIMAAN BARANG status not found', 404, { status_code: 'PROCESSING LAPORAN PENERIMAAN BARANG' });
+      throw new AppError(
+        'PROCESSING LAPORAN PENERIMAAN BARANG status not found',
+        404,
+        { status_code: 'PROCESSING LAPORAN PENERIMAAN BARANG' }
+      );
     }
 
     if (laporan.statusId === processingStatus.id) {
@@ -814,7 +872,10 @@ export class LaporanPenerimaanBarangService extends BaseService<
       });
 
       if (conflictingFile) {
-        throw new AppError('One or more files are already linked to another report', 400);
+        throw new AppError(
+          'One or more files are already linked to another report',
+          400
+        );
       }
     }
   }
@@ -834,7 +895,12 @@ export class LaporanPenerimaanBarangService extends BaseService<
     try {
       // Buat direktori upload seperti bulk purchase order
       const today = new Date().toISOString().split('T')[0]!;
-      const uploadDir = path.join(process.cwd(), 'fileuploaded', 'laporan-penerimaan-barang', today);
+      const uploadDir = path.join(
+        process.cwd(),
+        'fileuploaded',
+        'laporan-penerimaan-barang',
+        today
+      );
       await fs.promises.mkdir(uploadDir, { recursive: true });
 
       // Generate filename dengan prefix seperti bulk purchase order
@@ -858,17 +924,24 @@ export class LaporanPenerimaanBarangService extends BaseService<
           createdBy: userId,
         },
       });
-      await createAuditLog('FileUploaded', fileUploaded.id, ActionType.CREATE, userId || 'system', {
-        filename: originalFilename,
-        path: filepath,
-        mimetype: mimeType,
-        size: stats.size,
-      });
+      await createAuditLog(
+        'FileUploaded',
+        fileUploaded.id,
+        ActionType.CREATE,
+        userId || 'system',
+        {
+          filename: originalFilename,
+          path: filepath,
+          mimetype: mimeType,
+          size: stats.size,
+        }
+      );
 
       // Default prompt jika tidak ada
-      const defaultPrompt = prompt || 
+      const defaultPrompt =
+        prompt ||
         'Convert this document into structured JSON format for goods receipt report. ' +
-        'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
+          'Extract relevant information such as FPP number, order date, delivery details, supplier information, items, pricing, and payment information.';
 
       try {
         // Konversi file menggunakan ConversionService dengan schema laporan penerimaan barang
@@ -883,8 +956,11 @@ export class LaporanPenerimaanBarangService extends BaseService<
         let lpbData: any = null;
         try {
           const bulkService = new LaporanPenerimaanBarangBulkService();
-          lpbData = await bulkService.createLpbFromConvertedData(convertedData, userId);
-          
+          lpbData = await bulkService.createLpbFromConvertedData(
+            convertedData,
+            userId
+          );
+
           // Hubungkan file dengan LPB yang baru dibuat
           if (lpbData && lpbData.laporanPenerimaanBarangId) {
             await prisma.fileUploaded.update({
@@ -893,17 +969,25 @@ export class LaporanPenerimaanBarangService extends BaseService<
                 laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
               },
             });
-            await createAuditLog('FileUploaded', fileUploaded.id, ActionType.UPDATE, userId || 'system', {
-              laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
-            });
-            
+            await createAuditLog(
+              'FileUploaded',
+              fileUploaded.id,
+              ActionType.UPDATE,
+              userId || 'system',
+              {
+                laporanPenerimaanBarangId: lpbData.laporanPenerimaanBarangId,
+              }
+            );
+
             logger.info('File connected to LPB', {
               fileId: fileUploaded.id,
               lpbId: lpbData.laporanPenerimaanBarangId,
             });
           }
         } catch (lpbError) {
-          logger.warn('Failed to create LPB data from converted data', { error: lpbError });
+          logger.warn('Failed to create LPB data from converted data', {
+            error: lpbError,
+          });
           // Tidak throw error, karena file upload dan konversi sudah berhasil
         }
 
@@ -915,16 +999,19 @@ export class LaporanPenerimaanBarangService extends BaseService<
         await prisma.fileUploaded.delete({
           where: { id: fileUploaded.id },
         });
-        
+
         // Hapus file dari filesystem juga
         if (tempFilepath) {
           try {
             await fs.promises.unlink(tempFilepath);
           } catch (unlinkError) {
-            logger.warn('Failed to delete temp file', { tempFilepath, error: unlinkError });
+            logger.warn('Failed to delete temp file', {
+              tempFilepath,
+              error: unlinkError,
+            });
           }
         }
-        
+
         throw error;
       }
     } catch (error) {
@@ -933,7 +1020,10 @@ export class LaporanPenerimaanBarangService extends BaseService<
         try {
           await fs.promises.unlink(tempFilepath);
         } catch (unlinkError) {
-          logger.warn('Failed to delete temp file during cleanup', { tempFilepath, error: unlinkError });
+          logger.warn('Failed to delete temp file during cleanup', {
+            tempFilepath,
+            error: unlinkError,
+          });
         }
       }
       throw error;
@@ -959,8 +1049,4 @@ export class LaporanPenerimaanBarangService extends BaseService<
     const bulkService = new LaporanPenerimaanBarangBulkService();
     return bulkService.getAllBulkFiles(status);
   }
-
 }
-
-
-
