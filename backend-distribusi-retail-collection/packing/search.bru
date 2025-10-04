@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/packings/search?page=1&limit=10&statusId={{statusId}}
+  url: http://localhost:5050/api/v1/packings/search?page=1&limit=10&status_code={{status_code}}
   body: none
   auth: bearer
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   page: 1
   limit: 10
-  statusId: {{statusId}}
+  status_code: {{status_code}}
   ~tanggal_packing: {{tanggal_packing}}
   ~purchaseOrderId: {{purchaseOrderId}}
 }

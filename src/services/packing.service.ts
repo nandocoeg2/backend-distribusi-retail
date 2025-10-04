@@ -1,12 +1,19 @@
 import { prisma } from '@/config/database';
-import { CreatePackingInput, UpdatePackingInput, SearchPackingInput } from '@/schemas/packing.schema';
+import {
+  CreatePackingInput,
+  UpdatePackingInput,
+  SearchPackingInput,
+} from '@/schemas/packing.schema';
 import { AppError } from '@/utils/app-error';
 import { generateUniquePackingNumber } from '@/utils/random.utils';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
 
 export class PackingService {
-  static async createPacking(packingData: CreatePackingInput, userId: string): Promise<any> {
+  static async createPacking(
+    packingData: CreatePackingInput,
+    userId: string
+  ): Promise<any> {
     try {
       // Check if purchase order exists
       const purchaseOrder = await prisma.purchaseOrder.findUnique({
@@ -23,16 +30,22 @@ export class PackingService {
       });
 
       if (existingPacking) {
-        throw new AppError('Packing already exists for this Purchase Order', 409);
+        throw new AppError(
+          'Packing already exists for this Purchase Order',
+          409
+        );
       }
 
       // Generate unique packing number using standardized approach
-      const packingNumber = await generateUniquePackingNumber(async (number: string) => {
-        const existingPackingNumber = await prisma.packing.findUnique({
-          where: { packing_number: number },
-        });
-        return !existingPackingNumber; // Return true if unique (no existing packing)
-      }, purchaseOrder.po_number);
+      const packingNumber = await generateUniquePackingNumber(
+        async (number: string) => {
+          const existingPackingNumber = await prisma.packing.findUnique({
+            where: { packing_number: number },
+          });
+          return !existingPackingNumber; // Return true if unique (no existing packing)
+        },
+        purchaseOrder.po_number
+      );
 
       // Check if status exists
       const status = await prisma.status.findUnique({
@@ -44,7 +57,9 @@ export class PackingService {
       }
 
       // Check if all inventories exist
-      const inventoryIds = packingData.packingItems.map(item => item.inventoryId);
+      const inventoryIds = packingData.packingItems.map(
+        (item) => item.inventoryId
+      );
       const inventories = await prisma.inventory.findMany({
         where: {
           id: {
@@ -53,18 +68,23 @@ export class PackingService {
         },
       });
 
-      const foundInventoryIds = new Set(inventories.map(inv => inv.id));
-      const missingInventoryIds = inventoryIds.filter(id => !foundInventoryIds.has(id));
+      const foundInventoryIds = new Set(inventories.map((inv) => inv.id));
+      const missingInventoryIds = inventoryIds.filter(
+        (id) => !foundInventoryIds.has(id)
+      );
 
       if (missingInventoryIds.length > 0) {
-        throw new AppError(`Inventories not found: ${missingInventoryIds.join(', ')}`, 404);
+        throw new AppError(
+          `Inventories not found: ${missingInventoryIds.join(', ')}`,
+          404
+        );
       }
 
       // Check if all packing item statuses exist (if provided)
       const packingItemStatusIds = packingData.packingItems
-        .map(item => item.statusId)
+        .map((item) => item.statusId)
         .filter(Boolean) as string[];
-      
+
       if (packingItemStatusIds.length > 0) {
         const packingItemStatuses = await prisma.status.findMany({
           where: {
@@ -74,11 +94,18 @@ export class PackingService {
           },
         });
 
-        const foundStatusIds = new Set(packingItemStatuses.map(status => status.id));
-        const missingStatusIds = packingItemStatusIds.filter(id => !foundStatusIds.has(id));
+        const foundStatusIds = new Set(
+          packingItemStatuses.map((status) => status.id)
+        );
+        const missingStatusIds = packingItemStatusIds.filter(
+          (id) => !foundStatusIds.has(id)
+        );
 
         if (missingStatusIds.length > 0) {
-          throw new AppError(`Packing item statuses not found: ${missingStatusIds.join(', ')}`, 404);
+          throw new AppError(
+            `Packing item statuses not found: ${missingStatusIds.join(', ')}`,
+            404
+          );
         }
       }
 
@@ -92,21 +119,31 @@ export class PackingService {
           createdBy: userId,
           updatedBy: userId,
           packingItems: {
-            create: packingData.packingItems.map(item => ({ ...item, createdBy: userId, updatedBy: userId })),
+            create: packingData.packingItems.map((item) => ({
+              ...item,
+              createdBy: userId,
+              updatedBy: userId,
+            })),
           },
         },
         include: {
           packingItems: {
             include: {
               status: true,
-            }
+            },
           },
           purchaseOrder: true,
           status: true,
         },
       });
 
-      await createAuditLog('Packing', newPacking.id, 'CREATE', userId, newPacking);
+      await createAuditLog(
+        'Packing',
+        newPacking.id,
+        'CREATE',
+        userId,
+        newPacking
+      );
 
       return newPacking;
     } catch (error: any) {
@@ -117,7 +154,10 @@ export class PackingService {
     }
   }
 
-  static async getAllPackings(page: number = 1, limit: number = 10): Promise<PaginatedResult<any>> {
+  static async getAllPackings(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResult<any>> {
     const skip = (page - 1) * limit;
 
     const [data, totalItems] = await Promise.all([
@@ -128,7 +168,7 @@ export class PackingService {
           packingItems: {
             include: {
               status: true,
-            }
+            },
           },
           purchaseOrder: true,
           status: true,
@@ -160,7 +200,7 @@ export class PackingService {
         packingItems: {
           include: {
             status: true,
-          }
+          },
         },
         purchaseOrder: true,
         status: true,
@@ -220,9 +260,9 @@ export class PackingService {
         if (packingItems) {
           // Check if all packing item statuses exist (if provided)
           const packingItemStatusIds = packingItems
-            .map(item => item.statusId)
+            .map((item) => item.statusId)
             .filter(Boolean) as string[];
-          
+
           if (packingItemStatusIds.length > 0) {
             const packingItemStatuses = await tx.status.findMany({
               where: {
@@ -232,11 +272,20 @@ export class PackingService {
               },
             });
 
-            const foundStatusIds = new Set(packingItemStatuses.map(status => status.id));
-            const missingStatusIds = packingItemStatusIds.filter(id => !foundStatusIds.has(id));
+            const foundStatusIds = new Set(
+              packingItemStatuses.map((status) => status.id)
+            );
+            const missingStatusIds = packingItemStatusIds.filter(
+              (id) => !foundStatusIds.has(id)
+            );
 
             if (missingStatusIds.length > 0) {
-              throw new AppError(`Packing item statuses not found: ${missingStatusIds.join(', ')}`, 404);
+              throw new AppError(
+                `Packing item statuses not found: ${missingStatusIds.join(
+                  ', '
+                )}`,
+                404
+              );
             }
           }
 
@@ -262,7 +311,7 @@ export class PackingService {
             packingItems: {
               include: {
                 status: true,
-              }
+              },
             },
             purchaseOrder: true,
             status: true,
@@ -306,47 +355,60 @@ export class PackingService {
     }
   }
 
-  static async searchPackings(query: SearchPackingInput['query']): Promise<PaginatedResult<any>> {
-    const { 
+  static async searchPackings(
+    query: SearchPackingInput['query']
+  ): Promise<PaginatedResult<any>> {
+    const {
       packing_number,
-      tanggal_packing, 
-      statusId, 
-      purchaseOrderId, 
+      tanggal_packing,
+      status_code,
+      purchaseOrderId,
       page = 1,
-      limit = 10
+      limit = 10,
     } = query;
 
     const skip = (page - 1) * limit;
 
     const filters: any[] = [];
-    
+
     if (packing_number) {
       filters.push({
         packing_number: {
           contains: packing_number,
-          mode: 'insensitive'
-        }
+          mode: 'insensitive',
+        },
       });
     }
-    
+
     if (tanggal_packing) {
       const date = new Date(tanggal_packing);
       try {
         filters.push({
           tanggal_packing: {
             gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-            lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
-          }
-        }); 
+            lte: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate() + 1
+            ),
+          },
+        });
       } catch (e) {
         // ignore invalid date
       }
     }
-    
-    if (statusId) {
-      filters.push({ statusId });
+
+    if (status_code) {
+      filters.push({
+        status: {
+          status_code: {
+            equals: status_code,
+            mode: 'insensitive',
+          },
+        },
+      });
     }
-    
+
     if (purchaseOrderId) {
       filters.push({ purchaseOrderId });
     }
@@ -362,7 +424,7 @@ export class PackingService {
           packingItems: {
             include: {
               status: true,
-            }
+            },
           },
           purchaseOrder: true,
           status: true,
@@ -397,59 +459,70 @@ export class PackingService {
         // Validasi bahwa semua packing ada
         const packings = await tx.packing.findMany({
           where: {
-            id: { in: ids }
+            id: { in: ids },
           },
           include: {
             packingItems: true,
-            status: true
-          }
+            status: true,
+          },
         });
 
         if (packings.length !== ids.length) {
-          const foundIds = packings.map(p => p.id);
-          const missingIds = ids.filter(id => !foundIds.includes(id));
-          throw new AppError(`Packing not found: ${missingIds.join(', ')}`, 404);
+          const foundIds = packings.map((p) => p.id);
+          const missingIds = ids.filter((id) => !foundIds.includes(id));
+          throw new AppError(
+            `Packing not found: ${missingIds.join(', ')}`,
+            404
+          );
         }
 
         // Validasi bahwa semua packing memiliki status "PENDING PACKING"
         const pendingPackingStatus = await tx.status.findUnique({
-          where: { 
+          where: {
             status_code_category: {
               status_code: 'PENDING PACKING',
-              category: 'Packing'
-            }
-          }
+              category: 'Packing',
+            },
+          },
         });
 
         if (!pendingPackingStatus) {
           throw new AppError('PENDING PACKING status not found', 404);
         }
 
-        const invalidPackings = packings.filter(p => p.statusId !== pendingPackingStatus.id);
+        const invalidPackings = packings.filter(
+          (p) => p.statusId !== pendingPackingStatus.id
+        );
         if (invalidPackings.length > 0) {
-          const invalidIds = invalidPackings.map(p => p.id);
-          throw new AppError(`Packing dengan ID ${invalidIds.join(', ')} tidak memiliki status PENDING PACKING`, 400);
+          const invalidIds = invalidPackings.map((p) => p.id);
+          throw new AppError(
+            `Packing dengan ID ${invalidIds.join(
+              ', '
+            )} tidak memiliki status PENDING PACKING`,
+            400
+          );
         }
 
         // Ambil status "PROCESSING PACKING" dan "PROCESSING ITEM"
-        const [processingPackingStatus, processingItemStatus] = await Promise.all([
-          tx.status.findUnique({ 
-            where: { 
-              status_code_category: {
-                status_code: 'PROCESSING PACKING',
-                category: 'Packing'
-              }
-            } 
-          }),
-          tx.status.findUnique({ 
-            where: { 
-              status_code_category: {
-                status_code: 'PROCESSING ITEM',
-                category: 'Packing Detail Item'
-              }
-            } 
-          })
-        ]);
+        const [processingPackingStatus, processingItemStatus] =
+          await Promise.all([
+            tx.status.findUnique({
+              where: {
+                status_code_category: {
+                  status_code: 'PROCESSING PACKING',
+                  category: 'Packing',
+                },
+              },
+            }),
+            tx.status.findUnique({
+              where: {
+                status_code_category: {
+                  status_code: 'PROCESSING ITEM',
+                  category: 'Packing Detail Item',
+                },
+              },
+            }),
+          ]);
 
         if (!processingPackingStatus || !processingItemStatus) {
           throw new AppError('Required statuses not found', 404);
@@ -458,39 +531,39 @@ export class PackingService {
         // Update status packing menjadi "PROCESSING PACKING"
         const updatedPackings = await tx.packing.updateMany({
           where: {
-            id: { in: ids }
+            id: { in: ids },
           },
           data: {
             statusId: processingPackingStatus.id,
-            updatedBy: userId
-          }
+            updatedBy: userId,
+          },
         });
 
         // Update status semua packingItem menjadi "PROCESSING ITEM"
         const updatedPackingItems = await tx.packingItem.updateMany({
           where: {
-            packingId: { in: ids }
+            packingId: { in: ids },
           },
           data: {
             statusId: processingItemStatus.id,
-            updatedBy: userId
-          }
+            updatedBy: userId,
+          },
         });
 
         // Ambil data packing yang sudah diupdate untuk response
         const resultPackings = await tx.packing.findMany({
           where: {
-            id: { in: ids }
+            id: { in: ids },
           },
           include: {
             packingItems: {
               include: {
-                status: true
-              }
+                status: true,
+              },
             },
             purchaseOrder: true,
-            status: true
-          }
+            status: true,
+          },
         });
 
         // Buat audit log untuk setiap packing
@@ -498,7 +571,7 @@ export class PackingService {
           await createAuditLog('Packing', packing.id, 'UPDATE', userId, {
             action: 'PROCESS_PACKING',
             before: { statusId: pendingPackingStatus.id },
-            after: { statusId: processingPackingStatus.id }
+            after: { statusId: processingPackingStatus.id },
           });
         }
 
@@ -506,7 +579,7 @@ export class PackingService {
           message: 'Packing berhasil diproses',
           processedCount: updatedPackings.count,
           processedPackingItemsCount: updatedPackingItems.count,
-          packings: resultPackings
+          packings: resultPackings,
         };
       });
     } catch (error: any) {

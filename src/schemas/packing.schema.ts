@@ -8,15 +8,17 @@ export const createPackingSchema = z.object({
     statusId: z.string(),
     purchaseOrderId: z.string(),
     updatedBy: z.string().optional(),
-    packingItems: z.array(z.object({
-      nama_barang: z.string(),
-      total_qty: z.number().int(),
-      jumlah_carton: z.number().int(),
-      isi_per_carton: z.number().int(),
-      no_box: z.string(),
-      inventoryId: z.string(),
-      statusId: z.string().optional().nullable(),
-    })),
+    packingItems: z.array(
+      z.object({
+        nama_barang: z.string(),
+        total_qty: z.number().int(),
+        jumlah_carton: z.number().int(),
+        isi_per_carton: z.number().int(),
+        no_box: z.string(),
+        inventoryId: z.string(),
+        statusId: z.string().optional().nullable(),
+      })
+    ),
   }),
 });
 
@@ -35,16 +37,20 @@ export const updatePackingSchema = z.object({
     tanggal_packing: z.coerce.date().optional(),
     statusId: z.string().optional(),
     updatedBy: z.string().optional(),
-    packingItems: z.array(z.object({
-      id: z.string().optional(),
-      nama_barang: z.string(),
-      total_qty: z.number().int(),
-      jumlah_carton: z.number().int(),
-      isi_per_carton: z.number().int(),
-      no_box: z.string(),
-      inventoryId: z.string(),
-      statusId: z.string().optional().nullable(),
-    })).optional(),
+    packingItems: z
+      .array(
+        z.object({
+          id: z.string().optional(),
+          nama_barang: z.string(),
+          total_qty: z.number().int(),
+          jumlah_carton: z.number().int(),
+          isi_per_carton: z.number().int(),
+          no_box: z.string(),
+          inventoryId: z.string(),
+          statusId: z.string().optional().nullable(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -55,12 +61,14 @@ export const deletePackingSchema = z.object({
 });
 
 export const searchPackingSchema = z.object({
-  query: z.object({
-    packing_number: z.string().optional(),
-    tanggal_packing: z.string().optional(),
-    statusId: z.string().optional(),
-    purchaseOrderId: z.string().optional(),
-  }).merge(paginationSchema),
+  query: z
+    .object({
+      packing_number: z.string().optional(),
+      tanggal_packing: z.string().optional(),
+      status_code: z.string().optional(),
+      purchaseOrderId: z.string().optional(),
+    })
+    .merge(paginationSchema),
 });
 
 export const processPackingSchema = z.object({

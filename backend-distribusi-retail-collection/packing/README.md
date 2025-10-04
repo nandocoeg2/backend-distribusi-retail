@@ -3,21 +3,25 @@
 Dokumentasi lengkap untuk endpoint Packing API pada sistem Backend Distribusi Retail.
 
 ## Base URL
+
 ```
 http://localhost:5050/api/v1/packings
 ```
 
 ## Authentication
+
 Semua endpoint memerlukan Bearer Token yang valid di header Authorization.
 
 ## Endpoints
 
 ### 1. Create Packing
+
 Membuat data packing baru.
 
 **Endpoint:** `POST /`
 
 **Headers:**
+
 ```json
 {
   "Content-Type": "application/json",
@@ -27,6 +31,7 @@ Membuat data packing baru.
 ```
 
 **Request Body:**
+
 ```json
 {
   "tanggal_packing": "2025-09-06T00:00:00.000Z",
@@ -46,12 +51,14 @@ Membuat data packing baru.
 ```
 
 **Validation Rules:**
+
 - `tanggal_packing`: **Required** - Tanggal packing
 - `statusId`: **Required** - ID status packing
 - `purchaseOrderId`: **Required** - ID purchase order
 - `packingItems`: **Required** - Array item packing
 
 **Response Success (201 Created):**
+
 ```json
 {
   "success": true,
@@ -75,11 +82,13 @@ Membuat data packing baru.
 ---
 
 ### 2. Get All Packings
+
 Mengambil daftar semua packing dengan pagination.
 
 **Endpoint:** `GET /`
 
 **Headers:**
+
 ```json
 {
   "Accept": "application/json",
@@ -88,10 +97,12 @@ Mengambil daftar semua packing dengan pagination.
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Nomor halaman (default: 1)
 - `limit` (optional): Jumlah data per halaman (default: 10)
 
 **Response Success (200 OK):**
+
 ```json
 {
   "success": true,
@@ -110,11 +121,13 @@ Mengambil daftar semua packing dengan pagination.
 ---
 
 ### 3. Get Packing By ID
+
 Mengambil data packing berdasarkan ID.
 
 **Endpoint:** `GET /:id`
 
 **Headers:**
+
 ```json
 {
   "Accept": "application/json",
@@ -123,9 +136,11 @@ Mengambil data packing berdasarkan ID.
 ```
 
 **Path Parameters:**
+
 - `id` (required): ID packing
 
 **Response Success (200 OK):**
+
 ```json
 {
   "success": true,
@@ -149,11 +164,13 @@ Mengambil data packing berdasarkan ID.
 ---
 
 ### 4. Update Packing
+
 Memperbarui data packing berdasarkan ID.
 
 **Endpoint:** `PUT /:id`
 
 **Headers:**
+
 ```json
 {
   "Content-Type": "application/json",
@@ -163,9 +180,11 @@ Memperbarui data packing berdasarkan ID.
 ```
 
 **Path Parameters:**
+
 - `id` (required): ID packing
 
 **Request Body:**
+
 ```json
 {
   "tanggal_packing": "2025-09-06T00:00:00.000Z",
@@ -184,6 +203,7 @@ Memperbarui data packing berdasarkan ID.
 ```
 
 **Response Success (200 OK):**
+
 ```json
 {
   "success": true,
@@ -207,11 +227,13 @@ Memperbarui data packing berdasarkan ID.
 ---
 
 ### 5. Delete Packing
+
 Menghapus data packing berdasarkan ID.
 
 **Endpoint:** `DELETE /:id`
 
 **Headers:**
+
 ```json
 {
   "Accept": "application/json",
@@ -220,9 +242,11 @@ Menghapus data packing berdasarkan ID.
 ```
 
 **Path Parameters:**
+
 - `id` (required): ID packing
 
 **Response Success (204 No Content):**
+
 ```
 Status: 204 No Content
 Body: (empty)
@@ -231,11 +255,13 @@ Body: (empty)
 ---
 
 ### 6. Search Packings
+
 Mencari packing berdasarkan berbagai filter dengan pagination.
 
 **Endpoint:** `GET /search`
 
 **Headers:**
+
 ```json
 {
   "Accept": "application/json",
@@ -244,14 +270,23 @@ Mencari packing berdasarkan berbagai filter dengan pagination.
 ```
 
 **Query Parameters:**
+
 - `packing_number` (optional): Pencarian berdasarkan nomor packing
 - `tanggal_packing` (optional): Pencarian berdasarkan tanggal packing
-- `statusId` (optional): Pencarian berdasarkan status ID
+- `status_code` (optional): Pencarian berdasarkan status code (contoh: "PENDING PACKING", "PROCESSING PACKING")
 - `purchaseOrderId` (optional): Pencarian berdasarkan Purchase Order ID
 - `page` (optional): Nomor halaman (default: 1)
 - `limit` (optional): Jumlah data per halaman (default: 10)
 
+**Example Request:**
+
+```
+GET /search?status_code=PENDING%20PACKING&page=1&limit=10
+GET /search?status_code=PROCESSING%20PACKING&packing_number=PKG-2024-001
+```
+
 **Response Success (200 OK):**
+
 ```json
 {
   "success": true,
@@ -270,11 +305,13 @@ Mencari packing berdasarkan berbagai filter dengan pagination.
 ---
 
 ### 7. Process Packing
+
 Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan mengubah status semua packing item menjadi "PROCESSING ITEM".
 
 **Endpoint:** `POST /process`
 
 **Headers:**
+
 ```json
 {
   "Content-Type": "application/json",
@@ -284,6 +321,7 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 ```
 
 **Request Body:**
+
 ```json
 {
   "ids": ["packing_id_1", "packing_id_2", "packing_id_3"]
@@ -291,9 +329,11 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 ```
 
 **Validation Rules:**
+
 - `ids`: **Required** - Array ID packing yang akan diproses (minimal 1 ID)
 
 **Response Success (200 OK):**
+
 ```json
 {
   "success": true,
@@ -347,6 +387,7 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 **Error Responses:**
 
 **400 Bad Request - Invalid Status:**
+
 ```json
 {
   "success": false,
@@ -357,6 +398,7 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 ```
 
 **404 Not Found - Packing Not Found:**
+
 ```json
 {
   "success": false,
@@ -367,6 +409,7 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 ```
 
 **404 Not Found - Status Not Found:**
+
 ```json
 {
   "success": false,
@@ -411,3 +454,4 @@ Semua endpoint menggunakan format error response yang konsisten:
 - Packing terintegrasi dengan Purchase Order dan Inventory
 - Sistem mendukung multiple items dalam satu packing
 - Search mendukung multiple filter yang dapat dikombinasikan
+- Parameter `status_code` adalah case-insensitive untuk kemudahan pencarian
