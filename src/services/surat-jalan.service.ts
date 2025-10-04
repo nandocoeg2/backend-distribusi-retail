@@ -8,13 +8,20 @@ import {
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
-import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.utils';
+import {
+  calculatePagination,
+  executePaginatedQuery,
+} from '@/utils/pagination.utils';
 import { getEntityWithAuditTrails } from '@/utils/audit.utils';
 
 export class SuratJalanService {
-  static async createSuratJalan(suratJalanData: CreateSuratJalanInput, userId: string): Promise<SuratJalan> {
+  static async createSuratJalan(
+    suratJalanData: CreateSuratJalanInput,
+    userId: string
+  ): Promise<SuratJalan> {
     try {
-      const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } = suratJalanData;
+      const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } =
+        suratJalanData;
 
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
         const invoice = await prisma.invoicePengiriman.findUnique({
@@ -42,56 +49,71 @@ export class SuratJalanService {
           createdBy: userId,
           updatedBy: userId,
           suratJalanDetails: {
-            create: suratJalanDetails.map(detail => ({
+            create: suratJalanDetails.map((detail) => ({
               no_box: detail.no_box,
               total_quantity_in_box: detail.total_quantity_in_box,
               isi_box: detail.isi_box,
               sisa: detail.sisa,
               total_box: detail.total_box,
               suratJalanDetailItems: {
-                create: detail.items.map(item => ({
+                create: detail.items.map((item) => ({
                   ...item,
                   createdBy: userId,
                   updatedBy: userId,
-                }))
-              }
-            }))
-          }
+                })),
+              },
+            })),
+          },
         },
         include: {
           suratJalanDetails: {
             include: {
-              suratJalanDetailItems: true
-            }
+              suratJalanDetailItems: true,
+            },
           },
           invoice: true,
           status: true,
           historyPengiriman: {
             include: {
-              status: true
-            }
-          }
-        }
+              status: true,
+            },
+          },
+        },
       });
 
-      await createAuditLog('SuratJalan', newSuratJalan.id, 'CREATE', userId, newSuratJalan);
+      await createAuditLog(
+        'SuratJalan',
+        newSuratJalan.id,
+        'CREATE',
+        userId,
+        newSuratJalan
+      );
 
       return newSuratJalan;
     } catch (error: any) {
       if (error instanceof AppError) throw error;
-      
-      if (error.code === 'P2002' && error.meta?.target?.includes('no_surat_jalan')) {
+
+      if (
+        error.code === 'P2002' &&
+        error.meta?.target?.includes('no_surat_jalan')
+      ) {
         throw new AppError('Surat jalan with this number already exists', 409);
       }
       if (error.code === 'P2003') {
-        throw new AppError('Foreign key constraint violation. Please check if the referenced invoice pengiriman or status exists.', 400);
+        throw new AppError(
+          'Foreign key constraint violation. Please check if the referenced invoice pengiriman or status exists.',
+          400
+        );
       }
-      
+
       throw new AppError('Failed to create surat jalan', 500);
     }
   }
 
-  static async getAllSuratJalan(page: number = 1, limit: number = 10): Promise<PaginatedResult<SuratJalan>> {
+  static async getAllSuratJalan(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResult<SuratJalan>> {
     const { skip, take } = calculatePagination(page, limit);
 
     const dataQuery = prisma.suratJalan.findMany({
@@ -102,7 +124,7 @@ export class SuratJalanService {
         invoice: true,
         status: true,
       },
-      orderBy: { id: 'desc' }
+      orderBy: { id: 'desc' },
     });
 
     const countQuery = prisma.suratJalan.count();
@@ -115,16 +137,32 @@ export class SuratJalanService {
       where: { id },
       include: {
         suratJalanDetails: { include: { suratJalanDetailItems: true } },
-        invoice: { include: { purchaseOrder: { include: { customer: true, supplier: true } } } },
+        invoice: {
+          include: {
+            purchaseOrder: { include: { customer: true, supplier: true } },
+          },
+        },
         status: true,
-        historyPengiriman: { include: { status: true }, orderBy: { createdAt: 'desc' } }
+        historyPengiriman: {
+          include: { status: true },
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 
-    return getEntityWithAuditTrails(findQuery, 'SuratJalan', id, 'Surat Jalan not found');
+    return getEntityWithAuditTrails(
+      findQuery,
+      'SuratJalan',
+      id,
+      'Surat Jalan not found'
+    );
   }
 
-  static async updateSuratJalan(id: string, data: UpdateSuratJalanInput['body'], userId: string): Promise<SuratJalan> {
+  static async updateSuratJalan(
+    id: string,
+    data: UpdateSuratJalanInput['body'],
+    userId: string
+  ): Promise<SuratJalan> {
     const { suratJalanDetails, ...suratJalanInfo } = data;
 
     try {
@@ -140,10 +178,15 @@ export class SuratJalanService {
         }
 
         if (suratJalanDetails) {
-          const detailIds = existingSuratJalan.suratJalanDetails?.map(d => d.id) || [];
+          const detailIds =
+            existingSuratJalan.suratJalanDetails?.map((d) => d.id) || [];
           if (detailIds.length > 0) {
-            await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
-            await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
+            await tx.suratJalanDetailItem.deleteMany({
+              where: { surat_jalan_detail_id: { in: detailIds } },
+            });
+            await tx.suratJalanDetail.deleteMany({
+              where: { surat_jalan_id: id },
+            });
           }
 
           for (const detail of suratJalanDetails) {
@@ -155,8 +198,14 @@ export class SuratJalanService {
                 isi_box: detail.isi_box,
                 sisa: detail.sisa,
                 total_box: detail.total_box,
-                suratJalanDetailItems: { create: detail.items.map(item => ({ ...item, createdBy: userId, updatedBy: userId })) }
-              }
+                suratJalanDetailItems: {
+                  create: detail.items.map((item) => ({
+                    ...item,
+                    createdBy: userId,
+                    updatedBy: userId,
+                  })),
+                },
+              },
             });
           }
         }
@@ -171,17 +220,26 @@ export class SuratJalanService {
           },
         });
 
-        await createAuditLog('SuratJalan', updatedSuratJalanData.id, 'UPDATE', userId, {
-          before: existingSuratJalan,
-          after: updatedSuratJalanData,
-        });
+        await createAuditLog(
+          'SuratJalan',
+          updatedSuratJalanData.id,
+          'UPDATE',
+          userId,
+          {
+            before: existingSuratJalan,
+            after: updatedSuratJalanData,
+          }
+        );
 
         return updatedSuratJalanData;
       });
     } catch (error: any) {
       if (error instanceof AppError) throw error;
 
-      if (error.code === 'P2002' && error.meta?.target?.includes('no_surat_jalan')) {
+      if (
+        error.code === 'P2002' &&
+        error.meta?.target?.includes('no_surat_jalan')
+      ) {
         throw new AppError('Surat jalan with this number already exists', 409);
       }
 
@@ -189,7 +247,10 @@ export class SuratJalanService {
     }
   }
 
-  static async deleteSuratJalan(id: string, userId: string): Promise<SuratJalan> {
+  static async deleteSuratJalan(
+    id: string,
+    userId: string
+  ): Promise<SuratJalan> {
     const suratJalan = await prisma.suratJalan.findUnique({ where: { id } });
     if (!suratJalan) {
       throw new AppError('Surat Jalan not found', 404);
@@ -198,9 +259,16 @@ export class SuratJalanService {
     await createAuditLog('SuratJalan', id, 'DELETE', userId, suratJalan);
 
     await prisma.$transaction(async (tx) => {
-      const detailIds = (await tx.suratJalanDetail.findMany({ where: { surat_jalan_id: id }, select: { id: true } })).map(d => d.id);
+      const detailIds = (
+        await tx.suratJalanDetail.findMany({
+          where: { surat_jalan_id: id },
+          select: { id: true },
+        })
+      ).map((d) => d.id);
       if (detailIds.length > 0) {
-        await tx.suratJalanDetailItem.deleteMany({ where: { surat_jalan_detail_id: { in: detailIds } } });
+        await tx.suratJalanDetailItem.deleteMany({
+          where: { surat_jalan_detail_id: { in: detailIds } },
+        });
       }
       await tx.suratJalanDetail.deleteMany({ where: { surat_jalan_id: id } });
       await tx.historyPengiriman.deleteMany({ where: { surat_jalan_id: id } });
@@ -210,16 +278,33 @@ export class SuratJalanService {
     return suratJalan;
   }
 
-  static async searchSuratJalan(query: SearchSuratJalanInput['query']): Promise<PaginatedResult<SuratJalan>> {
-    const { no_surat_jalan, deliver_to, PIC, invoiceId, statusId, is_printed, page = 1, limit = 10 } = query;
+  static async searchSuratJalan(
+    query: SearchSuratJalanInput['query']
+  ): Promise<PaginatedResult<SuratJalan>> {
+    const {
+      no_surat_jalan,
+      deliver_to,
+      PIC,
+      invoiceId,
+      status_code,
+      is_printed,
+      page = 1,
+      limit = 10,
+    } = query;
     const { skip, take } = calculatePagination(page, limit);
     const filters: Prisma.SuratJalanWhereInput[] = [];
-    
-    if (no_surat_jalan) filters.push({ no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' } });
-    if (deliver_to) filters.push({ deliver_to: { contains: deliver_to, mode: 'insensitive' } });
+
+    if (no_surat_jalan)
+      filters.push({
+        no_surat_jalan: { contains: no_surat_jalan, mode: 'insensitive' },
+      });
+    if (deliver_to)
+      filters.push({
+        deliver_to: { contains: deliver_to, mode: 'insensitive' },
+      });
     if (PIC) filters.push({ PIC: { contains: PIC, mode: 'insensitive' } });
     if (invoiceId) filters.push({ invoiceId });
-    if (statusId) filters.push({ statusId });
+    if (status_code) filters.push({ status: { status_code: status_code } });
     if (is_printed !== undefined) filters.push({ is_printed });
 
     const whereClause = filters.length > 0 ? { AND: filters } : {};
@@ -230,10 +315,12 @@ export class SuratJalanService {
       take,
       include: {
         suratJalanDetails: { include: { suratJalanDetailItems: true } },
-        invoice: { include: { purchaseOrder: { include: { customer: true } } } },
+        invoice: {
+          include: { purchaseOrder: { include: { customer: true } } },
+        },
         status: true,
       },
-      orderBy: { id: 'desc' }
+      orderBy: { id: 'desc' },
     });
 
     const countQuery = prisma.suratJalan.count({ where: whereClause });

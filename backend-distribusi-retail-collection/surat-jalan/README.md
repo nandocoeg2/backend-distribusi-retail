@@ -3,14 +3,17 @@
 API untuk mengelola data surat jalan dalam sistem distribusi retail. Surat jalan digunakan untuk melacak pengiriman barang dari gudang ke customer.
 
 ## Base URL
+
 ```
 http://localhost:5050/api/v1/surat-jalan
 ```
 
 ## Authentication
+
 Semua endpoint memerlukan Bearer Token authentication.
 
 **Header:**
+
 ```
 Authorization: Bearer {access_token}
 Accept: application/json
@@ -21,14 +24,17 @@ Accept: application/json
 ## Endpoints
 
 ### 1. Get All Surat Jalan
+
 Mengambil daftar semua surat jalan dengan pagination.
 
 **Request:**
+
 ```http
 GET /api/v1/surat-jalan?page=1&limit=10
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
@@ -41,6 +47,7 @@ Authorization: Bearer {access_token}
 | limit | integer | No | 10 | Jumlah data per halaman |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -93,20 +100,24 @@ Authorization: Bearer {access_token}
 ---
 
 ### 2. Create Surat Jalan
+
 Membuat surat jalan baru.
 
 **Request:**
+
 ```http
 POST /api/v1/surat-jalan
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
 ```
 
 **Body:**
+
 ```json
 {
   "no_surat_jalan": "SJ-2024-001",
@@ -167,6 +178,7 @@ Authorization: Bearer {access_token}
 | suratJalanDetails[].items[].keterangan | string | No | Keterangan tambahan |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -209,20 +221,24 @@ Authorization: Bearer {access_token}
 ---
 
 ### 3. Create Surat Jalan with Valid Invoice
+
 Membuat surat jalan dengan invoice yang valid.
 
 **Request:**
+
 ```http
 POST /api/v1/surat-jalan
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
 ```
 
 **Body:**
+
 ```json
 {
   "no_surat_jalan": "SJ-2024-002",
@@ -261,6 +277,7 @@ Authorization: Bearer {access_token}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -303,14 +320,17 @@ Authorization: Bearer {access_token}
 ---
 
 ### 4. Get Surat Jalan by ID
+
 Mengambil data surat jalan berdasarkan ID.
 
 **Request:**
+
 ```http
 GET /api/v1/surat-jalan/{surat_jalan_id}
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
@@ -322,6 +342,7 @@ Authorization: Bearer {access_token}
 | surat_jalan_id | string | Yes | ID unik surat jalan |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -364,14 +385,17 @@ Authorization: Bearer {access_token}
 ---
 
 ### 5. Update Surat Jalan
+
 Memperbarui data surat jalan.
 
 **Request:**
+
 ```http
 PUT /api/v1/surat-jalan/{surat_jalan_id}
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
@@ -383,6 +407,7 @@ Authorization: Bearer {access_token}
 | surat_jalan_id | string | Yes | ID unik surat jalan |
 
 **Body:**
+
 ```json
 {
   "no_surat_jalan": "SJ-2024-001-UPDATED",
@@ -412,6 +437,7 @@ Authorization: Bearer {access_token}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -454,14 +480,17 @@ Authorization: Bearer {access_token}
 ---
 
 ### 6. Delete Surat Jalan
+
 Menghapus surat jalan.
 
 **Request:**
+
 ```http
 DELETE /api/v1/surat-jalan/{surat_jalan_id}
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
@@ -473,6 +502,7 @@ Authorization: Bearer {access_token}
 | surat_jalan_id | string | Yes | ID unik surat jalan |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -483,14 +513,17 @@ Authorization: Bearer {access_token}
 ---
 
 ### 7. Search Surat Jalan
-Mencari surat jalan berdasarkan nomor surat jalan atau nama penerima.
+
+Mencari surat jalan berdasarkan nomor surat jalan, nama penerima, atau kode status.
 
 **Request:**
+
 ```http
-GET /api/v1/surat-jalan/search?no_surat_jalan=SJ-2024&deliver_to=Customer&page=1&limit=10
+GET /api/v1/surat-jalan/search?no_surat_jalan=SJ-2024&deliver_to=Customer&status_code=DRAFT&page=1&limit=10
 ```
 
 **Headers:**
+
 ```
 Accept: application/json
 Authorization: Bearer {access_token}
@@ -501,10 +534,12 @@ Authorization: Bearer {access_token}
 |-----------|------|----------|-------------|
 | no_surat_jalan | string | No | Nomor surat jalan yang dicari |
 | deliver_to | string | No | Nama penerima yang dicari |
+| status_code | string | No | Kode status surat jalan yang dicari (e.g., DRAFT, READY_TO_SHIP) |
 | page | integer | No | Nomor halaman (default: 1) |
 | limit | integer | No | Jumlah data per halaman (default: 10) |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -538,6 +573,7 @@ Authorization: Bearer {access_token}
 ## Error Responses
 
 ### 400 Bad Request
+
 ```json
 {
   "success": false,
@@ -564,6 +600,7 @@ Authorization: Bearer {access_token}
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "success": false,
@@ -572,6 +609,7 @@ Authorization: Bearer {access_token}
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "success": false,
@@ -580,6 +618,7 @@ Authorization: Bearer {access_token}
 ```
 
 ### 409 Conflict
+
 ```json
 {
   "success": false,
@@ -588,6 +627,7 @@ Authorization: Bearer {access_token}
 ```
 
 ### 422 Unprocessable Entity
+
 ```json
 {
   "success": false,
@@ -596,6 +636,7 @@ Authorization: Bearer {access_token}
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "success": false,
