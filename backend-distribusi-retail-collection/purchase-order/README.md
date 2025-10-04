@@ -436,7 +436,7 @@ curl -X GET "http://localhost:5050/api/v1/purchase-orders/history?page=1&limit=1
         "id": "po_123",
         "po_number": "PO-001",
         "status": {
-          "status_code": "APPROVED PURCHASE ORDER"
+          "status_code": "COMPLETED PURCHASE ORDER"
         }
       }
     ],
@@ -557,7 +557,7 @@ curl --request PATCH \
 - `PENDING_PURCHASE_ORDER` - Menunggu proses (default)
 - `PROCESSING_PURCHASE_ORDER` - Sedang diproses
 - `PROCESSED_PURCHASE_ORDER` - Sudah diproses
-- `APPROVED_PURCHASE_ORDER` - Disetujui
+- `COMPLETED_PURCHASE_ORDER` - Selesai
 - `FAILED_PURCHASE_ORDER` - Gagal
 
 ### Status Code Usage
@@ -676,6 +676,6 @@ curl --request PUT \
   --header 'authorization: Bearer YOUR_TOKEN' \
   --header 'content-type: application/json' \
   --data '{
-    "status_code": "APPROVED_PURCHASE_ORDER"
+    "status_code": "COMPLETED_PURCHASE_ORDER"
   }'
 ```

@@ -89,9 +89,9 @@ const ALL_STATUSES: StatusData[] = [
     category: 'Purchase Order'
   },
   {
-    status_code: 'APPROVED PURCHASE ORDER',
-    status_name: 'Approved Purchase Order',
-    status_description: 'Purchase order has been approved',
+    status_code: 'COMPLETED PURCHASE ORDER',
+    status_name: 'Completed Purchase Order',
+    status_description: 'Purchase order has been completed',
     category: 'Purchase Order'
   },
   {
