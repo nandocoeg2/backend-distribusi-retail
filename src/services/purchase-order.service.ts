@@ -24,7 +24,8 @@ export interface FileInfo {
 export class PurchaseOrderService {
   private static async findPurchaseOrdersByPoNumber(
     poNumber: string,
-    excludeIds: string[] = []
+    excludeIds: string[] = [],
+    statusId?: string
   ) {
     const whereClause: Prisma.PurchaseOrderWhereInput = {
       po_number: poNumber,
@@ -34,18 +35,25 @@ export class PurchaseOrderService {
       whereClause.id = { notIn: excludeIds };
     }
 
+    if (statusId) {
+      whereClause.statusId = statusId;
+    }
+
     return prisma.purchaseOrder.findMany({
       where: whereClause,
       select: {
         id: true,
         po_number: true,
+        statusId: true,
       },
     });
   }
 
-  static async checkDuplicatePoNumber(poNumber: string) {
+  static async checkDuplicatePoNumber(poNumber: string, statusId?: string) {
     const matchingPurchaseOrders = await this.findPurchaseOrdersByPoNumber(
-      poNumber
+      poNumber,
+      [],
+      statusId
     );
 
     const matchingCount = matchingPurchaseOrders.length;
@@ -226,6 +234,7 @@ export class PurchaseOrderService {
         include: {
           customer: true,
           supplier: true,
+          termOfPayment: true,
           files: true,
           status: true,
         },
@@ -654,6 +663,7 @@ export class PurchaseOrderService {
         include: {
           customer: true,
           supplier: true,
+          termOfPayment: true,
           files: true,
           status: true,
         },
@@ -780,24 +790,6 @@ export class PurchaseOrderService {
       throw new AppError('Purchase Order not found', 404);
     }
 
-    const duplicateCheck = await this.checkDuplicatePoNumber(
-      purchaseOrder.po_number
-    );
-
-    if (duplicateCheck.hasDuplicate) {
-      throw new AppError(
-        'Duplicate PO number detected. Please resolve duplicates before processing.',
-        400,
-        {
-          poNumber: purchaseOrder.po_number,
-          duplicateCount: duplicateCheck.duplicateCount,
-          duplicateIds: duplicateCheck.duplicateIds,
-          matchingCount: duplicateCheck.matchingCount,
-          matchingPurchaseOrders: duplicateCheck.matchingPurchaseOrders,
-        }
-      );
-    }
-
     const status = await prisma.status.findUnique({
       where: {
         status_code_category: {
@@ -809,6 +801,25 @@ export class PurchaseOrderService {
 
     if (!status) {
       throw new AppError('Status not found', 404);
+    }
+
+    const duplicateCheck = await this.checkDuplicatePoNumber(
+      purchaseOrder.po_number,
+      status.id
+    );
+
+    if (duplicateCheck.hasDuplicate) {
+      throw new AppError(
+        'Duplicate PO number detected with the same status. Please resolve duplicates before processing.',
+        400,
+        {
+          poNumber: purchaseOrder.po_number,
+          duplicateCount: duplicateCheck.duplicateCount,
+          duplicateIds: duplicateCheck.duplicateIds,
+          matchingCount: duplicateCheck.matchingCount,
+          matchingPurchaseOrders: duplicateCheck.matchingPurchaseOrders,
+        }
+      );
     }
 
     const pendingPackingStatus = await prisma.status.findUnique({
