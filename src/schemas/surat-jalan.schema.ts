@@ -121,13 +121,13 @@ export const searchSuratJalanSchema = z.object({
       .transform((val) => val === 'true')
       .optional(),
     page: z
-      .string()
-      .transform((val) => parseInt(val))
-      .default('1'),
+      .union([z.string(), z.number()])
+      .transform((val) => Number(val))
+      .default(1),
     limit: z
-      .string()
-      .transform((val) => parseInt(val))
-      .default('10'),
+      .union([z.string(), z.number()])
+      .transform((val) => Number(val))
+      .default(10),
   }),
 });
 
