@@ -86,11 +86,8 @@ export class LaporanPenerimaanBarangController {
     request: FastifyRequest<{ Querystring: SearchLaporanPenerimaanBarangInput['query'] }>,
     reply: FastifyReply
   ) {
-    const { q, page = 1, limit = 10 } = request.query;
     const result = await LaporanPenerimaanBarangService.searchLaporanPenerimaanBarang(
-      q,
-      page,
-      limit
+      request.query
     );
     return reply.send(ResponseUtil.success(result));
   }

@@ -343,15 +343,18 @@ Mencari laporan penerimaan barang berdasarkan query dengan pagination.
   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
-
 **Query Parameters:**
-- `q` (optional): Query pencarian
+- `status_code` (optional): Filter berdasarkan kode status LPB secara exact
+- `purchaseOrderId` (optional): Filter berdasarkan ID purchase order
+- `customerId` (optional): Filter berdasarkan ID customer
+- `termin_bayar` (optional): Filter berdasarkan ID term of payment
+- `q` (optional): Keyword pencarian teks lintas relasi
 - `page` (optional): Nomor halaman (default: 1)
 - `limit` (optional): Jumlah data per halaman (default: 10)
 
 **Example Request:**
 ```
-GET /api/v1/laporan-penerimaan-barang/search?q=jakarta&page=1&limit=10
+GET /api/v1/laporan-penerimaan-barang/search?status_code=COMPLETED%20LAPORAN%20PENERIMAAN%20BARANG&q=jakarta&page=1&limit=10
 ```
 
 **Response Success (200 OK):**
@@ -1089,16 +1092,16 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 
 ## Search Functionality
 
-- Search akan mencari berdasarkan:
+- Gunakan parameter `status_code` untuk memfilter laporan berdasarkan kode status LPB secara exact.
+- Parameter `purchaseOrderId`, `customerId`, dan `termin_bayar` memfilter laporan berdasarkan relasi terkait.
+- Parameter `q` akan mencari berdasarkan:
   - Nama file yang diupload
   - Nomor purchase order
   - Nama customer
   - Alamat pengiriman customer
   - Kode term of payment
   - Nama status
-- Search bersifat case-insensitive
-- Mendukung partial matching (contains)
-
+- Pencarian teks (`q`) bersifat case-insensitive dan mendukung partial matching (contains).
 ## Data Structure
 
 ### Laporan Penerimaan Barang Object
@@ -1149,3 +1152,4 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 - Laporan penerimaan barang digunakan untuk melacak penerimaan barang dari supplier
 - Search mendukung pencarian berdasarkan berbagai field terkait
 - Data include relasi dengan purchase order, customer, term of payment, status, dan files
+

@@ -2,10 +2,12 @@ import { ActionType, LaporanPenerimaanBarang, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import {
   CreateLaporanPenerimaanBarangInput,
+  SearchLaporanPenerimaanBarangInput,
   UpdateLaporanPenerimaanBarangInput,
 } from '@/schemas/laporan-penerimaan-barang.schema';
 import { BaseService } from './base.service';
 import { PaginatedResult } from '@/types/common.types';
+import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.utils';
 import { AppError } from '@/utils/app-error';
 import { ConversionService } from './conversion.service';
 import logger from '@/config/logger';
@@ -381,72 +383,128 @@ export class LaporanPenerimaanBarangService extends BaseService<
   }
 
   static async searchLaporanPenerimaanBarang(
-    query: string | undefined,
-    page: number = 1,
-    limit: number = 10
+    query: SearchLaporanPenerimaanBarangInput['query']
   ): Promise<PaginatedResult<LaporanPenerimaanBarang>> {
+    const {
+      q,
+      status_code,
+      purchaseOrderId,
+      customerId,
+      termin_bayar,
+      page = 1,
+      limit = 10,
+    } = query;
+
     const service = new LaporanPenerimaanBarangService();
 
-    if (!query) {
+    if (!q && !status_code && !purchaseOrderId && !customerId && !termin_bayar) {
       return service.getAllEntities(page, limit, this.includeRelations);
     }
 
-    const filters: Prisma.LaporanPenerimaanBarangWhereInput[] = [
-      {
-        files: {
-          some: {
-            filename: {
-              contains: query,
-              mode: 'insensitive',
+    const { skip, take } = calculatePagination(page, limit);
+
+    const structuredFilters: Prisma.LaporanPenerimaanBarangWhereInput[] = [];
+
+    if (purchaseOrderId) {
+      structuredFilters.push({ purchaseOrderId });
+    }
+
+    if (customerId) {
+      structuredFilters.push({ customerId });
+    }
+
+    if (termin_bayar) {
+      structuredFilters.push({ termin_bayar });
+    }
+
+    if (status_code) {
+      structuredFilters.push({ status: { status_code } });
+    }
+
+    const textFilters: Prisma.LaporanPenerimaanBarangWhereInput[] = q
+      ? [
+          {
+            files: {
+              some: {
+                filename: {
+                  contains: q,
+                  mode: 'insensitive',
+                },
+              },
             },
           },
-        },
-      },
-      {
-        purchaseOrder: {
-          po_number: {
-            contains: query,
-            mode: 'insensitive',
+          {
+            purchaseOrder: {
+              po_number: {
+                contains: q,
+                mode: 'insensitive',
+              },
+            },
           },
-        },
-      },
-      {
-        customer: {
-          namaCustomer: {
-            contains: query,
-            mode: 'insensitive',
+          {
+            customer: {
+              namaCustomer: {
+                contains: q,
+                mode: 'insensitive',
+              },
+              alamatPengiriman: {
+                contains: q,
+                mode: 'insensitive',
+              },
+            },
           },
-          alamatPengiriman: {
-            contains: query,
-            mode: 'insensitive',
+          {
+            termOfPayment: {
+              kode_top: {
+                contains: q,
+                mode: 'insensitive',
+              },
+            },
           },
-        },
-      },
-      {
-        termOfPayment: {
-          kode_top: {
-            contains: query,
-            mode: 'insensitive',
+          {
+            status: {
+              status_name: {
+                contains: q,
+                mode: 'insensitive',
+              },
+              status_code: {
+                contains: q,
+                mode: 'insensitive',
+              },
+            },
           },
-        },
-      },
-      {
-        status: {
-          status_name: {
-            contains: query,
-            mode: 'insensitive',
-          },
-          status_code: {
-            contains: query,
-            mode: 'insensitive',
-          },
-        },
-      },
-    ];
+        ]
+      : [];
 
-    return service.searchEntities(filters, page, limit, this.includeRelations);
+    const hasStructuredFilters = structuredFilters.length > 0;
+    const hasTextFilters = textFilters.length > 0;
+
+    let whereClause: Prisma.LaporanPenerimaanBarangWhereInput = {};
+
+    if (hasStructuredFilters && hasTextFilters) {
+      whereClause = {
+        AND: [{ AND: structuredFilters }, { OR: textFilters }],
+      };
+    } else if (hasStructuredFilters) {
+      whereClause = { AND: structuredFilters };
+    } else if (hasTextFilters) {
+      whereClause = { OR: textFilters };
+    }
+
+    const dataQuery = prisma.laporanPenerimaanBarang.findMany({
+      where: whereClause,
+      skip,
+      take,
+      include: this.includeRelations,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const countQuery = prisma.laporanPenerimaanBarang.count({
+      where: whereClause,
+    });
+
+    return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
-
   static async processLaporanPenerimaanBarang(
     ids: string[],
     userId: string

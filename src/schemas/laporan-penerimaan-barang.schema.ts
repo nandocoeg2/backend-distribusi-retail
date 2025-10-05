@@ -46,6 +46,10 @@ export const searchLaporanPenerimaanBarangSchema = z.object({
   query: z
     .object({
       q: z.string().optional().describe('Search keyword'),
+      status_code: z.string().optional(),
+      purchaseOrderId: z.string().optional(),
+      customerId: z.string().optional(),
+      termin_bayar: z.string().optional(),
     })
     .merge(paginationSchema),
 });
