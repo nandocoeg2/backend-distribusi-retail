@@ -735,28 +735,43 @@ export class PackingService {
           }
         }
 
-        // Ambil status "COMPLETED PACKING" dan "PROCESSED ITEM"
-        const [completedPackingStatus, processedItemStatus] =
-          await Promise.all([
-            tx.status.findUnique({
-              where: {
-                status_code_category: {
-                  status_code: 'COMPLETED PACKING',
-                  category: 'Packing',
-                },
+        // Ambil status "COMPLETED PACKING", "PROCESSED ITEM", dan "PROCESSED PURCHASE ORDER"
+        const [
+          completedPackingStatus,
+          processedItemStatus,
+          processedPurchaseOrderStatus,
+        ] = await Promise.all([
+          tx.status.findUnique({
+            where: {
+              status_code_category: {
+                status_code: 'COMPLETED PACKING',
+                category: 'Packing',
               },
-            }),
-            tx.status.findUnique({
-              where: {
-                status_code_category: {
-                  status_code: 'PROCESSED ITEM',
-                  category: 'Packing Detail Item',
-                },
+            },
+          }),
+          tx.status.findUnique({
+            where: {
+              status_code_category: {
+                status_code: 'PROCESSED ITEM',
+                category: 'Packing Detail Item',
               },
-            }),
-          ]);
+            },
+          }),
+          tx.status.findUnique({
+            where: {
+              status_code_category: {
+                status_code: 'PROCESSED PURCHASE ORDER',
+                category: 'Purchase Order',
+              },
+            },
+          }),
+        ]);
 
-        if (!completedPackingStatus || !processedItemStatus) {
+        if (
+          !completedPackingStatus ||
+          !processedItemStatus ||
+          !processedPurchaseOrderStatus
+        ) {
           throw new AppError('Required statuses not found', 404);
         }
 
@@ -778,6 +793,23 @@ export class PackingService {
           },
           data: {
             statusId: completedPackingStatus.id,
+            updatedBy: userId,
+          },
+        });
+
+        // Update status purchase order menjadi "PROCESSED PURCHASE ORDER"
+        const uniquePurchaseOrderIds = [
+          ...new Set(
+            packings.map((p) => p.purchaseOrderId).filter(Boolean) as string[]
+          ),
+        ];
+
+        await tx.purchaseOrder.updateMany({
+          where: {
+            id: { in: uniquePurchaseOrderIds },
+          },
+          data: {
+            statusId: processedPurchaseOrderStatus.id,
             updatedBy: userId,
           },
         });
@@ -812,14 +844,6 @@ export class PackingService {
         }
 
         // Buat audit log untuk setiap purchase order yang terkait
-        const uniquePurchaseOrderIds = [
-          ...new Set(
-            resultPackings
-              .map((p) => p.purchaseOrderId)
-              .filter(Boolean) as string[]
-          ),
-        ];
-
         for (const poId of uniquePurchaseOrderIds) {
           const purchaseOrder = await tx.purchaseOrder.findUnique({
             where: { id: poId },
@@ -841,6 +865,8 @@ export class PackingService {
               userId,
               {
                 action: 'PACKING_COMPLETED',
+                before: { status_code: 'PROCESSING PURCHASE ORDER' },
+                after: { status_code: 'PROCESSED PURCHASE ORDER' },
                 packingIds: resultPackings
                   .filter((p) => p.purchaseOrderId === poId)
                   .map((p) => p.id),

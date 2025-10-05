@@ -415,13 +415,25 @@ describe('PackingService', () => {
         .mockResolvedValueOnce({
           id: 'processedItemStatusId',
           status_code: 'PROCESSED ITEM',
+        })
+        .mockResolvedValueOnce({
+          id: 'processedPurchaseOrderStatusId',
+          status_code: 'PROCESSED PURCHASE ORDER',
         });
       (prisma.packingItem.updateMany as jest.Mock).mockResolvedValue({
         count: 2,
       });
       (prisma.packing.updateMany as jest.Mock).mockResolvedValue({ count: 2 });
+      (prisma.purchaseOrder.updateMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
       (prisma.purchaseOrder.findUnique as jest.Mock).mockResolvedValue({
         ...mockPurchaseOrder,
+        statusId: 'processedPurchaseOrderStatusId',
+        status: {
+          id: 'processedPurchaseOrderStatusId',
+          status_code: 'PROCESSED PURCHASE ORDER',
+        },
         packings: mockUpdatedPackings,
       });
       (prisma.$transaction as jest.Mock).mockImplementation(
@@ -451,6 +463,15 @@ describe('PackingService', () => {
           }),
         })
       );
+      expect(prisma.purchaseOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            statusId: 'processedPurchaseOrderStatusId',
+            updatedBy: userId,
+          }),
+        })
+      );
+      expect(createAuditLog).toHaveBeenCalled();
     });
   });
 });

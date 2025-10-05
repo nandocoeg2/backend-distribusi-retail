@@ -434,7 +434,7 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 
 ### 8. Complete Packing
 
-Menyelesaikan proses packing dari status "PROCESSING PACKING" menjadi "COMPLETED PACKING" dan mengubah status semua packing item menjadi "PROCESSED ITEM".
+Menyelesaikan proses packing dari status "PROCESSING PACKING" menjadi "COMPLETED PACKING", mengubah status semua packing item menjadi "PROCESSED ITEM", dan mengubah status purchase order menjadi "PROCESSED PURCHASE ORDER".
 
 **Endpoint:** `POST /complete`
 
@@ -489,7 +489,7 @@ Menyelesaikan proses packing dari status "PROCESSING PACKING" menjadi "COMPLETED
         "purchaseOrder": {
           "id": "purchase-order-uuid",
           "status": {
-            "status_code": "PROCESSING PURCHASE ORDER"
+            "status_code": "PROCESSED PURCHASE ORDER"
           }
         },
         "packingItems": [
