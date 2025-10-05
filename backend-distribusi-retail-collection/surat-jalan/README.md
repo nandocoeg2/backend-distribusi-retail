@@ -72,7 +72,7 @@ Authorization: Bearer {access_token}
             "isi_box": 10,
             "sisa": 0,
             "total_box": 10,
-            "items": [
+            "suratJalanDetailItems": [
               {
                 "id": "item_id_1",
                 "nama_barang": "Product A",
@@ -125,6 +125,13 @@ Authorization: Bearer {access_token}
   "PIC": "John Doe",
   "alamat_tujuan": "Jl. Example No. 123, Jakarta",
   "invoiceId": null,
+  "checklistSuratJalan": {
+    "tanggal": "2024-01-15T10:00:00.000Z",
+    "checker": "Ahmad Wijaya",
+    "driver": "Budi Santoso",
+    "mobil": "B 1234 XYZ",
+    "kota": "Jakarta"
+  },
   "suratJalanDetails": [
     {
       "no_box": "BOX-001",
@@ -163,6 +170,12 @@ Authorization: Bearer {access_token}
 | PIC | string | Yes | Person in Charge |
 | alamat_tujuan | string | Yes | Alamat tujuan pengiriman |
 | invoiceId | string | No | ID invoice terkait (opsional) |
+| checklistSuratJalan | object | No | Checklist data surat jalan |
+| checklistSuratJalan.tanggal | string (ISO 8601) | Yes* | Tanggal checklist |
+| checklistSuratJalan.checker | string | Yes* | Nama checker/pemeriksa |
+| checklistSuratJalan.driver | string | Yes* | Nama driver |
+| checklistSuratJalan.mobil | string | Yes* | Nomor kendaraan |
+| checklistSuratJalan.kota | string | Yes* | Kota tujuan |
 | suratJalanDetails | array | Yes | Detail barang dalam surat jalan |
 | suratJalanDetails[].no_box | string | Yes | Nomor box |
 | suratJalanDetails[].total_quantity_in_box | integer | Yes | Total quantity dalam box |
@@ -176,6 +189,8 @@ Authorization: Bearer {access_token}
 | suratJalanDetails[].items[].satuan | string | Yes | Satuan barang |
 | suratJalanDetails[].items[].total_box | integer | Yes | Total box untuk item |
 | suratJalanDetails[].items[].keterangan | string | No | Keterangan tambahan |
+
+\* Required if checklistSuratJalan object is provided
 
 **Response:**
 
@@ -193,6 +208,17 @@ Authorization: Bearer {access_token}
     "status": "DRAFT",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
+    "checklistSuratJalan": {
+      "id": "checklist_id_1",
+      "suratJalanId": "surat_jalan_id_1",
+      "tanggal": "2024-01-15T10:00:00.000Z",
+      "checker": "Ahmad Wijaya",
+      "driver": "Budi Santoso",
+      "mobil": "B 1234 XYZ",
+      "kota": "Jakarta",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
     "suratJalanDetails": [
       {
         "id": "detail_id_1",
@@ -201,7 +227,7 @@ Authorization: Bearer {access_token}
         "isi_box": 10,
         "sisa": 0,
         "total_box": 10,
-        "items": [
+        "suratJalanDetailItems": [
           {
             "id": "item_id_1",
             "nama_barang": "Product A",
@@ -300,7 +326,7 @@ Authorization: Bearer {access_token}
         "isi_box": 20,
         "sisa": 0,
         "total_box": 10,
-        "items": [
+        "suratJalanDetailItems": [
           {
             "id": "item_id_2",
             "nama_barang": "Product C",
@@ -365,7 +391,7 @@ Authorization: Bearer {access_token}
         "isi_box": 10,
         "sisa": 0,
         "total_box": 10,
-        "items": [
+        "suratJalanDetailItems": [
           {
             "id": "item_id_1",
             "nama_barang": "Product A",
@@ -414,6 +440,13 @@ Authorization: Bearer {access_token}
   "deliver_to": "Customer ABC Updated",
   "PIC": "Jane Doe",
   "alamat_tujuan": "Jl. Updated No. 456, Jakarta",
+  "checklistSuratJalan": {
+    "tanggal": "2024-01-16T14:30:00.000Z",
+    "checker": "Siti Nurhaliza",
+    "driver": "Eko Prasetyo",
+    "mobil": "B 5678 ABC",
+    "kota": "Bandung"
+  },
   "suratJalanDetails": [
     {
       "no_box": "BOX-001-UPDATED",
@@ -452,6 +485,17 @@ Authorization: Bearer {access_token}
     "status": "DRAFT",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
+    "checklistSuratJalan": {
+      "id": "checklist_id_1",
+      "suratJalanId": "surat_jalan_id_1",
+      "tanggal": "2024-01-16T14:30:00.000Z",
+      "checker": "Siti Nurhaliza",
+      "driver": "Eko Prasetyo",
+      "mobil": "B 5678 ABC",
+      "kota": "Bandung",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
     "suratJalanDetails": [
       {
         "id": "detail_id_1",
@@ -460,7 +504,7 @@ Authorization: Bearer {access_token}
         "isi_box": 15,
         "sisa": 0,
         "total_box": 10,
-        "items": [
+        "suratJalanDetailItems": [
           {
             "id": "item_id_1",
             "nama_barang": "Product A Updated",
@@ -665,3 +709,9 @@ Surat jalan dapat memiliki status berikut:
 - Surat jalan tidak dapat dihapus jika sudah dalam status SHIPPED atau DELIVERED
 - Search dapat dilakukan berdasarkan nomor surat jalan dan/atau nama penerima
 - Setiap surat jalan dapat memiliki multiple detail box dengan multiple items
+- Response API mengembalikan item detail dalam properti `suratJalanDetailItems`; gunakan `items` pada payload request.
+- **checklistSuratJalan** adalah field opsional yang dapat disertakan saat create/update:
+  - Relasi one-to-one: 1 surat jalan = 1 checklist
+  - Berisi informasi: tanggal checklist, nama checker, driver, mobil, dan kota tujuan
+  - Jika tidak disertakan, surat jalan tetap dapat dibuat tanpa checklist
+  - Saat update, jika checklist sudah ada akan di-update, jika belum ada akan dibuat baru

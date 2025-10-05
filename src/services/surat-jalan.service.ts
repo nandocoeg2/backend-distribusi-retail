@@ -20,7 +20,7 @@ export class SuratJalanService {
     userId: string
   ): Promise<SuratJalan> {
     try {
-      const { suratJalanDetails, createdBy, updatedBy, ...suratJalanInfo } =
+      const { suratJalanDetails, checklistSuratJalan, createdBy, updatedBy, ...suratJalanInfo } =
         suratJalanData;
 
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
@@ -64,6 +64,13 @@ export class SuratJalanService {
               },
             })),
           },
+          checklistSuratJalan: checklistSuratJalan ? {
+            create: {
+              ...checklistSuratJalan,
+              createdBy: userId,
+              updatedBy: userId,
+            }
+          } : undefined,
         },
         include: {
           suratJalanDetails: {
@@ -78,6 +85,7 @@ export class SuratJalanService {
               status: true,
             },
           },
+          checklistSuratJalan: true,
         },
       });
 
@@ -123,6 +131,7 @@ export class SuratJalanService {
         suratJalanDetails: { include: { suratJalanDetailItems: true } },
         invoice: true,
         status: true,
+        checklistSuratJalan: true,
       },
       orderBy: { id: 'desc' },
     });
@@ -147,6 +156,7 @@ export class SuratJalanService {
           include: { status: true },
           orderBy: { createdAt: 'desc' },
         },
+        checklistSuratJalan: true,
       },
     });
 
@@ -163,7 +173,7 @@ export class SuratJalanService {
     data: UpdateSuratJalanInput['body'],
     userId: string
   ): Promise<SuratJalan> {
-    const { suratJalanDetails, ...suratJalanInfo } = data;
+    const { suratJalanDetails, checklistSuratJalan, ...suratJalanInfo } = data;
 
     try {
       return await prisma.$transaction(async (tx) => {
@@ -171,6 +181,7 @@ export class SuratJalanService {
           where: { id },
           include: {
             suratJalanDetails: true,
+            checklistSuratJalan: true,
           },
         });
         if (!existingSuratJalan) {
@@ -210,6 +221,30 @@ export class SuratJalanService {
           }
         }
 
+        // Handle checklist update
+        if (checklistSuratJalan) {
+          if (existingSuratJalan.checklistSuratJalan) {
+            // Update existing checklist
+            await tx.checklistSuratJalan.update({
+              where: { suratJalanId: id },
+              data: {
+                ...checklistSuratJalan,
+                updatedBy: userId,
+              },
+            });
+          } else {
+            // Create new checklist
+            await tx.checklistSuratJalan.create({
+              data: {
+                suratJalanId: id,
+                ...checklistSuratJalan,
+                createdBy: userId,
+                updatedBy: userId,
+              },
+            });
+          }
+        }
+
         const updatedSuratJalanData = await tx.suratJalan.update({
           where: { id },
           data: { ...suratJalanInfo, updatedBy: userId },
@@ -217,6 +252,7 @@ export class SuratJalanService {
             suratJalanDetails: { include: { suratJalanDetailItems: true } },
             invoice: true,
             status: true,
+            checklistSuratJalan: true,
           },
         });
 
@@ -319,6 +355,7 @@ export class SuratJalanService {
           include: { purchaseOrder: { include: { customer: true } } },
         },
         status: true,
+        checklistSuratJalan: true,
       },
       orderBy: { id: 'desc' },
     });

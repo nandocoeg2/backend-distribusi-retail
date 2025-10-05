@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const checklistSuratJalanSchema = z.object({
+  tanggal: z.string().or(z.date()).transform((val) => new Date(val)),
+  checker: z.string().min(1, 'Checker is required'),
+  driver: z.string().min(1, 'Driver is required'),
+  mobil: z.string().min(1, 'Mobil is required'),
+  kota: z.string().min(1, 'Kota is required'),
+});
+
 export const createSuratJalanSchema = z.object({
   body: z.object({
     no_surat_jalan: z.string().min(1, 'Nomor surat jalan is required'),
@@ -10,6 +18,7 @@ export const createSuratJalanSchema = z.object({
     statusId: z.string().optional().nullable(),
     createdBy: z.string().optional(),
     updatedBy: z.string().optional(),
+    checklistSuratJalan: checklistSuratJalanSchema.optional(),
     suratJalanDetails: z
       .array(
         z.object({
@@ -62,6 +71,7 @@ export const updateSuratJalanSchema = z.object({
     updatedBy: z.string().optional(),
     is_printed: z.boolean().optional(),
     print_counter: z.number().int().min(0).optional(),
+    checklistSuratJalan: checklistSuratJalanSchema.optional(),
     suratJalanDetails: z
       .array(
         z.object({
