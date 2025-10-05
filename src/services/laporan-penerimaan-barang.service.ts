@@ -7,7 +7,10 @@ import {
 } from '@/schemas/laporan-penerimaan-barang.schema';
 import { BaseService } from './base.service';
 import { PaginatedResult } from '@/types/common.types';
-import { calculatePagination, executePaginatedQuery } from '@/utils/pagination.utils';
+import {
+  calculatePagination,
+  executePaginatedQuery,
+} from '@/utils/pagination.utils';
 import { AppError } from '@/utils/app-error';
 import { ConversionService } from './conversion.service';
 import logger from '@/config/logger';
@@ -397,7 +400,13 @@ export class LaporanPenerimaanBarangService extends BaseService<
 
     const service = new LaporanPenerimaanBarangService();
 
-    if (!q && !status_code && !purchaseOrderId && !customerId && !termin_bayar) {
+    if (
+      !q &&
+      !status_code &&
+      !purchaseOrderId &&
+      !customerId &&
+      !termin_bayar
+    ) {
       return service.getAllEntities(page, limit, this.includeRelations);
     }
 
