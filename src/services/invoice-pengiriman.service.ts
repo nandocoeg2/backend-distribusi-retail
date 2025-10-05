@@ -235,7 +235,7 @@ export class InvoicePengirimanService {
       no_invoice,
       deliver_to,
       type,
-      statusPembayaranId,
+      status_code,
       purchaseOrderId,
       tanggal_start,
       tanggal_end,
@@ -256,8 +256,14 @@ export class InvoicePengirimanService {
     if (type) {
       filters.push({ type: type as 'PEMBAYARAN' | 'PENGIRIMAN' });
     }
-    if (statusPembayaranId) {
-      filters.push({ statusPembayaranId });
+    if (status_code) {
+      filters.push({
+        statusPembayaran: {
+          is: {
+            status_code,
+          },
+        },
+      });
     }
     if (purchaseOrderId) {
       filters.push({ purchaseOrderId });

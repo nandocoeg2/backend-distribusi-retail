@@ -419,7 +419,7 @@ Mencari invoice pengiriman berdasarkan berbagai filter dengan pagination.
 - `no_invoice` (optional): Pencarian berdasarkan nomor invoice
 - `deliver_to` (optional): Pencarian berdasarkan alamat pengiriman
 - `type` (optional): Pencarian berdasarkan tipe invoice (PEMBAYARAN/PENGIRIMAN)
-- `statusPembayaranId` (optional): Pencarian berdasarkan status pembayaran ID
+- `status_code` (optional): Pencarian berdasarkan kode status pembayaran (mis. PAYMENT_PENDING)
 - `purchaseOrderId` (optional): Pencarian berdasarkan Purchase Order ID
 - `tanggal_start` (optional): Pencarian berdasarkan tanggal mulai (YYYY-MM-DD)
 - `tanggal_end` (optional): Pencarian berdasarkan tanggal akhir (YYYY-MM-DD)
@@ -428,7 +428,7 @@ Mencari invoice pengiriman berdasarkan berbagai filter dengan pagination.
 
 **Example Request:**
 ```
-GET /api/v1/invoice-pengiriman/search?no_invoice=INV-2024&type=PEMBAYARAN&tanggal_start=2024-01-01&tanggal_end=2024-12-31&page=1&limit=10
+GET /api/v1/invoice-pengiriman/search?no_invoice=INV-2024&type=PEMBAYARAN&status_code=PAYMENT_PENDING&tanggal_start=2024-01-01&tanggal_end=2024-12-31&page=1&limit=10
 ```
 
 **Response Success (200 OK):**
@@ -521,7 +521,7 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 - **Multiple Filters**: Mendukung pencarian berdasarkan berbagai kriteria
 - **Date Range**: Pencarian berdasarkan rentang tanggal
 - **Type Filter**: Pencarian berdasarkan tipe invoice
-- **Status Filter**: Pencarian berdasarkan status pembayaran
+- **Status Filter**: Pencarian berdasarkan status pembayaran menggunakan parameter `status_code`
 - **Combined Filters**: Dapat menggabungkan multiple filter dalam satu request
 
 ## Invoice Types

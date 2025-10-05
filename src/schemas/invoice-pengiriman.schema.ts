@@ -98,10 +98,10 @@ export const searchInvoicePengirimanSchema = z.object({
       no_invoice: z.string().optional().describe('Search by invoice number'),
       deliver_to: z.string().optional().describe('Search by delivery address'),
       type: z.string().optional().describe('Search by invoice type'),
-      statusPembayaranId: z
+      status_code: z
         .string()
         .optional()
-        .describe('Search by payment status ID'),
+        .describe('Search by payment status code'),
       purchaseOrderId: z
         .string()
         .optional()
