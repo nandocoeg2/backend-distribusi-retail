@@ -202,7 +202,15 @@ export class PackingService {
             status: true,
           },
         },
-        purchaseOrder: true,
+        purchaseOrder: {
+          include: {
+            customer: {
+              include: {
+                groupCustomer: true,
+              },
+            },
+          },
+        },
         status: true,
       },
     });
@@ -655,10 +663,7 @@ export class PackingService {
     }
   }
 
-  static async completePacking(
-    ids: string[],
-    userId: string
-  ): Promise<any> {
+  static async completePacking(ids: string[], userId: string): Promise<any> {
     try {
       return await prisma.$transaction(async (tx) => {
         // Validasi bahwa semua packing ada
