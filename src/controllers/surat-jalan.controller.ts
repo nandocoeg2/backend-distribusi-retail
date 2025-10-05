@@ -4,6 +4,7 @@ import { SuratJalanService } from '@/services/surat-jalan.service';
 import {
   CreateSuratJalanInput,
   UpdateSuratJalanInput,
+  ProcessSuratJalanInput,
   SearchSuratJalanInput,
   GetSuratJalanByIdInput,
   DeleteSuratJalanInput,
@@ -96,6 +97,29 @@ export class SuratJalanController {
         return reply.code(error.statusCode).send(ResponseUtil.error(error.message));
       }
       return reply.code(500).send(ResponseUtil.error('Failed to delete surat jalan'));
+    }
+  }
+
+  static async processSuratJalan(
+    request: FastifyRequest<{ Body: ProcessSuratJalanInput }>,
+    reply: FastifyReply
+  ) {
+    try {
+      const userId = request.user?.id || 'system';
+      const result = await SuratJalanService.processSuratJalan(
+        request.body.ids,
+        userId
+      );
+      return reply.send(ResponseUtil.success(result));
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        return reply
+          .code(error.statusCode)
+          .send(ResponseUtil.error(error.message));
+      }
+      return reply
+        .code(500)
+        .send(ResponseUtil.error('Failed to process surat jalan'));
     }
   }
 

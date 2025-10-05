@@ -614,6 +614,62 @@ Authorization: Bearer {access_token}
 
 ---
 
+### 8. Process Surat Jalan
+
+Memproses satu atau beberapa surat jalan sekaligus. Endpoint ini mengubah status setiap surat jalan dari `DRAFT SURAT JALAN` menjadi `READY TO SHIP SURAT JALAN` ketika semua validasi terpenuhi.
+
+**Request:**
+
+```http
+POST /api/v1/surat-jalan/process
+```
+
+**Headers:**
+
+```
+Accept: application/json
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Body:**
+
+```json
+{
+  "ids": ["surat_jalan_id_1", "surat_jalan_id_2"]
+}
+```
+
+**Validasi utama:**
+
+- Seluruh ID harus valid dan ditemukan di database.
+- Setiap surat jalan wajib memiliki status `DRAFT SURAT JALAN`.
+- Status akan diperbarui menjadi `READY TO SHIP SURAT JALAN` dan audit log akan tercatat untuk setiap perubahan.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Surat jalan berhasil diproses",
+    "processedCount": 2,
+    "suratJalan": [
+      {
+        "id": "surat_jalan_id_1",
+        "status": {
+          "status_code": "READY TO SHIP SURAT JALAN"
+        },
+        "updatedBy": "user_id",
+        "updatedAt": "2024-01-15T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## Error Responses
 
 ### 400 Bad Request

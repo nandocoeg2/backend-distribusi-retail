@@ -141,10 +141,21 @@ export const searchSuratJalanSchema = z.object({
   }),
 });
 
+export const processSuratJalanSchema = z.object({
+  body: z.object({
+    ids: z
+      .array(z.string().cuid('Invalid ID format'))
+      .min(1, 'Minimal satu surat jalan harus dipilih'),
+  }),
+});
+
 export type CreateSuratJalanInput = z.infer<
   typeof createSuratJalanSchema
 >['body'];
 export type UpdateSuratJalanInput = z.infer<typeof updateSuratJalanSchema>;
+export type ProcessSuratJalanInput = z.infer<
+  typeof processSuratJalanSchema
+>['body'];
 export type SearchSuratJalanInput = z.infer<typeof searchSuratJalanSchema>;
 export type GetSuratJalanByIdInput = z.infer<
   typeof getSuratJalanByIdSchema

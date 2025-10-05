@@ -8,8 +8,10 @@ import {
   getSuratJalanByIdSchema,
   updateSuratJalanSchema,
   UpdateSuratJalanInput,
-  SearchSuratJalanInput,
   searchSuratJalanSchema,
+  SearchSuratJalanInput,
+  processSuratJalanSchema,
+  ProcessSuratJalanInput,
 } from '@/schemas/surat-jalan.schema';
 
 export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -99,6 +101,22 @@ export const suratJalanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
       ],
     },
     SuratJalanController.deleteSuratJalan
+  );
+
+  fastify.post<{ Body: ProcessSuratJalanInput }>(
+    '/process',
+    {
+      schema: {
+        tags: ['Surat Jalan'],
+        body: processSuratJalanSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(processSuratJalanSchema),
+      ],
+    },
+    SuratJalanController.processSuratJalan
   );
 
   done();

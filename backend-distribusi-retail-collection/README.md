@@ -33,6 +33,7 @@ This Bruno API collection provides comprehensive testing and documentation for t
 ### 📄 Surat Jalan (Delivery Notes) (`surat-jalan/`)
 - Delivery note creation and management
 - Status tracking for delivery lifecycle
+- Batch processing from DRAFT SURAT JALAN to READY TO SHIP SURAT JALAN
 
 ### 🧾 Invoice Management (`invoice/`)
 - Invoice creation and management
@@ -111,6 +112,7 @@ All endpoints require proper JWT authentication:
 - ✅ Enhanced purchase order processing with automatic document creation
 - ✅ Integrated status tracking across all business entities
 - ✅ Added comprehensive status filtering endpoints
+- ✅ Added Surat Jalan processing endpoint for draft-to-ready workflow
 
 ## Usage Notes
 

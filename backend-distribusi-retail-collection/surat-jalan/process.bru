@@ -1,0 +1,44 @@
+meta {
+  name: process
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:5050/api/v1/surat-jalan/process
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "ids": ["surat_jalan_id_1", "surat_jalan_id_2"]
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response has success structure", function() {
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('object');
+  });
+
+  test("Response contains processed count", function() {
+    expect(res.getBody().data.processedCount).to.be.a('number');
+  });
+
+  test("Response contains surat jalan array", function() {
+    expect(res.getBody().data.suratJalan).to.be.an('array');
+  });
+}

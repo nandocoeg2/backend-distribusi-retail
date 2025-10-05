@@ -283,6 +283,131 @@ export class SuratJalanService {
     }
   }
 
+  static async processSuratJalan(
+    ids: string[],
+    userId: string
+  ): Promise<any> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const suratJalanList = await tx.suratJalan.findMany({
+          where: {
+            id: { in: ids },
+          },
+          include: {
+            status: true,
+            invoice: true,
+            suratJalanDetails: {
+              include: {
+                suratJalanDetailItems: true,
+              },
+            },
+            historyPengiriman: {
+              include: {
+                status: true,
+              },
+            },
+            checklistSuratJalan: true,
+          },
+        });
+
+        if (suratJalanList.length !== ids.length) {
+          const foundIds = suratJalanList.map((suratJalan) => suratJalan.id);
+          const missingIds = ids.filter((id) => !foundIds.includes(id));
+          throw new AppError(
+            `Surat jalan not found: ${missingIds.join(', ')}`,
+            404
+          );
+        }
+
+        const [draftStatus, readyToShipStatus] = await Promise.all([
+          tx.status.findUnique({
+            where: {
+              status_code_category: {
+                status_code: 'DRAFT SURAT JALAN',
+                category: 'Surat Jalan',
+              },
+            },
+          }),
+          tx.status.findUnique({
+            where: {
+              status_code_category: {
+                status_code: 'READY TO SHIP SURAT JALAN',
+                category: 'Surat Jalan',
+              },
+            },
+          }),
+        ]);
+
+        if (!draftStatus || !readyToShipStatus) {
+          throw new AppError('Required statuses not found', 404);
+        }
+
+        const invalidSuratJalan = suratJalanList.filter(
+          (suratJalan) => suratJalan.statusId !== draftStatus.id
+        );
+
+        if (invalidSuratJalan.length > 0) {
+          const invalidIds = invalidSuratJalan.map((suratJalan) => suratJalan.id);
+          throw new AppError(
+            `Surat jalan dengan ID ${invalidIds.join(
+              ', '
+            )} tidak memiliki status DRAFT SURAT JALAN`,
+            400
+          );
+        }
+
+        const updatedSuratJalan = await tx.suratJalan.updateMany({
+          where: {
+            id: { in: ids },
+          },
+          data: {
+            statusId: readyToShipStatus.id,
+            updatedBy: userId,
+          },
+        });
+
+        const resultSuratJalan = await tx.suratJalan.findMany({
+          where: {
+            id: { in: ids },
+          },
+          include: {
+            status: true,
+            invoice: true,
+            suratJalanDetails: {
+              include: {
+                suratJalanDetailItems: true,
+              },
+            },
+            historyPengiriman: {
+              include: {
+                status: true,
+              },
+            },
+            checklistSuratJalan: true,
+          },
+        });
+
+        for (const suratJalan of resultSuratJalan) {
+          await createAuditLog('SuratJalan', suratJalan.id, 'UPDATE', userId, {
+            action: 'PROCESS_SURAT_JALAN',
+            before: { statusId: draftStatus.id },
+            after: { statusId: readyToShipStatus.id },
+          });
+        }
+
+        return {
+          message: 'Surat jalan berhasil diproses',
+          processedCount: updatedSuratJalan.count,
+          suratJalan: resultSuratJalan,
+        };
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+
+      throw new AppError('Failed to process surat jalan', 500);
+    }
+  }
+
   static async deleteSuratJalan(
     id: string,
     userId: string
