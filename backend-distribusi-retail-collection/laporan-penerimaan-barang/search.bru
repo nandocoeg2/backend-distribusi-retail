@@ -5,8 +5,18 @@ meta {
 }
 
 get {
-  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/search?q=contoh&page=1&limit=10
+  url: http://localhost:5050/api/v1/laporan-penerimaan-barang/search
   auth: bearer
+}
+
+params:query {
+  page: 1
+  limit: 10
+  status_code: "COMPLETED LAPORAN PENERIMAAN BARANG"
+  ~q: contoh keyword
+  ~purchaseOrderId: clx1otn7p000108l82e7ke2j9
+  ~customerId: clx1otn81000308l89p8y5a2k
+  ~termin_bayar: clx1otn7p000108l82e7ke2j8
 }
 
 auth:bearer {

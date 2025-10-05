@@ -77,7 +77,16 @@ export const processPackingSchema = z.object({
   }),
 });
 
+export const completePackingSchema = z.object({
+  body: z.object({
+    ids: z.array(z.string()).min(1, 'Minimal 1 ID packing harus disediakan'),
+  }),
+});
+
 export type CreatePackingInput = z.infer<typeof createPackingSchema>['body'];
 export type UpdatePackingInput = z.infer<typeof updatePackingSchema>;
 export type SearchPackingInput = z.infer<typeof searchPackingSchema>;
 export type ProcessPackingInput = z.infer<typeof processPackingSchema>['body'];
+export type CompletePackingInput = z.infer<
+  typeof completePackingSchema
+>['body'];

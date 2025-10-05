@@ -306,7 +306,7 @@ GET /search?status_code=PROCESSING%20PACKING&packing_number=PKG-2024-001
 
 ### 7. Process Packing
 
-Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan mengubah status semua packing item menjadi "PROCESSING ITEM".
+Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan mengubah status semua packing item menjadi "PROCESSING ITEM". Audit log dicatat untuk packing dan purchase order yang terkait.
 
 **Endpoint:** `POST /process`
 
@@ -397,6 +397,17 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
 }
 ```
 
+**400 Bad Request - Invalid Purchase Order Status:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Purchase Order untuk Packing packing_id_1 harus memiliki status PROCESSING PURCHASE ORDER"
+  }
+}
+```
+
 **404 Not Found - Packing Not Found:**
 
 ```json
@@ -415,6 +426,139 @@ Memproses packing dari status "PENDING PACKING" menjadi "PROCESSING PACKING" dan
   "success": false,
   "error": {
     "message": "PENDING PACKING status not found"
+  }
+}
+```
+
+---
+
+### 8. Complete Packing
+
+Menyelesaikan proses packing dari status "PROCESSING PACKING" menjadi "COMPLETED PACKING" dan mengubah status semua packing item menjadi "PROCESSED ITEM".
+
+**Endpoint:** `POST /complete`
+
+**Headers:**
+
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Request Body:**
+
+```json
+{
+  "ids": ["packing_id_1", "packing_id_2", "packing_id_3"]
+}
+```
+
+**Validation Rules:**
+
+- `ids`: **Required** - Array ID packing yang akan diselesaikan (minimal 1 ID)
+
+**Response Success (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Packing berhasil diselesaikan",
+    "completedCount": 2,
+    "completedPackingItemsCount": 4,
+    "packings": [
+      {
+        "id": "packing-uuid-1",
+        "packing_number": "PKG-2024-001",
+        "tanggal_packing": "2025-09-06T00:00:00.000Z",
+        "statusId": "completed-packing-status-uuid",
+        "purchaseOrderId": "purchase-order-uuid",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T12:00:00.000Z",
+        "createdBy": "user-uuid",
+        "updatedBy": "user-uuid",
+        "status": {
+          "id": "completed-packing-status-uuid",
+          "status_code": "COMPLETED PACKING",
+          "status_name": "Completed Packing",
+          "status_description": "Packing has been completed"
+        },
+        "purchaseOrder": {
+          "id": "purchase-order-uuid",
+          "status": {
+            "status_code": "PROCESSING PURCHASE ORDER"
+          }
+        },
+        "packingItems": [
+          {
+            "id": "packing-item-uuid",
+            "nama_barang": "Product Name",
+            "total_qty": 100,
+            "jumlah_carton": 10,
+            "isi_per_carton": 10,
+            "no_box": "BOX001",
+            "packingId": "packing-uuid-1",
+            "inventoryId": "inventory-uuid",
+            "statusId": "processed-item-status-uuid",
+            "status": {
+              "id": "processed-item-status-uuid",
+              "status_code": "PROCESSED ITEM",
+              "status_name": "Processed Item",
+              "status_description": "Packing detail item has been processed."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Error Responses:**
+
+**400 Bad Request - Invalid Status:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Packing dengan ID packing_id_1 tidak memiliki status PROCESSING PACKING"
+  }
+}
+```
+
+**400 Bad Request - Invalid Purchase Order Status:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Purchase Order untuk Packing packing_id_1 harus memiliki status PROCESSING PURCHASE ORDER"
+  }
+}
+```
+
+**404 Not Found - Packing Not Found:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Packing not found: packing_id_1, packing_id_2"
+  }
+}
+```
+
+**404 Not Found - Status Not Found:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "PROCESSING PACKING status not found"
   }
 }
 ```

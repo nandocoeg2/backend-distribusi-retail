@@ -1,4 +1,8 @@
-import { FastifyInstance, FastifyPluginCallback, FastifyPluginOptions } from 'fastify';
+import {
+  FastifyInstance,
+  FastifyPluginCallback,
+  FastifyPluginOptions,
+} from 'fastify';
 import { PackingController } from '@/controllers/packing.controller';
 import { validateRequest } from '@/middleware/validate-request';
 import {
@@ -12,6 +16,8 @@ import {
   searchPackingSchema,
   processPackingSchema,
   ProcessPackingInput,
+  completePackingSchema,
+  CompletePackingInput,
 } from '@/schemas/packing.schema';
 
 export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -79,10 +85,7 @@ export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
         body: updatePackingSchema.shape.body,
         security: [{ Bearer: [] }],
       },
-      preHandler: [
-        fastify.authenticate,
-        validateRequest(updatePackingSchema),
-      ],
+      preHandler: [fastify.authenticate, validateRequest(updatePackingSchema)],
     },
     PackingController.updatePacking
   );
@@ -95,10 +98,7 @@ export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
         params: deletePackingSchema.shape.params,
         security: [{ Bearer: [] }],
       },
-      preHandler: [
-        fastify.authenticate,
-        validateRequest(deletePackingSchema),
-      ],
+      preHandler: [fastify.authenticate, validateRequest(deletePackingSchema)],
     },
     PackingController.deletePacking
   );
@@ -111,12 +111,25 @@ export const packingRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
         body: processPackingSchema.shape.body,
         security: [{ Bearer: [] }],
       },
-      preHandler: [
-        fastify.authenticate,
-        validateRequest(processPackingSchema),
-      ],
+      preHandler: [fastify.authenticate, validateRequest(processPackingSchema)],
     },
     PackingController.processPacking
+  );
+
+  fastify.post<{ Body: CompletePackingInput }>(
+    '/complete',
+    {
+      schema: {
+        tags: ['Packing'],
+        body: completePackingSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [
+        fastify.authenticate,
+        validateRequest(completePackingSchema),
+      ],
+    },
+    PackingController.completePacking
   );
 
   done();

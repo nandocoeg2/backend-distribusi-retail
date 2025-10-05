@@ -5,6 +5,7 @@ import {
   UpdatePackingInput,
   SearchPackingInput,
   ProcessPackingInput,
+  CompletePackingInput,
 } from '@/schemas/packing.schema';
 import { ResponseUtil } from '@/utils/response.util';
 
@@ -19,7 +20,10 @@ export class PackingController {
   }
 
   static async getPackings(request: FastifyRequest, reply: FastifyReply) {
-    const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
+    const { page = 1, limit = 10 } = request.query as {
+      page?: number;
+      limit?: number;
+    };
     const result = await PackingService.getAllPackings(page, limit);
     return reply.send(ResponseUtil.success(result));
   }
@@ -70,7 +74,22 @@ export class PackingController {
     reply: FastifyReply
   ) {
     const userId = request.user?.id || 'system';
-    const result = await PackingService.processPacking(request.body.ids, userId);
+    const result = await PackingService.processPacking(
+      request.body.ids,
+      userId
+    );
+    return reply.send(ResponseUtil.success(result));
+  }
+
+  static async completePacking(
+    request: FastifyRequest<{ Body: CompletePackingInput }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+    const result = await PackingService.completePacking(
+      request.body.ids,
+      userId
+    );
     return reply.send(ResponseUtil.success(result));
   }
 }

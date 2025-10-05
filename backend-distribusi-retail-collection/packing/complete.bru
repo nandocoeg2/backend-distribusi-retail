@@ -1,0 +1,42 @@
+meta {
+  name: Complete Packing
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:5050/api/v1/packings/complete
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "ids": ["{{packingId}}"]
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response has success structure", function() {
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody().data).to.be.an('object');
+  });
+
+  test("Response contains completed packings", function() {
+    expect(res.getBody().data.packings).to.be.an('array');
+    expect(res.getBody().data.completedCount).to.be.a('number');
+    expect(res.getBody().data.completedPackingItemsCount).to.be.a('number');
+  });
+}

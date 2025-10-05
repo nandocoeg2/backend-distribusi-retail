@@ -464,6 +464,11 @@ export class PackingService {
           include: {
             packingItems: true,
             status: true,
+            purchaseOrder: {
+              include: {
+                status: true,
+              },
+            },
           },
         });
 
@@ -501,6 +506,28 @@ export class PackingService {
             )} tidak memiliki status PENDING PACKING`,
             400
           );
+        }
+
+        // Validasi semua packing memiliki purchase order dengan status PROCESSING PURCHASE ORDER
+        for (const packing of packings) {
+          if (!packing.purchaseOrderId) {
+            throw new AppError(
+              `Packing dengan ID ${packing.id} tidak memiliki Purchase Order`,
+              400
+            );
+          }
+
+          if (
+            !packing.purchaseOrder ||
+            !packing.purchaseOrder.status ||
+            packing.purchaseOrder.status.status_code !==
+              'PROCESSING PURCHASE ORDER'
+          ) {
+            throw new AppError(
+              `Purchase Order untuk Packing ${packing.id} harus memiliki status PROCESSING PURCHASE ORDER`,
+              400
+            );
+          }
         }
 
         // Ambil status "PROCESSING PACKING" dan "PROCESSING ITEM"
@@ -575,6 +602,44 @@ export class PackingService {
           });
         }
 
+        // Buat audit log untuk setiap purchase order yang terkait
+        const uniquePurchaseOrderIds = [
+          ...new Set(
+            resultPackings
+              .map((p) => p.purchaseOrderId)
+              .filter(Boolean) as string[]
+          ),
+        ];
+
+        for (const poId of uniquePurchaseOrderIds) {
+          const purchaseOrder = await tx.purchaseOrder.findUnique({
+            where: { id: poId },
+            include: {
+              status: true,
+              packings: {
+                include: {
+                  status: true,
+                },
+              },
+            },
+          });
+
+          if (purchaseOrder) {
+            await createAuditLog(
+              'PurchaseOrder',
+              purchaseOrder.id,
+              'UPDATE',
+              userId,
+              {
+                action: 'PACKING_PROCESSED',
+                packingIds: resultPackings
+                  .filter((p) => p.purchaseOrderId === poId)
+                  .map((p) => p.id),
+              }
+            );
+          }
+        }
+
         return {
           message: 'Packing berhasil diproses',
           processedCount: updatedPackings.count,
@@ -587,6 +652,215 @@ export class PackingService {
         throw error;
       }
       throw new AppError('Failed to process packing', 500);
+    }
+  }
+
+  static async completePacking(
+    ids: string[],
+    userId: string
+  ): Promise<any> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        // Validasi bahwa semua packing ada
+        const packings = await tx.packing.findMany({
+          where: {
+            id: { in: ids },
+          },
+          include: {
+            packingItems: true,
+            status: true,
+            purchaseOrder: {
+              include: {
+                status: true,
+              },
+            },
+          },
+        });
+
+        if (packings.length !== ids.length) {
+          const foundIds = packings.map((p) => p.id);
+          const missingIds = ids.filter((id) => !foundIds.includes(id));
+          throw new AppError(
+            `Packing not found: ${missingIds.join(', ')}`,
+            404
+          );
+        }
+
+        // Validasi bahwa semua packing memiliki status "PROCESSING PACKING"
+        const processingPackingStatus = await tx.status.findUnique({
+          where: {
+            status_code_category: {
+              status_code: 'PROCESSING PACKING',
+              category: 'Packing',
+            },
+          },
+        });
+
+        if (!processingPackingStatus) {
+          throw new AppError('PROCESSING PACKING status not found', 404);
+        }
+
+        const invalidPackings = packings.filter(
+          (p) => p.statusId !== processingPackingStatus.id
+        );
+        if (invalidPackings.length > 0) {
+          const invalidIds = invalidPackings.map((p) => p.id);
+          throw new AppError(
+            `Packing dengan ID ${invalidIds.join(
+              ', '
+            )} tidak memiliki status PROCESSING PACKING`,
+            400
+          );
+        }
+
+        // Validasi semua packing memiliki purchase order dengan status PROCESSING PURCHASE ORDER
+        for (const packing of packings) {
+          if (!packing.purchaseOrderId) {
+            throw new AppError(
+              `Packing dengan ID ${packing.id} tidak memiliki Purchase Order`,
+              400
+            );
+          }
+
+          if (
+            !packing.purchaseOrder ||
+            !packing.purchaseOrder.status ||
+            packing.purchaseOrder.status.status_code !==
+              'PROCESSING PURCHASE ORDER'
+          ) {
+            throw new AppError(
+              `Purchase Order untuk Packing ${packing.id} harus memiliki status PROCESSING PURCHASE ORDER`,
+              400
+            );
+          }
+        }
+
+        // Ambil status "COMPLETED PACKING" dan "PROCESSED ITEM"
+        const [completedPackingStatus, processedItemStatus] =
+          await Promise.all([
+            tx.status.findUnique({
+              where: {
+                status_code_category: {
+                  status_code: 'COMPLETED PACKING',
+                  category: 'Packing',
+                },
+              },
+            }),
+            tx.status.findUnique({
+              where: {
+                status_code_category: {
+                  status_code: 'PROCESSED ITEM',
+                  category: 'Packing Detail Item',
+                },
+              },
+            }),
+          ]);
+
+        if (!completedPackingStatus || !processedItemStatus) {
+          throw new AppError('Required statuses not found', 404);
+        }
+
+        // Update status semua packingItem menjadi "PROCESSED ITEM"
+        const updatedPackingItems = await tx.packingItem.updateMany({
+          where: {
+            packingId: { in: ids },
+          },
+          data: {
+            statusId: processedItemStatus.id,
+            updatedBy: userId,
+          },
+        });
+
+        // Update status packing menjadi "COMPLETED PACKING"
+        const updatedPackings = await tx.packing.updateMany({
+          where: {
+            id: { in: ids },
+          },
+          data: {
+            statusId: completedPackingStatus.id,
+            updatedBy: userId,
+          },
+        });
+
+        // Ambil data packing yang sudah diupdate untuk response
+        const resultPackings = await tx.packing.findMany({
+          where: {
+            id: { in: ids },
+          },
+          include: {
+            packingItems: {
+              include: {
+                status: true,
+              },
+            },
+            purchaseOrder: {
+              include: {
+                status: true,
+              },
+            },
+            status: true,
+          },
+        });
+
+        // Buat audit log untuk setiap packing
+        for (const packing of resultPackings) {
+          await createAuditLog('Packing', packing.id, 'UPDATE', userId, {
+            action: 'COMPLETE_PACKING',
+            before: { statusId: processingPackingStatus.id },
+            after: { statusId: completedPackingStatus.id },
+          });
+        }
+
+        // Buat audit log untuk setiap purchase order yang terkait
+        const uniquePurchaseOrderIds = [
+          ...new Set(
+            resultPackings
+              .map((p) => p.purchaseOrderId)
+              .filter(Boolean) as string[]
+          ),
+        ];
+
+        for (const poId of uniquePurchaseOrderIds) {
+          const purchaseOrder = await tx.purchaseOrder.findUnique({
+            where: { id: poId },
+            include: {
+              status: true,
+              packings: {
+                include: {
+                  status: true,
+                },
+              },
+            },
+          });
+
+          if (purchaseOrder) {
+            await createAuditLog(
+              'PurchaseOrder',
+              purchaseOrder.id,
+              'UPDATE',
+              userId,
+              {
+                action: 'PACKING_COMPLETED',
+                packingIds: resultPackings
+                  .filter((p) => p.purchaseOrderId === poId)
+                  .map((p) => p.id),
+              }
+            );
+          }
+        }
+
+        return {
+          message: 'Packing berhasil diselesaikan',
+          completedCount: updatedPackings.count,
+          completedPackingItemsCount: updatedPackingItems.count,
+          packings: resultPackings,
+        };
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to complete packing', 500);
     }
   }
 }
