@@ -20,8 +20,13 @@ export class SuratJalanService {
     userId: string
   ): Promise<SuratJalan> {
     try {
-      const { suratJalanDetails, checklistSuratJalan, createdBy, updatedBy, ...suratJalanInfo } =
-        suratJalanData;
+      const {
+        suratJalanDetails,
+        checklistSuratJalan,
+        createdBy,
+        updatedBy,
+        ...suratJalanInfo
+      } = suratJalanData;
 
       if (suratJalanInfo.invoiceId && suratJalanInfo.invoiceId !== null) {
         const invoice = await prisma.invoicePengiriman.findUnique({
@@ -64,13 +69,15 @@ export class SuratJalanService {
               },
             })),
           },
-          checklistSuratJalan: checklistSuratJalan ? {
-            create: {
-              ...checklistSuratJalan,
-              createdBy: userId,
-              updatedBy: userId,
-            }
-          } : undefined,
+          checklistSuratJalan: checklistSuratJalan
+            ? {
+                create: {
+                  ...checklistSuratJalan,
+                  createdBy: userId,
+                  updatedBy: userId,
+                },
+              }
+            : undefined,
         },
         include: {
           suratJalanDetails: {
@@ -283,10 +290,7 @@ export class SuratJalanService {
     }
   }
 
-  static async processSuratJalan(
-    ids: string[],
-    userId: string
-  ): Promise<any> {
+  static async processSuratJalan(ids: string[], userId: string): Promise<any> {
     try {
       return await prisma.$transaction(async (tx) => {
         const suratJalanList = await tx.suratJalan.findMany({
@@ -347,11 +351,29 @@ export class SuratJalanService {
         );
 
         if (invalidSuratJalan.length > 0) {
-          const invalidIds = invalidSuratJalan.map((suratJalan) => suratJalan.id);
+          const invalidIds = invalidSuratJalan.map(
+            (suratJalan) => suratJalan.id
+          );
           throw new AppError(
             `Surat jalan dengan ID ${invalidIds.join(
               ', '
             )} tidak memiliki status DRAFT SURAT JALAN`,
+            400
+          );
+        }
+
+        const suratJalanWithoutChecklist = suratJalanList.filter(
+          (suratJalan) => !suratJalan.checklistSuratJalan
+        );
+
+        if (suratJalanWithoutChecklist.length > 0) {
+          const missingChecklistIds = suratJalanWithoutChecklist.map(
+            (suratJalan) => suratJalan.no_surat_jalan
+          );
+          throw new AppError(
+            `Surat jalan dengan no surat jalan ${missingChecklistIds.join(
+              ', '
+            )} belum melengkapi checklist`,
             400
           );
         }
