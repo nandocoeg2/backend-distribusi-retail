@@ -146,6 +146,16 @@ Membuat data invoice pengiriman baru.
 }
 ```
 
+**Response Error (409 Conflict):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "InvoicePengiriman with this number already exists"
+  }
+}
+```
+
 ---
 
 ### 2. Get All Invoice Pengiriman
@@ -260,7 +270,36 @@ GET /api/v1/invoice-pengiriman/invoice-uuid
     "updatedBy": "user-uuid",
     "invoiceDetails": [...],
     "statusPembayaran": null,
-    "purchaseOrder": null
+    "purchaseOrder": {
+      "id": "po-uuid",
+      "no_purchase_order": "PO-2024-001",
+      "customer": {
+        "id": "customer-uuid",
+        "name": "Customer ABC"
+      },
+      "supplier": {
+        "id": "supplier-uuid",
+        "name": "Supplier XYZ"
+      }
+    },
+    "suratJalan": [],
+    "auditTrails": [
+      {
+        "id": "audit-uuid",
+        "tableName": "InvoicePengiriman",
+        "recordId": "invoice-uuid",
+        "action": "CREATE",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "userId": "user-uuid",
+        "user": {
+          "id": "user-uuid",
+          "username": "johndoe",
+          "firstName": "John",
+          "lastName": "Doe"
+        },
+        "changes": {...}
+      }
+    ]
   }
 }
 ```
@@ -366,6 +405,16 @@ Semua field bersifat optional, hanya field yang ingin diupdate yang perlu dikiri
 }
 ```
 
+**Response Error (500 Internal Server Error):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Failed to update InvoicePengiriman"
+  }
+}
+```
+
 ---
 
 ### 5. Delete Invoice Pengiriman
@@ -396,6 +445,16 @@ Body: (empty)
   "success": false,
   "error": {
     "message": "InvoicePengiriman not found"
+  }
+}
+```
+
+**Response Error (500 Internal Server Error):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Failed to delete InvoicePengiriman"
   }
 }
 ```
@@ -459,7 +518,14 @@ GET /api/v1/invoice-pengiriman/search?no_invoice=INV-2024&type=PEMBAYARAN&status
         "updatedBy": "user-uuid",
         "invoiceDetails": [...],
         "statusPembayaran": null,
-        "purchaseOrder": null
+        "purchaseOrder": {
+          "id": "po-uuid",
+          "no_purchase_order": "PO-2024-001",
+          "customer": {
+            "id": "customer-uuid",
+            "name": "Customer ABC"
+          }
+        }
       }
     ],
     "pagination": {
@@ -495,6 +561,7 @@ Semua endpoint menggunakan format error response yang konsisten:
 - `400 Bad Request`: Request tidak valid
 - `401 Unauthorized`: Tidak terautentikasi atau token tidak valid
 - `404 Not Found`: Resource tidak ditemukan
+- `409 Conflict`: Conflict - Nomor invoice sudah ada
 - `500 Internal Server Error`: Error server internal
 
 ## Pagination
@@ -555,9 +622,16 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "updatedBy": "string (UUID)",
   "invoiceDetails": "InvoicePengirimanDetail[]",
   "statusPembayaran": "Status Object (optional)",
-  "purchaseOrder": "PurchaseOrder Object (optional)"
+  "purchaseOrder": "PurchaseOrder Object with nested customer and supplier (optional)",
+  "suratJalan": "SuratJalan[] (only in Get By ID)",
+  "auditTrails": "AuditTrail[] (only in Get By ID)"
 }
 ```
+
+**Note:**
+- Field `purchaseOrder` pada endpoint Get By ID include nested relations: `customer` dan `supplier`
+- Field `purchaseOrder` pada endpoint Search include nested relation: `customer` saja
+- Field `suratJalan` dan `auditTrails` hanya ada pada response Get By ID
 
 ### Invoice Pengiriman Detail Object
 ```json
