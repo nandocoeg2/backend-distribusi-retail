@@ -379,10 +379,51 @@ Authorization: Bearer {access_token}
     "deliver_to": "Customer ABC",
     "PIC": "John Doe",
     "alamat_tujuan": "Jl. Example No. 123, Jakarta",
-    "invoiceId": null,
-    "status": "DRAFT",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "invoiceId": "invoice_id_1",
+    "status": {
+      "id": "status_id_1",
+      "status_code": "DRAFT SURAT JALAN",
+      "category": "Surat Jalan"
+    },
+    "invoice": {
+      "id": "invoice_id_1",
+      "no_invoice": "INV-2024-001",
+      "purchaseOrder": {
+        "id": "po_id_1",
+        "no_purchase_order": "PO-2024-001",
+        "customer": {
+          "id": "customer_id_1",
+          "nama_customer": "Customer ABC"
+        },
+        "supplier": {
+          "id": "supplier_id_1",
+          "nama_supplier": "Supplier XYZ"
+        }
+      }
+    },
+    "historyPengiriman": [
+      {
+        "id": "history_id_1",
+        "surat_jalan_id": "surat_jalan_id_1",
+        "status": {
+          "id": "status_id_1",
+          "status_code": "DRAFT SURAT JALAN",
+          "category": "Surat Jalan"
+        },
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "checklistSuratJalan": {
+      "id": "checklist_id_1",
+      "suratJalanId": "surat_jalan_id_1",
+      "tanggal": "2024-01-15T10:00:00.000Z",
+      "checker": "Ahmad Wijaya",
+      "driver": "Budi Santoso",
+      "mobil": "B 1234 XYZ",
+      "kota": "Jakarta",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
     "suratJalanDetails": [
       {
         "id": "detail_id_1",
@@ -403,7 +444,19 @@ Authorization: Bearer {access_token}
           }
         ]
       }
-    ]
+    ],
+    "auditTrails": [
+      {
+        "id": "audit_id_1",
+        "entityType": "SuratJalan",
+        "entityId": "surat_jalan_id_1",
+        "action": "CREATE",
+        "performedBy": "user_id_1",
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   }
 }
 ```
@@ -644,6 +697,7 @@ Content-Type: application/json
 
 - Seluruh ID harus valid dan ditemukan di database.
 - Setiap surat jalan wajib memiliki status `DRAFT SURAT JALAN`.
+- Setiap surat jalan wajib sudah memiliki `checklistSuratJalan`.
 - Status akan diperbarui menjadi `READY TO SHIP SURAT JALAN` dan audit log akan tercatat untuk setiap perubahan.
 
 **Response:**
