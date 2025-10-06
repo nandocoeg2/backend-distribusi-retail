@@ -61,7 +61,13 @@ Authorization: Bearer {access_token}
         "PIC": "John Doe",
         "alamat_tujuan": "Jl. Example No. 123, Jakarta",
         "invoiceId": null,
-        "status": "DRAFT",
+        "status": {
+          "id": "status_id_1",
+          "status_code": "DRAFT SURAT JALAN",
+          "category": "Surat Jalan"
+        },
+        "invoice": null,
+        "checklistSuratJalan": null,
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z",
         "suratJalanDetails": [
@@ -205,7 +211,13 @@ Authorization: Bearer {access_token}
     "PIC": "John Doe",
     "alamat_tujuan": "Jl. Example No. 123, Jakarta",
     "invoiceId": null,
-    "status": "DRAFT",
+    "status": {
+      "id": "status_id_1",
+      "status_code": "DRAFT SURAT JALAN",
+      "category": "Surat Jalan"
+    },
+    "invoice": null,
+    "historyPengiriman": [],
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "checklistSuratJalan": {
@@ -315,7 +327,17 @@ Authorization: Bearer {access_token}
     "PIC": "Jane Smith",
     "alamat_tujuan": "Jl. Test No. 456, Bandung",
     "invoiceId": "cmfi41jra000512j7pt27ziog",
-    "status": "READY_TO_SHIP",
+    "status": {
+      "id": "status_id_1",
+      "status_code": "DRAFT SURAT JALAN",
+      "category": "Surat Jalan"
+    },
+    "invoice": {
+      "id": "cmfi41jra000512j7pt27ziog",
+      "no_invoice": "INV-2024-001"
+    },
+    "historyPengiriman": [],
+    "checklistSuratJalan": null,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "suratJalanDetails": [
@@ -535,7 +557,12 @@ Authorization: Bearer {access_token}
     "PIC": "Jane Doe",
     "alamat_tujuan": "Jl. Updated No. 456, Jakarta",
     "invoiceId": null,
-    "status": "DRAFT",
+    "status": {
+      "id": "status_id_1",
+      "status_code": "DRAFT SURAT JALAN",
+      "category": "Surat Jalan"
+    },
+    "invoice": null,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "checklistSuratJalan": {
