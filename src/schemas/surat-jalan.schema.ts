@@ -15,6 +15,7 @@ export const createSuratJalanSchema = z.object({
     PIC: z.string().min(1, 'PIC is required'),
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required'),
     invoiceId: z.string().optional().nullable(),
+    purchaseOrderId: z.string().optional().nullable(),
     statusId: z.string().optional().nullable(),
     createdBy: z.string().optional(),
     updatedBy: z.string().optional(),
@@ -67,6 +68,7 @@ export const updateSuratJalanSchema = z.object({
     PIC: z.string().min(1, 'PIC is required').optional(),
     alamat_tujuan: z.string().min(1, 'Alamat tujuan is required').optional(),
     invoiceId: z.string().optional().nullable(),
+    purchaseOrderId: z.string().optional().nullable(),
     statusId: z.string().optional().nullable(),
     updatedBy: z.string().optional(),
     is_printed: z.boolean().optional(),
@@ -125,6 +127,7 @@ export const searchSuratJalanSchema = z.object({
     deliver_to: z.string().optional(),
     PIC: z.string().optional(),
     invoiceId: z.string().optional(),
+    purchaseOrderId: z.string().optional(),
     status_code: z.string().optional(),
     is_printed: z
       .string()

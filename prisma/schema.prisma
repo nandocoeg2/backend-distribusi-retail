@@ -134,6 +134,7 @@ model PurchaseOrder {
   packings                Packing[]
   invoices                InvoicePengiriman[]
   invoicePenagihan        InvoicePenagihan[]
+  suratJalan              SuratJalan?
   customer                Customer                  @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
@@ -363,17 +364,20 @@ model SuratJalan {
   is_printed           Boolean               @default(false)
   print_counter        Int                   @default(0)
   invoiceId            String?
+  purchaseOrderId      String?
   statusId             String?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   createdBy            String
   updatedBy            String
   invoice              InvoicePengiriman?    @relation(fields: [invoiceId], references: [id])
+  purchaseOrder        PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
   status               Status?               @relation("SuratJalanStatus", fields: [statusId], references: [id])
   suratJalanDetails    SuratJalanDetail[]
   historyPengiriman    HistoryPengiriman[]
   checklistSuratJalan  ChecklistSuratJalan?
 
+  @@unique([purchaseOrderId])
   @@map("surat_jalan")
 }
 

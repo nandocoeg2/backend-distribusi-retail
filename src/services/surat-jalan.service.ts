@@ -38,6 +38,16 @@ export class SuratJalanService {
         }
       }
 
+      if (suratJalanInfo.purchaseOrderId && suratJalanInfo.purchaseOrderId !== null) {
+        const purchaseOrder = await prisma.purchaseOrder.findUnique({
+          where: { id: suratJalanInfo.purchaseOrderId },
+        });
+
+        if (!purchaseOrder) {
+          throw new AppError('PurchaseOrder not found', 404);
+        }
+      }
+
       if (suratJalanInfo.statusId && suratJalanInfo.statusId !== null) {
         const status = await prisma.status.findUnique({
           where: { id: suratJalanInfo.statusId },
@@ -86,6 +96,7 @@ export class SuratJalanService {
             },
           },
           invoice: true,
+          purchaseOrder: true,
           status: true,
           historyPengiriman: {
             include: {
@@ -137,6 +148,7 @@ export class SuratJalanService {
       include: {
         suratJalanDetails: { include: { suratJalanDetailItems: true } },
         invoice: true,
+        purchaseOrder: true,
         status: true,
         checklistSuratJalan: true,
       },
@@ -158,6 +170,7 @@ export class SuratJalanService {
             purchaseOrder: { include: { customer: true, supplier: true } },
           },
         },
+        purchaseOrder: { include: { customer: true, supplier: true } },
         status: true,
         historyPengiriman: {
           include: { status: true },
@@ -258,6 +271,7 @@ export class SuratJalanService {
           include: {
             suratJalanDetails: { include: { suratJalanDetailItems: true } },
             invoice: true,
+            purchaseOrder: true,
             status: true,
             checklistSuratJalan: true,
           },
@@ -300,6 +314,7 @@ export class SuratJalanService {
           include: {
             status: true,
             invoice: true,
+            purchaseOrder: true,
             suratJalanDetails: {
               include: {
                 suratJalanDetailItems: true,
@@ -395,6 +410,7 @@ export class SuratJalanService {
           include: {
             status: true,
             invoice: true,
+            purchaseOrder: true,
             suratJalanDetails: {
               include: {
                 suratJalanDetailItems: true,
@@ -469,6 +485,7 @@ export class SuratJalanService {
       deliver_to,
       PIC,
       invoiceId,
+      purchaseOrderId,
       status_code,
       is_printed,
       page = 1,
@@ -487,6 +504,7 @@ export class SuratJalanService {
       });
     if (PIC) filters.push({ PIC: { contains: PIC, mode: 'insensitive' } });
     if (invoiceId) filters.push({ invoiceId });
+    if (purchaseOrderId) filters.push({ purchaseOrderId });
     if (status_code) filters.push({ status: { status_code: status_code } });
     if (is_printed !== undefined) filters.push({ is_printed });
 
@@ -501,6 +519,7 @@ export class SuratJalanService {
         invoice: {
           include: { purchaseOrder: { include: { customer: true } } },
         },
+        purchaseOrder: { include: { customer: true } },
         status: true,
         checklistSuratJalan: true,
       },

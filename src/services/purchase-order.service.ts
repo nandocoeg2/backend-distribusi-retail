@@ -284,6 +284,17 @@ export class PurchaseOrderService {
             status: true,
           },
         },
+        suratJalan: {
+          include: {
+            suratJalanDetails: {
+              include: {
+                suratJalanDetailItems: true,
+              },
+            },
+            status: true,
+            checklistSuratJalan: true,
+          },
+        },
       },
     });
 
@@ -489,18 +500,42 @@ export class PurchaseOrderService {
         await tx.suratJalanDetailItem.deleteMany({
           where: {
             suratJalanDetail: {
-              suratJalan: { invoice: { purchaseOrderId: id } },
+              suratJalan: {
+                OR: [
+                  { invoice: { purchaseOrderId: id } },
+                  { purchaseOrderId: id }
+                ]
+              },
             },
           },
         });
         await tx.suratJalanDetail.deleteMany({
-          where: { suratJalan: { invoice: { purchaseOrderId: id } } },
+          where: {
+            suratJalan: {
+              OR: [
+                { invoice: { purchaseOrderId: id } },
+                { purchaseOrderId: id }
+              ]
+            }
+          },
         });
         await tx.historyPengiriman.deleteMany({
-          where: { suratJalan: { invoice: { purchaseOrderId: id } } },
+          where: {
+            suratJalan: {
+              OR: [
+                { invoice: { purchaseOrderId: id } },
+                { purchaseOrderId: id }
+              ]
+            }
+          },
         });
         await tx.suratJalan.deleteMany({
-          where: { invoice: { purchaseOrderId: id } },
+          where: {
+            OR: [
+              { invoice: { purchaseOrderId: id } },
+              { purchaseOrderId: id }
+            ]
+          },
         });
         await tx.invoicePengirimanDetail.deleteMany({
           where: { invoice: { purchaseOrderId: id } },
@@ -1068,6 +1103,7 @@ export class PurchaseOrderService {
                 is_printed: false,
                 print_counter: 0,
                 invoiceId: createdInvoice.id,
+                purchaseOrderId: id,
                 statusId: pendingSuratJalanStatus.id,
                 createdBy: userId,
                 updatedBy: userId,
