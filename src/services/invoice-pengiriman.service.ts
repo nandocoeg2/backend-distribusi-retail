@@ -8,7 +8,10 @@ import {
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
-import { generateUniqueDocumentNumber, DOCUMENT_CONFIGS } from '@/utils/random.utils';
+import {
+  generateUniqueDocumentNumber,
+  DOCUMENT_CONFIGS,
+} from '@/utils/random.utils';
 
 export class InvoicePengirimanService {
   static async createInvoice(
@@ -21,8 +24,12 @@ export class InvoicePengirimanService {
       const newInvoice = await prisma.invoicePengiriman.create({
         data: {
           ...invoiceInfo,
-          tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : new Date(),
-          expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
+          tanggal: invoiceInfo.tanggal
+            ? new Date(invoiceInfo.tanggal)
+            : new Date(),
+          expired_date: invoiceInfo.expired_date
+            ? new Date(invoiceInfo.expired_date)
+            : null,
           createdBy: userId,
           updatedBy: userId,
           invoiceDetails: invoiceDetails
@@ -48,12 +55,24 @@ export class InvoicePengirimanService {
         },
       });
 
-      await createAuditLog('InvoicePengiriman', newInvoice.id, 'CREATE', userId, newInvoice);
+      await createAuditLog(
+        'InvoicePengiriman',
+        newInvoice.id,
+        'CREATE',
+        userId,
+        newInvoice
+      );
 
       return newInvoice;
     } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('no_invoice')) {
-        throw new AppError('InvoicePengiriman with this number already exists', 409);
+      if (
+        error.code === 'P2002' &&
+        error.meta?.target?.includes('no_invoice')
+      ) {
+        throw new AppError(
+          'InvoicePengiriman with this number already exists',
+          409
+        );
       }
       throw error;
     }
@@ -189,8 +208,12 @@ export class InvoicePengirimanService {
           where: { id },
           data: {
             ...invoiceInfo,
-            tanggal: invoiceInfo.tanggal ? new Date(invoiceInfo.tanggal) : undefined,
-            expired_date: invoiceInfo.expired_date ? new Date(invoiceInfo.expired_date) : null,
+            tanggal: invoiceInfo.tanggal
+              ? new Date(invoiceInfo.tanggal)
+              : undefined,
+            expired_date: invoiceInfo.expired_date
+              ? new Date(invoiceInfo.expired_date)
+              : null,
             updatedBy: userId,
           },
           include: {
@@ -206,10 +229,16 @@ export class InvoicePengirimanService {
           },
         });
 
-        await createAuditLog('InvoicePengiriman', invoice.id, 'UPDATE', userId, {
-          before: existingInvoice,
-          after: invoice,
-        });
+        await createAuditLog(
+          'InvoicePengiriman',
+          invoice.id,
+          'UPDATE',
+          userId,
+          {
+            before: existingInvoice,
+            after: invoice,
+          }
+        );
 
         return invoice;
       });
@@ -224,7 +253,10 @@ export class InvoicePengirimanService {
     }
   }
 
-  static async deleteInvoice(id: string, userId: string): Promise<InvoicePengiriman | null> {
+  static async deleteInvoice(
+    id: string,
+    userId: string
+  ): Promise<InvoicePengiriman | null> {
     try {
       return await prisma.$transaction(async (tx) => {
         const existingInvoice = await tx.invoicePengiriman.findUnique({
@@ -235,7 +267,13 @@ export class InvoicePengirimanService {
           throw new AppError('InvoicePengiriman not found', 404);
         }
 
-        await createAuditLog('InvoicePengiriman', id, 'DELETE', userId, existingInvoice);
+        await createAuditLog(
+          'InvoicePengiriman',
+          id,
+          'DELETE',
+          userId,
+          existingInvoice
+        );
 
         await tx.invoicePengirimanDetail.deleteMany({
           where: { invoiceId: id },
@@ -274,10 +312,14 @@ export class InvoicePengirimanService {
     const filters: Prisma.InvoicePengirimanWhereInput[] = [];
 
     if (no_invoice) {
-      filters.push({ no_invoice: { contains: no_invoice, mode: 'insensitive' } });
+      filters.push({
+        no_invoice: { contains: no_invoice, mode: 'insensitive' },
+      });
     }
     if (deliver_to) {
-      filters.push({ deliver_to: { contains: deliver_to, mode: 'insensitive' } });
+      filters.push({
+        deliver_to: { contains: deliver_to, mode: 'insensitive' },
+      });
     }
     if (type) {
       filters.push({ type: type as 'PEMBAYARAN' | 'PENGIRIMAN' });
@@ -372,22 +414,31 @@ export class InvoicePengirimanService {
 
       // 2. Validasi purchaseOrder dan termin_bayar
       if (!invoicePengiriman.purchaseOrder) {
-        throw new AppError('PurchaseOrder not found for this InvoicePengiriman', 404);
+        throw new AppError(
+          'PurchaseOrder not found for this InvoicePengiriman',
+          404
+        );
       }
 
       if (!invoicePengiriman.purchaseOrder.termin_bayar) {
-        throw new AppError('Term of Payment (termin_bayar) not found in PurchaseOrder', 400);
+        throw new AppError(
+          'Term of Payment (termin_bayar) not found in PurchaseOrder',
+          400
+        );
       }
 
       // 3. Cek apakah sudah ada InvoicePenagihan yang terhubung
       if (invoicePengiriman.invoicePenagihanId) {
-        throw new AppError('InvoicePenagihan already exists for this InvoicePengiriman', 409);
+        throw new AppError(
+          'InvoicePenagihan already exists for this InvoicePengiriman',
+          409
+        );
       }
 
       // 4. Generate unique invoice number
       const checkUniqueCallback = async (invoiceNumber: string) => {
         const existing = await prisma.invoicePenagihan.findUnique({
-          where: { no_invoice_penagihan: invoiceNumber }
+          where: { no_invoice_penagihan: invoiceNumber },
         });
         return !existing;
       };
@@ -395,10 +446,10 @@ export class InvoicePengirimanService {
       const invoiceNumber = await generateUniqueDocumentNumber(
         {
           ...DOCUMENT_CONFIGS.INVOICE,
-          prefix: 'IPN'
+          prefix: 'IPN',
         },
         checkUniqueCallback,
-        invoicePengiriman.purchaseOrderId || undefined
+        invoicePengiriman.purchaseOrder.po_number || undefined
       );
 
       // 5. Tentukan statusId (gunakan parameter atau default)
@@ -408,11 +459,14 @@ export class InvoicePengirimanService {
         const defaultStatus = await prisma.status.findFirst({
           where: {
             category: 'Invoice Penagihan',
-            status_code: 'PENDING INVOICE PENAGIHAN'
-          }
+            status_code: 'PENDING INVOICE PENAGIHAN',
+          },
         });
         if (!defaultStatus) {
-          throw new AppError('Default status "PENDING INVOICE PENAGIHAN" not found. Please provide statusId or create status with category "Invoice Penagihan" and status_code "PENDING INVOICE PENAGIHAN"', 400);
+          throw new AppError(
+            'Default status "PENDING INVOICE PENAGIHAN" not found. Please provide statusId or create status with category "Invoice Penagihan" and status_code "PENDING INVOICE PENAGIHAN"',
+            400
+          );
         }
         finalStatusId = defaultStatus.id;
       }
@@ -514,10 +568,14 @@ export class InvoicePengirimanService {
       if (error instanceof AppError) {
         throw error;
       }
-      console.error('Error creating InvoicePenagihan from InvoicePengiriman:', error);
-      throw new AppError('Failed to create InvoicePenagihan from InvoicePengiriman', 500);
+      console.error(
+        'Error creating InvoicePenagihan from InvoicePengiriman:',
+        error
+      );
+      throw new AppError(
+        'Failed to create InvoicePenagihan from InvoicePengiriman',
+        500
+      );
     }
   }
 }
-
-
