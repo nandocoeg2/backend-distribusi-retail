@@ -106,6 +106,7 @@ Membuat data invoice pengiriman baru.
     "type": "PEMBAYARAN",
     "statusPembayaranId": null,
     "purchaseOrderId": null,
+    "invoicePenagihanId": null,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
     "createdBy": "user-uuid",
@@ -131,7 +132,8 @@ Membuat data invoice pengiriman baru.
       }
     ],
     "statusPembayaran": null,
-    "purchaseOrder": null
+    "purchaseOrder": null,
+    "invoicePenagihan": null
   }
 }
 ```
@@ -202,13 +204,15 @@ GET /api/v1/invoice-pengiriman?page=1&limit=10
         "type": "PEMBAYARAN",
         "statusPembayaranId": null,
         "purchaseOrderId": null,
+        "invoicePenagihanId": null,
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z",
         "createdBy": "user-uuid",
         "updatedBy": "user-uuid",
         "invoiceDetails": [...],
         "statusPembayaran": null,
-        "purchaseOrder": null
+        "purchaseOrder": null,
+        "invoicePenagihan": null
       }
     ],
     "pagination": {
@@ -281,6 +285,21 @@ GET /api/v1/invoice-pengiriman/invoice-uuid
         "id": "supplier-uuid",
         "name": "Supplier XYZ"
       }
+    },
+    "invoicePenagihan": {
+      "id": "invoice-penagihan-uuid",
+      "no_invoice_penagihan": "IPN-2024-001",
+      "status": {
+        "id": "status-uuid",
+        "status_code": "PAID",
+        "status_name": "Paid"
+      },
+      "termOfPayment": {
+        "id": "top-uuid",
+        "kode_top": "TOP30",
+        "batas_hari": 30
+      },
+      "invoicePenagihanDetails": [...]
     },
     "suratJalan": [],
     "auditTrails": [
@@ -540,6 +559,201 @@ GET /api/v1/invoice-pengiriman/search?no_invoice=INV-2024&type=PEMBAYARAN&status
 
 ---
 
+### 7. Create Invoice Penagihan from Invoice Pengiriman
+Membuat invoice penagihan baru berdasarkan data invoice pengiriman yang sudah ada.
+
+**Endpoint:** `POST /:id/create-penagihan`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID invoice pengiriman yang akan digunakan sebagai basis
+
+**Request Body:**
+```json
+{
+  "statusId": "status-uuid-optional"
+}
+```
+
+**Validation Rules:**
+- `statusId`: Optional - Status ID untuk invoice penagihan (jika tidak diisi, akan menggunakan status "PENDING INVOICE PENAGIHAN")
+
+**Available Status for Invoice Penagihan (category: "Invoice Penagihan"):**
+- `PENDING INVOICE PENAGIHAN` - **Default** - Menunggu pembayaran
+- `PROCESSING INVOICE PENAGIHAN` - Invoice sedang diproses
+- `PAID INVOICE PENAGIHAN` - Sudah dibayar
+- `OVERDUE INVOICE PENAGIHAN` - Telah jatuh tempo
+- `CANCELLED INVOICE PENAGIHAN` - Dibatalkan
+- `COMPLETED INVOICE PENAGIHAN` - Selesai
+
+**Example Request:**
+```
+POST /api/v1/invoice-pengiriman/invoice-uuid/create-penagihan
+```
+
+**Response Success (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "invoice-penagihan-uuid",
+    "purchaseOrderId": "po-uuid",
+    "no_invoice_penagihan": "IPN-2024-001",
+    "kw": false,
+    "fp": false,
+    "tanggal": "2024-01-15T10:30:00.000Z",
+    "kepada": "Customer ABC",
+    "sub_total": 1000000,
+    "total_discount": 50000,
+    "total_price": 950000,
+    "ppn_percentage": 11,
+    "ppn_rupiah": 104500,
+    "grand_total": 1054500,
+    "termOfPaymentId": "top-uuid",
+    "statusId": "status-uuid",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "invoicePenagihanDetails": [
+      {
+        "id": "detail-uuid",
+        "invoicePenagihanId": "invoice-penagihan-uuid",
+        "nama_barang": "Product A",
+        "PLU": "PLU001",
+        "quantity": 10,
+        "satuan": "pcs",
+        "harga": 100000,
+        "total": 1000000,
+        "discount_percentage": 5,
+        "discount_rupiah": 50000,
+        "createdAt": "2024-01-15T10:30:00.000Z",
+        "updatedAt": "2024-01-15T10:30:00.000Z",
+        "createdBy": "user-uuid",
+        "updatedBy": "user-uuid"
+      }
+    ],
+    "status": {
+      "id": "status-uuid",
+      "status_code": "PENDING",
+      "category": "invoice_penagihan",
+      "status_name": "Pending"
+    },
+    "termOfPayment": {
+      "id": "top-uuid",
+      "kode_top": "TOP30",
+      "batas_hari": 30
+    },
+    "purchaseOrder": {
+      "id": "po-uuid",
+      "po_number": "PO-2024-001",
+      "customer": {
+        "id": "customer-uuid",
+        "namaCustomer": "Customer ABC"
+      },
+      "supplier": {
+        "id": "supplier-uuid",
+        "name": "Supplier XYZ"
+      }
+    }
+  }
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "InvoicePengiriman not found"
+  }
+}
+```
+
+**Response Error (404 Not Found - PurchaseOrder):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "PurchaseOrder not found for this InvoicePengiriman"
+  }
+}
+```
+
+**Response Error (400 Bad Request - No Term of Payment):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Term of Payment (termin_bayar) not found in PurchaseOrder"
+  }
+}
+```
+
+**Response Error (409 Conflict):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "InvoicePenagihan already exists for this InvoicePengiriman"
+  }
+}
+```
+
+**Response Error (400 Bad Request - No Status):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Default status \"PENDING INVOICE PENAGIHAN\" not found. Please provide statusId or create status with category \"Invoice Penagihan\" and status_code \"PENDING INVOICE PENAGIHAN\""
+  }
+}
+```
+
+**Response Error (500 Internal Server Error):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Failed to create InvoicePenagihan from InvoicePengiriman"
+  }
+}
+```
+
+**Business Logic:**
+1. Sistem akan mengambil semua data dari InvoicePengiriman (header + details)
+2. Field mapping:
+   - `tanggal` → menggunakan current timestamp (saat pembuatan invoice penagihan)
+   - `kepada` → dari `deliver_to` invoice pengiriman
+   - `termOfPaymentId` → dari `purchaseOrder.termin_bayar`
+   - `kw` dan `fp` → default `false`
+   - Semua nilai finansial (sub_total, total_discount, dll) → copy dari invoice pengiriman
+   - Invoice details → copy semua item dari invoice pengiriman (kecuali field PPN per item)
+3. Sistem akan membuat nomor invoice penagihan unik dengan prefix `IPN`
+4. Sistem akan membuat relasi 1-to-1 antara InvoicePengiriman dan InvoicePenagihan
+5. Audit trail akan tercatat untuk kedua invoice (CREATE untuk penagihan, UPDATE untuk pengiriman)
+6. Jika sudah pernah dibuat invoice penagihan dari invoice pengiriman ini sebelumnya, akan mengembalikan error 409
+
+**Notes:**
+- Invoice pengiriman harus sudah memiliki relasi dengan purchase order
+- Purchase order harus memiliki term of payment (termin_bayar)
+- Setiap invoice pengiriman hanya bisa membuat satu invoice penagihan
+- Audit trail otomatis tercatat untuk tracking
+- **Default Status**: Jika `statusId` tidak disediakan, sistem akan menggunakan status dengan:
+  - `category`: "Invoice Penagihan"
+  - `status_code`: "PENDING INVOICE PENAGIHAN"
+- Pastikan status default tersebut sudah ada di database, atau sertakan `statusId` di request body
+
+---
+
 ## Error Handling
 
 Semua endpoint menggunakan format error response yang konsisten:
@@ -616,6 +830,7 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "type": "enum (PEMBAYARAN/PENGIRIMAN)",
   "statusPembayaranId": "string (UUID, optional)",
   "purchaseOrderId": "string (UUID, optional)",
+  "invoicePenagihanId": "string (UUID, optional)",
   "createdAt": "DateTime (ISO 8601)",
   "updatedAt": "DateTime (ISO 8601)",
   "createdBy": "string (UUID)",
@@ -623,6 +838,7 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
   "invoiceDetails": "InvoicePengirimanDetail[]",
   "statusPembayaran": "Status Object (optional)",
   "purchaseOrder": "PurchaseOrder Object with nested customer and supplier (optional)",
+  "invoicePenagihan": "InvoicePenagihan Object (optional)",
   "suratJalan": "SuratJalan[] (only in Get By ID)",
   "auditTrails": "AuditTrail[] (only in Get By ID)"
 }
@@ -631,7 +847,9 @@ Endpoint yang mendukung pagination mengembalikan data dalam format:
 **Note:**
 - Field `purchaseOrder` pada endpoint Get By ID include nested relations: `customer` dan `supplier`
 - Field `purchaseOrder` pada endpoint Search include nested relation: `customer` saja
+- Field `invoicePenagihan` berisi detail invoice penagihan yang sudah dibuat (jika ada), include: `status`, `termOfPayment`, dan `invoicePenagihanDetails` (hanya pada Get By ID)
 - Field `suratJalan` dan `auditTrails` hanya ada pada response Get By ID
+- Relasi `invoicePenagihan` bersifat 1-to-1, artinya setiap invoice pengiriman maksimal memiliki 1 invoice penagihan
 
 ### Invoice Pengiriman Detail Object
 ```json

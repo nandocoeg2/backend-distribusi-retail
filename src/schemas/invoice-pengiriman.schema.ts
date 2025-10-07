@@ -112,9 +112,19 @@ export const searchInvoicePengirimanSchema = z.object({
     .merge(paginationSchema),
 });
 
+export const createPenagihanFromPengirimanSchema = z.object({
+  params: z.object({
+    id: z.string().describe('The ID of the invoice pengiriman'),
+  }),
+  body: z.object({
+    statusId: z.string().optional().describe('Status ID for the invoice penagihan (optional, defaults to PENDING)'),
+  }).optional(),
+});
+
 export type CreateInvoicePengirimanInput = z.infer<typeof createInvoicePengirimanSchema>['body'];
 export type UpdateInvoicePengirimanInput = z.infer<typeof updateInvoicePengirimanSchema>;
 export type SearchInvoicePengirimanInput = z.infer<typeof searchInvoicePengirimanSchema>;
 export type InvoicePengirimanPaginationInput = z.infer<typeof paginationSchema>;
+export type CreatePenagihanFromPengirimanInput = z.infer<typeof createPenagihanFromPengirimanSchema>;
 
 

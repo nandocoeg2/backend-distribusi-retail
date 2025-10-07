@@ -1,0 +1,25 @@
+meta {
+  name: create-penagihan
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:5050/api/v1/invoice-pengiriman/:id/create-penagihan
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id: invoice-pengiriman-id-here
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "statusId": "status-id-here-optional"
+  }
+}

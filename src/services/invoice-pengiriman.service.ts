@@ -1,4 +1,4 @@
-import { InvoicePengiriman, Prisma } from '@prisma/client';
+import { InvoicePengiriman, InvoicePenagihan, Prisma } from '@prisma/client';
 import { prisma } from '@/config/database';
 import {
   CreateInvoicePengirimanInput,
@@ -8,6 +8,7 @@ import {
 import { AppError } from '@/utils/app-error';
 import { createAuditLog } from './audit.service';
 import { PaginatedResult } from '@/types/common.types';
+import { generateUniqueDocumentNumber, DOCUMENT_CONFIGS } from '@/utils/random.utils';
 
 export class InvoicePengirimanService {
   static async createInvoice(
@@ -38,6 +39,12 @@ export class InvoicePengirimanService {
           invoiceDetails: true,
           statusPembayaran: true,
           purchaseOrder: true,
+          invoicePenagihan: {
+            include: {
+              status: true,
+              termOfPayment: true,
+            },
+          },
         },
       });
 
@@ -66,6 +73,12 @@ export class InvoicePengirimanService {
           invoiceDetails: true,
           statusPembayaran: true,
           purchaseOrder: true,
+          invoicePenagihan: {
+            include: {
+              status: true,
+              termOfPayment: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -100,6 +113,13 @@ export class InvoicePengirimanService {
           },
         },
         suratJalan: true,
+        invoicePenagihan: {
+          include: {
+            status: true,
+            termOfPayment: true,
+            invoicePenagihanDetails: true,
+          },
+        },
       },
     });
 
@@ -177,6 +197,12 @@ export class InvoicePengirimanService {
             invoiceDetails: true,
             statusPembayaran: true,
             purchaseOrder: true,
+            invoicePenagihan: {
+              include: {
+                status: true,
+                termOfPayment: true,
+              },
+            },
           },
         });
 
@@ -294,6 +320,12 @@ export class InvoicePengirimanService {
               customer: true,
             },
           },
+          invoicePenagihan: {
+            include: {
+              status: true,
+              termOfPayment: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -317,6 +349,174 @@ export class InvoicePengirimanService {
         itemsPerPage: limit,
       },
     };
+  }
+
+  static async createPenagihan(
+    invoicePengirimanId: string,
+    statusId: string | undefined,
+    userId: string
+  ): Promise<InvoicePenagihan> {
+    try {
+      // 1. Query InvoicePengiriman dengan relasi
+      const invoicePengiriman = await prisma.invoicePengiriman.findUnique({
+        where: { id: invoicePengirimanId },
+        include: {
+          purchaseOrder: true,
+          invoiceDetails: true,
+        },
+      });
+
+      if (!invoicePengiriman) {
+        throw new AppError('InvoicePengiriman not found', 404);
+      }
+
+      // 2. Validasi purchaseOrder dan termin_bayar
+      if (!invoicePengiriman.purchaseOrder) {
+        throw new AppError('PurchaseOrder not found for this InvoicePengiriman', 404);
+      }
+
+      if (!invoicePengiriman.purchaseOrder.termin_bayar) {
+        throw new AppError('Term of Payment (termin_bayar) not found in PurchaseOrder', 400);
+      }
+
+      // 3. Cek apakah sudah ada InvoicePenagihan yang terhubung
+      if (invoicePengiriman.invoicePenagihanId) {
+        throw new AppError('InvoicePenagihan already exists for this InvoicePengiriman', 409);
+      }
+
+      // 4. Generate unique invoice number
+      const checkUniqueCallback = async (invoiceNumber: string) => {
+        const existing = await prisma.invoicePenagihan.findUnique({
+          where: { no_invoice_penagihan: invoiceNumber }
+        });
+        return !existing;
+      };
+
+      const invoiceNumber = await generateUniqueDocumentNumber(
+        {
+          ...DOCUMENT_CONFIGS.INVOICE,
+          prefix: 'IPN'
+        },
+        checkUniqueCallback,
+        invoicePengiriman.purchaseOrderId || undefined
+      );
+
+      // 5. Tentukan statusId (gunakan parameter atau default)
+      let finalStatusId = statusId;
+      if (!finalStatusId) {
+        // Cari status default untuk invoice penagihan (PENDING)
+        const defaultStatus = await prisma.status.findFirst({
+          where: {
+            category: 'Invoice Penagihan',
+            status_code: 'PENDING INVOICE PENAGIHAN'
+          }
+        });
+        if (!defaultStatus) {
+          throw new AppError('Default status "PENDING INVOICE PENAGIHAN" not found. Please provide statusId or create status with category "Invoice Penagihan" and status_code "PENDING INVOICE PENAGIHAN"', 400);
+        }
+        finalStatusId = defaultStatus.id;
+      }
+
+      // 6. Transaction: Create InvoicePenagihan dan update InvoicePengiriman
+      const result = await prisma.$transaction(async (tx) => {
+        // Create InvoicePenagihan
+        const newInvoicePenagihan = await tx.invoicePenagihan.create({
+          data: {
+            no_invoice_penagihan: invoiceNumber,
+            purchaseOrderId: invoicePengiriman.purchaseOrderId!,
+            kw: false,
+            fp: false,
+            tanggal: new Date(),
+            kepada: invoicePengiriman.deliver_to,
+            sub_total: invoicePengiriman.sub_total,
+            total_discount: invoicePengiriman.total_discount,
+            total_price: invoicePengiriman.total_price,
+            ppn_percentage: invoicePengiriman.ppn_percentage,
+            ppn_rupiah: invoicePengiriman.ppn_rupiah,
+            grand_total: invoicePengiriman.grand_total,
+            termOfPaymentId: invoicePengiriman.purchaseOrder!.termin_bayar!,
+            statusId: finalStatusId,
+            createdBy: userId,
+            updatedBy: userId,
+            invoicePenagihanDetails: {
+              create: invoicePengiriman.invoiceDetails.map((detail) => ({
+                nama_barang: detail.nama_barang,
+                PLU: detail.PLU,
+                quantity: detail.quantity,
+                satuan: detail.satuan,
+                harga: detail.harga,
+                total: detail.total,
+                discount_percentage: detail.discount_percentage,
+                discount_rupiah: detail.discount_rupiah,
+                createdBy: userId,
+                updatedBy: userId,
+              })),
+            },
+          },
+          include: {
+            invoicePenagihanDetails: true,
+            status: true,
+            termOfPayment: true,
+            purchaseOrder: {
+              include: {
+                customer: true,
+                supplier: true,
+              },
+            },
+          },
+        });
+
+        // Update InvoicePengiriman dengan link ke InvoicePenagihan
+        await tx.invoicePengiriman.update({
+          where: { id: invoicePengirimanId },
+          data: {
+            invoicePenagihanId: newInvoicePenagihan.id,
+            updatedBy: userId,
+          },
+        });
+
+        // Create AuditTrail untuk InvoicePenagihan (CREATE)
+        await createAuditLog(
+          'InvoicePenagihan',
+          newInvoicePenagihan.id,
+          'CREATE',
+          userId,
+          {
+            action: 'Created from InvoicePengiriman',
+            invoicePengirimanId: invoicePengirimanId,
+            data: newInvoicePenagihan,
+          }
+        );
+
+        // Create AuditTrail untuk InvoicePengiriman (UPDATE - linked to penagihan)
+        await createAuditLog(
+          'InvoicePengiriman',
+          invoicePengirimanId,
+          'UPDATE',
+          userId,
+          {
+            action: 'Linked to InvoicePenagihan',
+            invoicePenagihanId: newInvoicePenagihan.id,
+            changes: {
+              invoicePenagihanId: {
+                before: null,
+                after: newInvoicePenagihan.id,
+              },
+            },
+          }
+        );
+
+        return newInvoicePenagihan;
+      });
+
+      return result;
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error('Error creating InvoicePenagihan from InvoicePengiriman:', error);
+      throw new AppError('Failed to create InvoicePenagihan from InvoicePengiriman', 500);
+    }
   }
 }
 

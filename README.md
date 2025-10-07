@@ -284,6 +284,18 @@ Dokumentasi API lengkap tersedia melalui Swagger UI di `http://localhost:5050/do
 | `/api/invoice-pengiriman/:id` | `PUT` | Update data invoice pengiriman | `Authorization: Bearer <token>` | `{ "deliver_to": "..." }` | `{ "success": true, "data": { "id": "uuid", "deliver_to": "...", ... } }` |
 | `/api/invoice-pengiriman/:id` | `DELETE` | Menghapus invoice pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Deleted" } }` |
 | `/api/invoice-pengiriman/search` | `GET` | Pencarian invoice pengiriman | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "no_invoice": "INV-001", ... }], "pagination": {...} } }` |
+| `/api/invoice-pengiriman/:id/create-penagihan` | `POST` | Membuat invoice penagihan dari invoice pengiriman | `Authorization: Bearer <token>` | `{ "statusId": "..." }` (optional) | `{ "success": true, "data": { "id": "uuid", "no_invoice_penagihan": "IPN-001", ... } }` |
+
+### 💰 Manajemen Invoice Penagihan
+
+| Endpoint | Method | Deskripsi | Contoh Request Header | Contoh Request Body | Contoh Response |
+| --- | --- | --- | --- | --- | --- |
+| `/api/invoice-penagihan` | `GET` | Mendapatkan semua invoice penagihan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "no_invoice_penagihan": "IPN-001", ... }], "pagination": {...} } }` |
+| `/api/invoice-penagihan/:id` | `GET` | Mendapatkan invoice penagihan berdasarkan ID | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "id": "uuid", "no_invoice_penagihan": "IPN-001", ... } }` |
+| `/api/invoice-penagihan` | `POST` | Membuat invoice penagihan baru | `Authorization: Bearer <token>` | `{ "purchaseOrderId": "...", "kepada": "...", ... }` | `{ "success": true, "data": { "id": "uuid", "no_invoice_penagihan": "IPN-001", ... } }` |
+| `/api/invoice-penagihan/:id` | `PUT` | Update data invoice penagihan | `Authorization: Bearer <token>` | `{ "kepada": "..." }` | `{ "success": true, "data": { "id": "uuid", "kepada": "...", ... } }` |
+| `/api/invoice-penagihan/:id` | `DELETE` | Menghapus invoice penagihan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "message": "Deleted" } }` |
+| `/api/invoice-penagihan/search` | `GET` | Pencarian invoice penagihan | `Authorization: Bearer <token>` | - | `{ "success": true, "data": { "data": [{ "id": "uuid", "no_invoice_penagihan": "IPN-001", ... }], "pagination": {...} } }` |
 
 ### 📊 History Pengiriman
 

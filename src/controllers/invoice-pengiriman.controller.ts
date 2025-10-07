@@ -63,6 +63,26 @@ export class InvoicePengirimanController {
     const result = await InvoicePengirimanService.searchInvoices(request.query);
     return reply.send(ResponseUtil.success(result));
   }
+
+  static async createPenagihan(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body?: { statusId?: string };
+    }>,
+    reply: FastifyReply
+  ) {
+    const userId = request.user?.id || 'system';
+    const { id } = request.params;
+    const { statusId } = request.body || {};
+
+    const invoicePenagihan = await InvoicePengirimanService.createPenagihan(
+      id,
+      statusId,
+      userId
+    );
+
+    return reply.code(201).send(ResponseUtil.success(invoicePenagihan));
+  }
 }
 
 

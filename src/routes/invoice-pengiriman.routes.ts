@@ -10,6 +10,8 @@ import {
   UpdateInvoicePengirimanInput,
   SearchInvoicePengirimanInput,
   searchInvoicePengirimanSchema,
+  createPenagihanFromPengirimanSchema,
+  CreatePenagihanFromPengirimanInput,
 } from '@/schemas/invoice-pengiriman.schema';
 
 export const invoicePengirimanRoutes: FastifyPluginCallback<FastifyPluginOptions> = (
@@ -93,6 +95,21 @@ export const invoicePengirimanRoutes: FastifyPluginCallback<FastifyPluginOptions
       preHandler: [fastify.authenticate, validateRequest(deleteInvoicePengirimanSchema)],
     },
     InvoicePengirimanController.deleteInvoice
+  );
+
+  fastify.post<CreatePenagihanFromPengirimanInput>(
+    '/:id/create-penagihan',
+    {
+      schema: {
+        tags: ['InvoicePengiriman'],
+        description: 'Create InvoicePenagihan from existing InvoicePengiriman',
+        params: createPenagihanFromPengirimanSchema.shape.params,
+        body: createPenagihanFromPengirimanSchema.shape.body,
+        security: [{ Bearer: [] }],
+      },
+      preHandler: [fastify.authenticate, validateRequest(createPenagihanFromPengirimanSchema)],
+    },
+    InvoicePengirimanController.createPenagihan
   );
 
   done();

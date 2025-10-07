@@ -306,29 +306,31 @@ model PackingItem {
 }
 
 model InvoicePengiriman {
-  id                 String          @id @default(cuid())
-  no_invoice         String          @unique
-  tanggal            DateTime        @default(now())
+  id                 String            @id @default(cuid())
+  no_invoice         String            @unique
+  tanggal            DateTime          @default(now())
   deliver_to         String
-  sub_total          Decimal         @db.Decimal(15, 2)
-  total_discount     Decimal         @db.Decimal(15, 2)
-  total_price        Decimal         @db.Decimal(15, 2)
-  ppn_percentage     Decimal         @db.Decimal(5, 2)
-  ppn_rupiah         Decimal         @db.Decimal(15, 2)
-  grand_total        Decimal         @db.Decimal(15, 2)
+  sub_total          Decimal           @db.Decimal(15, 2)
+  total_discount     Decimal           @db.Decimal(15, 2)
+  total_price        Decimal           @db.Decimal(15, 2)
+  ppn_percentage     Decimal           @db.Decimal(5, 2)
+  ppn_rupiah         Decimal           @db.Decimal(15, 2)
+  grand_total        Decimal           @db.Decimal(15, 2)
   expired_date       DateTime?
-  TOP                String?         @db.VarChar(50)
-  type               InvoiceType     @default(PEMBAYARAN)
+  TOP                String?           @db.VarChar(50)
+  type               InvoiceType       @default(PEMBAYARAN)
   statusPembayaranId String?
-  statusPembayaran   Status?         @relation(name: "InvoiceStatusPembayaran", fields: [statusPembayaranId], references: [id])
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  statusPembayaran   Status?           @relation(name: "InvoiceStatusPembayaran", fields: [statusPembayaranId], references: [id])
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
   createdBy          String
   updatedBy          String
   purchaseOrderId    String?
-  purchaseOrder      PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrder      PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id])
   invoiceDetails     InvoicePengirimanDetail[]
   suratJalan         SuratJalan[]
+  invoicePenagihanId String?           @unique
+  invoicePenagihan   InvoicePenagihan? @relation(fields: [invoicePenagihanId], references: [id])
 
   @@map("invoice")
 }
@@ -577,6 +579,7 @@ model InvoicePenagihan {
   termOfPayment         TermOfPayment              @relation(fields: [termOfPaymentId], references: [id])
   status                Status                     @relation("InvoicePenagihanStatus", fields: [statusId], references: [id])
   invoicePenagihanDetails InvoicePenagihanDetail[]
+  invoicePengiriman     InvoicePengiriman?
 
   @@map("invoice_penagihan")
 }
