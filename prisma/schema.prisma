@@ -116,7 +116,7 @@ model Supplier {
 
 model PurchaseOrder {
   id                      String                    @id @default(cuid())
-  customerId              String
+  customerId              String?
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
   createdBy               String
@@ -135,7 +135,7 @@ model PurchaseOrder {
   invoices                InvoicePengiriman[]
   invoicePenagihan        InvoicePenagihan[]
   suratJalan              SuratJalan?
-  customer                Customer                  @relation(fields: [customerId], references: [id])
+  customer                Customer?                 @relation(fields: [customerId], references: [id])
   status                  Status?                   @relation(fields: [statusId], references: [id])
   supplier                Supplier?                 @relation(fields: [supplierId], references: [id])
   termOfPayment           TermOfPayment?            @relation(fields: [termin_bayar], references: [id])

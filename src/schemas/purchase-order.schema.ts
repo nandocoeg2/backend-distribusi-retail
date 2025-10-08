@@ -20,7 +20,7 @@ const purchaseOrderDetailSchema = z.object({
 
 export const createPurchaseOrderSchema = z.object({
   body: z.object({
-    customerId: z.string().describe('The ID of the customer'),
+    customerId: z.string().optional().describe('The ID of the customer'),
     po_number: z.string().describe('The purchase order number'),
     total_items: z.coerce.number().int().optional().describe('Total number of items in the PO'),
     tanggal_masuk_po: z.coerce.date().optional().describe('The date when PO was received'),

@@ -75,12 +75,15 @@ export class PurchaseOrderService {
     userId: string
   ): Promise<PurchaseOrder> {
     try {
-      const customer = await prisma.customer.findUnique({
-        where: { id: poData.customerId },
-      });
+      // Only validate customer if customerId is provided
+      if (poData.customerId) {
+        const customer = await prisma.customer.findUnique({
+          where: { id: poData.customerId },
+        });
 
-      if (!customer) {
-        throw new AppError('Customer not found', 404);
+        if (!customer) {
+          throw new AppError('Customer not found', 404);
+        }
       }
 
       // Get status by status_code or use default
@@ -840,7 +843,7 @@ export class PurchaseOrderService {
 
     const duplicateCheck = await this.checkDuplicatePoNumber(
       purchaseOrder.po_number,
-      status.id
+      purchaseOrder.statusId ?? undefined
     );
 
     if (duplicateCheck.hasDuplicate) {
