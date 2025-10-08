@@ -1,7 +1,10 @@
 import { GoogleGenAI, Type, type Schema } from '@google/genai';
+import { prisma } from '@/config/database';
 import { environment } from '@/config/environment';
 import logger from '@/config/logger';
 import { AppError } from '@/utils/app-error';
+
+type SchemaType = 'bulk-purchase-order' | 'laporan-penerimaan-barang';
 
 export class ConversionService {
   private static genAI = new GoogleGenAI({
@@ -156,9 +159,7 @@ export class ConversionService {
   };
 
   private static getModelConfig(
-    schemaType:
-      | 'bulk-purchase-order'
-      | 'laporan-penerimaan-barang' = 'bulk-purchase-order'
+    schemaType: SchemaType = 'bulk-purchase-order'
   ) {
     const responseSchema =
       schemaType === 'laporan-penerimaan-barang'
@@ -191,19 +192,80 @@ export class ConversionService {
     };
   }
 
+  private static async fetchCustomerReferenceData() {
+    try {
+      const customers = await prisma.customer.findMany({
+        select: {
+          namaCustomer: true,
+          kodeCustomer: true,
+          alamatPengiriman: true,
+        },
+        orderBy: {
+          namaCustomer: 'asc',
+        },
+      });
+
+      if (!customers.length) {
+        logger.warn(
+          'No customer records found to use as RAG context for conversion.'
+        );
+        return null;
+      }
+
+      return customers;
+    } catch (error) {
+      logger.error(
+        'Failed to fetch customer data for conversion RAG context.',
+        { error }
+      );
+      return null;
+    }
+  }
+
+  private static async buildRequestPayload(
+    prompt: string,
+    filePart: Awaited<ReturnType<typeof ConversionService.fileToGenerativePart>>,
+    schemaType: SchemaType
+  ) {
+    if (schemaType !== 'bulk-purchase-order') {
+      return [prompt, filePart];
+    }
+
+    const customers = await this.fetchCustomerReferenceData();
+    if (customers && customers.length > 0) {
+      const ragInstruction =
+        `${prompt}\n\n` +
+        'Customer reference data (sourced from the database to keep the "customers" object aligned with existing records):\n' +
+        `${JSON.stringify(customers)}`;
+
+      logger.debug('Attached customer dataset to Gemini prompt for RAG.', {
+        totalCustomers: customers.length,
+      });
+
+      return [ragInstruction, filePart];
+    }
+
+    logger.debug(
+      'Proceeding without customer RAG context for conversion (no data available).'
+    );
+    return [prompt, filePart];
+  }
+
   static async convertFileToJson(
     file: Buffer,
     mimeType: string,
     prompt: string,
-    schemaType:
-      | 'bulk-purchase-order'
-      | 'laporan-penerimaan-barang' = 'bulk-purchase-order'
+    schemaType: SchemaType = 'bulk-purchase-order'
   ) {
     logger.info('Preparing file for Gemini API...');
     const filePart = await this.fileToGenerativePart(file, mimeType);
     logger.info('File part created successfully.');
 
-    const requestPayload = [prompt, filePart];
+    const requestPayload = await this.buildRequestPayload(
+      prompt,
+      filePart,
+      schemaType
+    );
 
     try {
       logger.info(
@@ -235,6 +297,10 @@ export class ConversionService {
         throw new AppError('Could not parse the converted file content.', 500);
       }
     } catch (apiError) {
+      if (apiError instanceof AppError) {
+        throw apiError;
+      }
+
       const errorInfo = this.parseApiError(apiError);
 
       if (errorInfo.quotaExceeded) {
