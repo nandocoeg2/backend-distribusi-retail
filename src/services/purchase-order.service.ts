@@ -277,7 +277,7 @@ export class PurchaseOrderService {
         files: true,
         status: true,
         termOfPayment: true,
-        packings: {
+        packing: {
           include: {
             packingItems: {
               include: {
@@ -471,7 +471,7 @@ export class PurchaseOrderService {
         const existingPO = await tx.purchaseOrder.findUnique({
           where: { id },
           include: {
-            packings: { include: { packingItems: true } },
+            packing: { include: { packingItems: true } },
             invoices: {
               include: {
                 suratJalan: {
@@ -499,7 +499,7 @@ export class PurchaseOrderService {
         await tx.packingItem.deleteMany({
           where: { packing: { purchaseOrderId: id } },
         });
-        await tx.packing.deleteMany({ where: { purchaseOrderId: id } });
+        await tx.packing.delete({ where: { purchaseOrderId: id } }).catch(() => {});
         await tx.suratJalanDetailItem.deleteMany({
           where: {
             suratJalanDetail: {

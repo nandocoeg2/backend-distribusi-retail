@@ -627,7 +627,7 @@ export class PackingService {
             where: { id: poId },
             include: {
               status: true,
-              packings: {
+              packing: {
                 include: {
                   status: true,
                 },
@@ -857,7 +857,7 @@ export class PackingService {
             where: { id: poId },
             include: {
               status: true,
-              packings: {
+              packing: {
                 include: {
                   status: true,
                 },

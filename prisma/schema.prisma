@@ -131,7 +131,7 @@ model PurchaseOrder {
   po_type                 POType                    @default(MANUAL)
   files                   FileUploaded[]
   purchaseOrderDetails    PurchaseOrderDetail[]
-  packings                Packing[]
+  packing                 Packing?
   invoices                InvoicePengiriman[]
   invoicePenagihan        InvoicePenagihan[]
   suratJalan              SuratJalan?
