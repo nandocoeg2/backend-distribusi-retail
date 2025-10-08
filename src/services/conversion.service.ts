@@ -171,10 +171,14 @@ export class ConversionService {
         systemInstruction:
           'You are an expert at converting documents into structured JSON. ' +
           "Analyze the provided file and convert it into a valid JSON object based on the user's prompt. " +
-          'Do not include any explanatory text or markdown formatting in your response.',
+          'Return ONLY raw JSON that strictly matches the response schema. No extra text, no markdown.',
         responseMimeType: 'application/json',
         responseSchema,
       },
+      // saya mau nambahin data customer agar lebih mudah matching ke database
+      functions: [
+        { name: 'addCustomerData', parameters: { customerId: 'string' } },
+      ],
     } as const;
   }
 
