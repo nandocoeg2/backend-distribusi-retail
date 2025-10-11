@@ -67,6 +67,10 @@ export const searchPackingSchema = z.object({
       tanggal_packing: z.string().optional(),
       status_code: z.string().optional(),
       purchaseOrderId: z.string().optional(),
+      is_printed: z
+        .string()
+        .transform((val) => val === 'true')
+        .optional(),
     })
     .merge(paginationSchema),
 });

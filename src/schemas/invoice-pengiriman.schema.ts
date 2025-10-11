@@ -108,6 +108,11 @@ export const searchInvoicePengirimanSchema = z.object({
         .describe('Search by Purchase Order ID'),
       tanggal_start: z.string().optional().describe('Search by start date'),
       tanggal_end: z.string().optional().describe('Search by end date'),
+      is_printed: z
+        .string()
+        .transform((val) => val === 'true')
+        .optional()
+        .describe('Filter by print status'),
     })
     .merge(paginationSchema),
 });
