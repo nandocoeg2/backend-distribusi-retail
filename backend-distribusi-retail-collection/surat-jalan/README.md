@@ -659,6 +659,7 @@ Authorization: Bearer {access_token}
 | no_surat_jalan | string | No | Nomor surat jalan yang dicari |
 | deliver_to | string | No | Nama penerima yang dicari |
 | status_code | string | No | Kode status surat jalan yang dicari (e.g., DRAFT, READY_TO_SHIP) |
+| is_printed | boolean | No | Filter berdasarkan status cetak (true/false) |
 | page | integer | No | Nomor halaman (default: 1) |
 | limit | integer | No | Jumlah data per halaman (default: 10) |
 
@@ -748,6 +749,77 @@ Content-Type: application/json
   }
 }
 ```
+
+---
+
+### 9. Record Print
+
+Mencatat aktivitas print surat jalan. Endpoint ini akan mengupdate field `is_printed` menjadi `true` dan menambah counter `print_counter`.
+
+**Request:**
+
+```http
+POST /api/v1/surat-jalan/{surat_jalan_id}/record-print
+```
+
+**Headers:**
+
+```
+Accept: application/json
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| surat_jalan_id | string | Yes | ID unik surat jalan |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Print recorded successfully",
+  "data": {
+    "id": "surat_jalan_id_1",
+    "no_surat_jalan": "SJ-2024-001",
+    "is_printed": true,
+    "print_counter": 1,
+    "deliver_to": "Customer ABC",
+    "PIC": "John Doe",
+    "alamat_tujuan": "Jl. Example No. 123, Jakarta",
+    "invoiceId": null,
+    "status": {
+      "id": "status_id_1",
+      "status_code": "READY TO SHIP SURAT JALAN",
+      "category": "Surat Jalan"
+    },
+    "invoice": null,
+    "purchaseOrder": null,
+    "checklistSuratJalan": {...},
+    "suratJalanDetails": [...],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z"
+  }
+}
+```
+
+**Business Logic:**
+- Field `is_printed` akan di-set menjadi `true`
+- Field `print_counter` akan bertambah 1 setiap kali endpoint ini dipanggil
+- Audit trail otomatis tercatat untuk tracking aktivitas print
+- Endpoint ini dapat dipanggil berkali-kali untuk mencatat multiple print
+
+**Use Case:**
+- Tracking berapa kali surat jalan telah dicetak
+- Identifikasi surat jalan yang sudah/belum pernah dicetak
+- Monitoring aktivitas print untuk audit
+
+**Notes:**
+- Endpoint ini tidak membatasi status surat jalan, bisa dipanggil pada status apapun
+- Tidak ada limit berapa kali surat jalan bisa dicetak
+- Print counter akan terus bertambah setiap kali record print dipanggil
 
 ---
 

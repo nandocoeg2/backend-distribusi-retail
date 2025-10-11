@@ -374,6 +374,7 @@ export class PackingService {
       tanggal_packing,
       status_code,
       purchaseOrderId,
+      is_printed,
       page = 1,
       limit = 10,
     } = query;
@@ -422,6 +423,10 @@ export class PackingService {
 
     if (purchaseOrderId) {
       filters.push({ purchaseOrderId });
+    }
+
+    if (is_printed !== undefined) {
+      filters.push({ is_printed });
     }
 
     const [data, totalItems] = await Promise.all([
@@ -895,6 +900,53 @@ export class PackingService {
         throw error;
       }
       throw new AppError('Failed to complete packing', 500);
+    }
+  }
+
+  static async recordPrint(id: string, userId: string): Promise<any> {
+    try {
+      const packing = await prisma.packing.findUnique({
+        where: { id },
+      });
+
+      if (!packing) {
+        throw new AppError('Packing not found', 404);
+      }
+
+      const updatedPacking = await prisma.packing.update({
+        where: { id },
+        data: {
+          is_printed: true,
+          print_counter: { increment: 1 },
+          updatedBy: userId,
+        },
+        include: {
+          packingItems: {
+            include: {
+              status: true,
+            },
+          },
+          purchaseOrder: true,
+          status: true,
+        },
+      });
+
+      await createAuditLog('Packing', id, 'UPDATE', userId, {
+        action: 'RECORD_PRINT',
+        before: {
+          is_printed: packing.is_printed,
+          print_counter: packing.print_counter,
+        },
+        after: {
+          is_printed: updatedPacking.is_printed,
+          print_counter: updatedPacking.print_counter,
+        },
+      });
+
+      return updatedPacking;
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to record print for packing', 500);
     }
   }
 }

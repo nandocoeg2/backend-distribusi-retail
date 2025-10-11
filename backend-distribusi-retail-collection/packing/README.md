@@ -275,6 +275,7 @@ Mencari packing berdasarkan berbagai filter dengan pagination.
 - `tanggal_packing` (optional): Pencarian berdasarkan tanggal packing
 - `status_code` (optional): Pencarian berdasarkan status code (contoh: "PENDING PACKING", "PROCESSING PACKING")
 - `purchaseOrderId` (optional): Pencarian berdasarkan Purchase Order ID
+- `is_printed` (optional): Filter berdasarkan status cetak (true/false)
 - `page` (optional): Nomor halaman (default: 1)
 - `limit` (optional): Jumlah data per halaman (default: 10)
 
@@ -562,6 +563,99 @@ Menyelesaikan proses packing dari status "PROCESSING PACKING" menjadi "COMPLETED
   }
 }
 ```
+
+---
+
+### 9. Record Print Packing
+
+Mencatat aktivitas print packing. Endpoint ini akan mengupdate field `is_printed` menjadi `true` dan menambah counter `print_counter`.
+
+**Endpoint:** `POST /:id/record-print`
+
+**Headers:**
+
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+
+- `id` (required): ID packing
+
+**Example Request:**
+
+```
+POST /api/v1/packings/packing-uuid/record-print
+```
+
+**Response Success (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Print recorded successfully",
+  "data": {
+    "id": "packing-uuid",
+    "packing_number": "PKG-2024-001",
+    "is_printed": true,
+    "print_counter": 1,
+    "tanggal_packing": "2025-09-06T00:00:00.000Z",
+    "statusId": "status-uuid",
+    "purchaseOrderId": "purchase-order-uuid",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "status": {...},
+    "purchaseOrder": {...},
+    "packingItems": [...]
+  }
+}
+```
+
+**Response Error (404 Not Found):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Packing not found"
+  }
+}
+```
+
+**Response Error (500 Internal Server Error):**
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Failed to record print for packing"
+  }
+}
+```
+
+**Business Logic:**
+- Field `is_printed` akan di-set menjadi `true`
+- Field `print_counter` akan bertambah 1 setiap kali endpoint ini dipanggil
+- Audit trail otomatis tercatat untuk tracking aktivitas print dengan action `RECORD_PRINT`
+- Endpoint ini dapat dipanggil berkali-kali untuk mencatat multiple print
+
+**Use Case:**
+- Tracking berapa kali packing list telah dicetak
+- Identifikasi packing yang sudah/belum pernah dicetak
+- Monitoring aktivitas print untuk audit dan quality control
+- Integrasi dengan sistem warehouse management
+
+**Notes:**
+- Endpoint ini tidak membatasi status packing, bisa dipanggil pada status apapun
+- Tidak ada limit berapa kali packing bisa dicetak
+- Print counter akan terus bertambah setiap kali record print dipanggil
+- Berguna untuk tracking compliance dalam proses packing dan shipping
 
 ---
 

@@ -303,6 +303,7 @@ export class InvoicePengirimanService {
       purchaseOrderId,
       tanggal_start,
       tanggal_end,
+      is_printed,
       page = 1,
       limit = 10,
     } = query;
@@ -345,6 +346,9 @@ export class InvoicePengirimanService {
         dateFilter.lte = new Date(tanggal_end);
       }
       filters.push({ tanggal: dateFilter });
+    }
+    if (is_printed !== undefined) {
+      filters.push({ is_printed });
     }
 
     const [data, totalItems] = await Promise.all([
@@ -576,6 +580,64 @@ export class InvoicePengirimanService {
         'Failed to create InvoicePenagihan from InvoicePengiriman',
         500
       );
+    }
+  }
+
+  static async recordPrint(
+    id: string,
+    userId: string
+  ): Promise<InvoicePengiriman> {
+    try {
+      const invoice = await prisma.invoicePengiriman.findUnique({
+        where: { id },
+      });
+
+      if (!invoice) {
+        throw new AppError('InvoicePengiriman not found', 404);
+      }
+
+      const updatedInvoice = await prisma.invoicePengiriman.update({
+        where: { id },
+        data: {
+          is_printed: true,
+          print_counter: { increment: 1 },
+          updatedBy: userId,
+        },
+        include: {
+          invoiceDetails: true,
+          statusPembayaran: true,
+          purchaseOrder: true,
+          invoicePenagihan: {
+            include: {
+              status: true,
+              termOfPayment: true,
+            },
+          },
+        },
+      });
+
+      await createAuditLog(
+        'InvoicePengiriman',
+        id,
+        'UPDATE',
+        userId,
+        {
+          action: 'RECORD_PRINT',
+          before: {
+            is_printed: invoice.is_printed,
+            print_counter: invoice.print_counter,
+          },
+          after: {
+            is_printed: updatedInvoice.is_printed,
+            print_counter: updatedInvoice.print_counter,
+          },
+        }
+      );
+
+      return updatedInvoice;
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to record print for invoice pengiriman', 500);
     }
   }
 }

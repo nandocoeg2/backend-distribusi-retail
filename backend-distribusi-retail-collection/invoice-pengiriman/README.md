@@ -501,6 +501,7 @@ Mencari invoice pengiriman berdasarkan berbagai filter dengan pagination.
 - `purchaseOrderId` (optional): Pencarian berdasarkan Purchase Order ID
 - `tanggal_start` (optional): Pencarian berdasarkan tanggal mulai (YYYY-MM-DD)
 - `tanggal_end` (optional): Pencarian berdasarkan tanggal akhir (YYYY-MM-DD)
+- `is_printed` (optional): Filter berdasarkan status cetak (true/false)
 - `page` (optional): Nomor halaman (default: 1)
 - `limit` (optional): Jumlah data per halaman (default: 10)
 
@@ -751,6 +752,103 @@ POST /api/v1/invoice-pengiriman/invoice-uuid/create-penagihan
   - `category`: "Invoice Penagihan"
   - `status_code`: "PENDING INVOICE PENAGIHAN"
 - Pastikan status default tersebut sudah ada di database, atau sertakan `statusId` di request body
+
+---
+
+### 8. Record Print Invoice Pengiriman
+
+Mencatat aktivitas print invoice pengiriman. Endpoint ini akan mengupdate field `is_printed` menjadi `true` dan menambah counter `print_counter`.
+
+**Endpoint:** `POST /:id/record-print`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Path Parameters:**
+- `id` (required): ID invoice pengiriman
+
+**Example Request:**
+```
+POST /api/v1/invoice-pengiriman/invoice-uuid/record-print
+```
+
+**Response Success (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Print recorded successfully",
+  "data": {
+    "id": "invoice-uuid",
+    "no_invoice": "INV-2024-001",
+    "is_printed": true,
+    "print_counter": 1,
+    "tanggal": "2024-01-01T00:00:00.000Z",
+    "deliver_to": "Customer ABC",
+    "sub_total": 1000000,
+    "total_discount": 50000,
+    "total_price": 950000,
+    "ppn_percentage": 11,
+    "ppn_rupiah": 104500,
+    "grand_total": 1054500,
+    "expired_date": "2024-12-31T00:00:00.000Z",
+    "TOP": "30 days",
+    "type": "PEMBAYARAN",
+    "statusPembayaranId": null,
+    "purchaseOrderId": null,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T12:00:00.000Z",
+    "createdBy": "user-uuid",
+    "updatedBy": "user-uuid",
+    "invoiceDetails": [...],
+    "statusPembayaran": null,
+    "purchaseOrder": null,
+    "invoicePenagihan": null
+  }
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "InvoicePengiriman not found"
+  }
+}
+```
+
+**Response Error (500 Internal Server Error):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Failed to record print for invoice pengiriman"
+  }
+}
+```
+
+**Business Logic:**
+- Field `is_printed` akan di-set menjadi `true`
+- Field `print_counter` akan bertambah 1 setiap kali endpoint ini dipanggil
+- Audit trail otomatis tercatat untuk tracking aktivitas print
+- Endpoint ini dapat dipanggil berkali-kali untuk mencatat multiple print
+
+**Use Case:**
+- Tracking berapa kali invoice pengiriman telah dicetak
+- Identifikasi invoice yang sudah/belum pernah dicetak
+- Monitoring aktivitas print untuk audit dan compliance
+
+**Notes:**
+- Endpoint ini tidak membatasi status invoice, bisa dipanggil pada status apapun
+- Tidak ada limit berapa kali invoice bisa dicetak
+- Print counter akan terus bertambah setiap kali record print dipanggil
+- Cocok untuk integrasi dengan sistem print management
 
 ---
 

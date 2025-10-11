@@ -530,4 +530,58 @@ export class SuratJalanService {
 
     return executePaginatedQuery(dataQuery, countQuery, page, limit);
   }
+
+  static async recordPrint(
+    id: string,
+    userId: string
+  ): Promise<SuratJalan> {
+    try {
+      const suratJalan = await prisma.suratJalan.findUnique({
+        where: { id },
+      });
+
+      if (!suratJalan) {
+        throw new AppError('Surat Jalan not found', 404);
+      }
+
+      const updatedSuratJalan = await prisma.suratJalan.update({
+        where: { id },
+        data: {
+          is_printed: true,
+          print_counter: { increment: 1 },
+          updatedBy: userId,
+        },
+        include: {
+          suratJalanDetails: { include: { suratJalanDetailItems: true } },
+          invoice: true,
+          purchaseOrder: true,
+          status: true,
+          checklistSuratJalan: true,
+        },
+      });
+
+      await createAuditLog(
+        'SuratJalan',
+        id,
+        'UPDATE',
+        userId,
+        {
+          action: 'RECORD_PRINT',
+          before: {
+            is_printed: suratJalan.is_printed,
+            print_counter: suratJalan.print_counter,
+          },
+          after: {
+            is_printed: updatedSuratJalan.is_printed,
+            print_counter: updatedSuratJalan.print_counter,
+          },
+        }
+      );
+
+      return updatedSuratJalan;
+    } catch (error: any) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to record print for surat jalan', 500);
+    }
+  }
 }

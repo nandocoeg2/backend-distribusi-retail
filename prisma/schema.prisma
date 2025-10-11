@@ -273,6 +273,8 @@ model Packing {
   tanggal_packing DateTime
   statusId        String
   purchaseOrderId String        @unique
+  is_printed      Boolean       @default(false)
+  print_counter   Int           @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   createdBy       String
@@ -320,6 +322,8 @@ model InvoicePengiriman {
   TOP                String?           @db.VarChar(50)
   type               InvoiceType       @default(PEMBAYARAN)
   statusPembayaranId String?
+  is_printed         Boolean           @default(false)
+  print_counter      Int               @default(0)
   statusPembayaran   Status?           @relation(name: "InvoiceStatusPembayaran", fields: [statusPembayaranId], references: [id])
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
