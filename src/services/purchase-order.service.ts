@@ -298,6 +298,12 @@ export class PurchaseOrderService {
             checklistSuratJalan: true,
           },
         },
+        invoice: {
+          include: {
+            invoiceDetails: true,
+            statusPembayaran: true,
+          },
+        },
       },
     });
 
@@ -472,7 +478,7 @@ export class PurchaseOrderService {
           where: { id },
           include: {
             packing: { include: { packingItems: true } },
-            invoices: {
+            invoice: {
               include: {
                 suratJalan: {
                   include: {
@@ -499,15 +505,17 @@ export class PurchaseOrderService {
         await tx.packingItem.deleteMany({
           where: { packing: { purchaseOrderId: id } },
         });
-        await tx.packing.delete({ where: { purchaseOrderId: id } }).catch(() => {});
+        await tx.packing
+          .delete({ where: { purchaseOrderId: id } })
+          .catch(() => {});
         await tx.suratJalanDetailItem.deleteMany({
           where: {
             suratJalanDetail: {
               suratJalan: {
                 OR: [
                   { invoice: { purchaseOrderId: id } },
-                  { purchaseOrderId: id }
-                ]
+                  { purchaseOrderId: id },
+                ],
               },
             },
           },
@@ -517,9 +525,9 @@ export class PurchaseOrderService {
             suratJalan: {
               OR: [
                 { invoice: { purchaseOrderId: id } },
-                { purchaseOrderId: id }
-              ]
-            }
+                { purchaseOrderId: id },
+              ],
+            },
           },
         });
         await tx.historyPengiriman.deleteMany({
@@ -527,17 +535,14 @@ export class PurchaseOrderService {
             suratJalan: {
               OR: [
                 { invoice: { purchaseOrderId: id } },
-                { purchaseOrderId: id }
-              ]
-            }
+                { purchaseOrderId: id },
+              ],
+            },
           },
         });
         await tx.suratJalan.deleteMany({
           where: {
-            OR: [
-              { invoice: { purchaseOrderId: id } },
-              { purchaseOrderId: id }
-            ]
+            OR: [{ invoice: { purchaseOrderId: id } }, { purchaseOrderId: id }],
           },
         });
         await tx.invoicePengirimanDetail.deleteMany({

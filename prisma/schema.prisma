@@ -132,7 +132,7 @@ model PurchaseOrder {
   files                   FileUploaded[]
   purchaseOrderDetails    PurchaseOrderDetail[]
   packing                 Packing?
-  invoices                InvoicePengiriman[]
+  invoice                 InvoicePengiriman?
   invoicePenagihan        InvoicePenagihan[]
   suratJalan              SuratJalan?
   customer                Customer?                 @relation(fields: [customerId], references: [id])
@@ -325,7 +325,7 @@ model InvoicePengiriman {
   updatedAt          DateTime          @updatedAt
   createdBy          String
   updatedBy          String
-  purchaseOrderId    String?
+  purchaseOrderId    String?           @unique
   purchaseOrder      PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id])
   invoiceDetails     InvoicePengirimanDetail[]
   suratJalan         SuratJalan[]
