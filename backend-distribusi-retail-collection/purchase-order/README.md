@@ -23,7 +23,7 @@ Content-Type: multipart/form-data
 
 ### Request Body (Form Data)
 ```
-customerId: string (required)
+customerId: string (optional)
 po_number: string (required)
 total_items: number (optional)
 tanggal_masuk_po: string (optional, ISO date)
@@ -518,18 +518,14 @@ curl --request PATCH \
         "status": {
           "status_code": "PROCESSED PURCHASE ORDER"
         },
-        "packings": [
-          {
-            "id": "packing_123",
-            "packing_number": "PKG-PO-001-001"
-          }
-        ],
-        "invoices": [
-          {
-            "id": "invoice_123",
-            "no_invoice": "INV-PO-001-001"
-          }
-        ]
+        "packing": {
+          "id": "packing_123",
+          "packing_number": "PKG-PO-001-001"
+        },
+        "invoice": {
+          "id": "invoice_123",
+          "no_invoice": "INV-PO-001-001"
+        }
       },
       {
         "id": "po_124",
@@ -543,6 +539,14 @@ curl --request PATCH \
       {
         "id": "po_125",
         "error": "Purchase Order not found"
+      },
+      {
+        "id": "po_126",
+        "error": "Duplicate PO number detected with the same status. Please resolve duplicates before processing.",
+        "poNumber": "PO-003",
+        "duplicateCount": 2,
+        "duplicateIds": ["po_126", "po_127"],
+        "matchingCount": 3
       }
     ]
   }
@@ -602,18 +606,24 @@ curl --request PATCH \
 - Setiap purchase order akan diproses secara individual
 - Jika ada error pada salah satu purchase order, yang lainnya tetap akan diproses
 - Response akan menampilkan array `success` untuk yang berhasil dan array `failed` untuk yang gagal
-- Setiap purchase order yang berhasil diproses akan otomatis membuat:
-  - Packing dengan status `PENDING PACKING`
-  - Invoice dengan status `PENDING INVOICE`
-  - Surat Jalan dengan status `PENDING SURAT JALAN`
+- **Duplicate PO Number Check**: Sebelum processing, sistem akan mengecek duplikasi PO number dengan status yang sama. Jika ditemukan duplikasi, processing akan gagal dengan error yang menampilkan:
+  - `poNumber`: Nomor PO yang duplikat
+  - `duplicateCount`: Jumlah duplikasi
+  - `duplicateIds`: Array ID dari PO yang duplikat
+  - `matchingCount`: Total PO dengan nomor yang sama
+- Setiap purchase order yang berhasil diproses akan otomatis membuat (jika belum ada):
+  - **Satu** Packing dengan status `PENDING PACKING` (bukan array)
+  - **Satu** Invoice dengan status `PENDING INVOICE` (bukan array)
+  - **Satu** Surat Jalan dengan status `DRAFT SURAT JALAN` (bukan array)
 
 ### Purchase Order Details
-- Field `purchaseOrderDetails` harus berupa JSON string array
+- Field `purchaseOrderDetails` harus berupa JSON string array saat create (form data), atau JSON array saat update
 - Jika `inventoryId` tidak disediakan, sistem akan otomatis membuat inventory item baru berdasarkan PLU
-- Jika inventory dengan PLU yang sama sudah ada, akan diupdate dengan data terbaru
+- Jika inventory dengan PLU yang sama sudah ada, akan diupdate dengan data terbaru (upsert operation)
 - Semua operasi dilakukan dalam database transaction untuk memastikan konsistensi data
 - Field yang required: `plu`, `nama_barang`, `quantity`, `isi`, `harga`, `harga_netto`, `total_pembelian`
 - Field yang optional: `potongan_a`, `harga_after_potongan_a`, `potongan_b`, `harga_after_potongan_b`, `inventoryId`
+- Saat update, semua detail yang ada akan dihapus dan diganti dengan yang baru (replace operation)
 
 ### File Upload
 - Hanya untuk purchase order dengan `po_type: "BULK"`
@@ -625,6 +635,12 @@ curl --request PATCH \
 - Semua endpoint memerlukan Bearer token
 - Token harus valid dan tidak expired
 - User harus memiliki permission yang sesuai
+
+### Customer ID Validation
+- Field `customerId` bersifat **optional** saat membuat Purchase Order
+- Jika `customerId` disediakan, sistem akan memvalidasi apakah customer tersebut ada di database
+- Jika customer tidak ditemukan, akan mengembalikan error 404: "Customer not found"
+- Jika `customerId` tidak disediakan, Purchase Order tetap dapat dibuat tanpa customer reference
 
 ---
 
